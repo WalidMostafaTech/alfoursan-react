@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mainColor: #5f59c3;
+}
+
+/* remove input number arrows */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.htmlContent {
+  /* overflow-wrap: break-word;
+  overflow-x: auto; */
+
+  iframe {
+    max-width: 100%;
+    margin-inline: auto;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  ul {
+    list-style: disc;
+
+    li {
+      margin-inline-start: 1.25rem;
+    }
+  }
+
+  ol {
+    list-style: decimal;
+
+    li {
+      margin-inline-start: 1rem;
+    }
+  }
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+/* fix hover in mobile */
+@custom-variant hover (&:hover);
+
+@layer {
+  body {
+    @apply bg-gray-100 font-[cairo];
+  }
+}
+
+/* change mapbox popup style */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+}

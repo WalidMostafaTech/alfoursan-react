@@ -1,0 +1,194 @@
+            const ws = new WebSocket('wss://alfursantracking.com:2053');
+          ws.onopen = () => {
+            Object.keys(carMap).forEach((imei) => {
+              ws.send(JSON.stringify({
+                type: 'subscribe',
+                imei
+              }));
+            });
+          };
+      
+      
+            
+            
+            ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            // console.log('event onmessage ', data);
+
+
+            // console.log('data ', data);
+
+
+            if (data.type === 'replay' && data.data.imei) {
+              // console.log('onmessage' , data ) ;
+              // sendCommand(data.data.imei)
+            }
+
+            if ('data' in data && data.type === 'command_response') {
+              const response_command = res = data.data;
+              if ('position' in response_command) {
+                const {
+                  position
+                } = response_command;
+                if (position?.lon && position?.lat) {
+                  moveCarByIMEI(data.data.imei, [position.lon, position.lat], {
+                    speed: position.speed,
+                    lastOnline: position.datetime
+                  });
+                }
+              }
+            }
+
+
+            if ('data' in data && data.type === 'heartbeat') {
+              const {
+                heartbeat
+              } = data.data;
+              moveCarByIMEI(data.imei, null, {
+                voltage: heartbeat.externalVoltage
+              });
+            }
+
+
+            if (data.type === 'gps' && data.data?.imei) {
+              if (data.data.speed > 5) {
+                // $('.span' + data.data.imei).css('background', '#0bd32d');
+                $('.span' + data.data.imei).removeClass('stopped').addClass('running');
+                $('.statusaddressDev' + data.data.imei).text(' 🚙 متحرك').css('color', '#0bd32d');
+                $('.carImage' + data.data.imei).attr('src', imagePathGreen);
+              } else {
+                // $('.span' + data.data.imei).css('background', '#cb0202');
+                $('.statusaddressDev' + data.data.imei).text(' ⛔ متوقف').css('color', '#cb0202');
+                $('.span' + data.data.imei).removeClass('running').addClass('stopped');
+                $('.carImage' + data.data.imei).attr('src', imagePathRed);
+              }
+
+
+              const gps = data.data.gps;
+              // console.log('gps' , gps )
+              if (gps?.longitude && gps?.latitude) {
+                moveCarByIMEI(data.data.imei, [gps.longitude, gps.latitude], {
+                  speed: data.data.speed,
+                  accOn: data.data.statusDecoded?.accOn,
+                  gpsPositioned: data.data.statusDecoded?.gpsPositioned,
+                  direction: data.data.direction // 👈 أضف الاتجاه هنا
+                });
+              }
+            }
+
+            if (data.type === 'multi_gps' && data.data?.imei && Array.isArray(data.data.records)) {
+              const last = data.data.records[data.data.records.length - 1];
+              if (last?.longitude && last?.latitude) {
+                moveCarByIMEI(data.data.imei, [last.longitude, last.latitude]);
+              }
+            }
+            ////**********
+
+            if (data.type === 'alarm' && data.data?.imei) {
+
+              console.log('alarmTextAr ', data.data.alarmTextAr);
+              console.log('speed ', data.data.speed);
+              console.log('data ', data);
+
+
+              const {
+                gps,
+                speed,
+                courseStatus,
+                alarmType,
+                alarmText,
+                alarmTextAr,
+                statusDecoded
+              } = data.data;
+              const imei = data.data.imei;
+              const car = carMap[imei]?.car;
+              if (gps?.longitude && gps?.latitude) {
+                moveCarByIMEI(imei, [gps.longitude, gps.latitude], {
+                  speed,
+                  alarmType,
+                  alarmText,
+                  alarmTextAr,
+                  ...statusDecoded
+                });
+              }
+
+              /*  // كتابة التنبيه داخل LogDive
+                                        const logDiv = document.getElementById('LogDive');
+                                        const div = document.createElement('div');
+                                        div.style = 'margin: 5px; padding: 5px; border-bottom: 1px solid #ccc; font-size: 14px';
+                                        div.innerHTML = `
+    🚨 <strong>${alarmTextAr || 'تنبيه غير معروف'}</strong>
+    🚗 السيارة: ${car?.name || '-'} (${car?.car_number || '-'})<br>
+    📶 IMEI: ${imei}<br>
+    🕒 السرعة: ${speed} كم/س، ACC: ${statusDecoded?.accOn ? 'تشغيل' : 'إيقاف'}، GPS: ${statusDecoded?.gpsPositioned ? 'مثبت' : 'غير مثبت'}<br>
+  `;
+                                        logDiv.prepend(div);*/
+
+
+              if (gps?.longitude && gps?.latitude) {
+                moveCarByIMEI(data.data.imei, [gps.longitude, gps.latitude], {
+                  speed,
+                  alarmType,
+                  alarmText,
+                  alarmTextAr,
+                  ...statusDecoded
+                });
+              }
+
+
+              const alarm = data.data;
+              const type = alarm.alarmText || 'Unknown Alarm';
+              const typeAr = alarm.alarmTextAr || 'إنذار غير معروف';
+              const time = alarm.date ? new Date(alarm.date).toLocaleString() : 'N/A';
+              const message = `
+        <b>${type}</b><br>
+
+
+    📟 IMEI: ${imei}<br>
+    🕒 ${time}<br>
+    🚗 السرعة: ${speed} كم/س<br>
+    🔧 حالة الجهاز:<br>
+    - ACC: ${alarm.statusDecoded?.accOn ? 'تشغيل' : 'إيقاف'}<br>
+    - الحماية: ${alarm.statusDecoded?.defense ? 'مفعلة' : 'غير مفعلة'}<br>
+
+
+  `;
+
+              // - GPS: ${correctedGpsPositioned ? 'مثبت' : 'غير مثبت'}<br>
+              //   ${correctedOilCut ? 'مقطوع' : 'متصل'}<br>
+              toastr['error'](
+                message,
+                `🚨 ${typeAr}`, {
+                  closeButton: true,
+                  tapToDismiss: false,
+                  rtl: true,
+                  timeOut: 10000,
+                  extendedTimeOut: 2000
+                }
+              );
+            }
+
+
+            ////**********
+
+
+            /*
+
+                if (data.type === 'alarm' && data.data?.imei) {
+                  const { gps, speed, courseStatus, alarmType, alarmText, alarmTextAr, statusDecoded } = data.data;
+                  if (gps?.longitude && gps?.latitude) {
+                    moveCarByIMEI(data.data.imei, [gps.longitude, gps.latitude], {
+                      speed,
+                      alarmType,
+                      alarmText,
+                      alarmTextAr,
+                      ...statusDecoded
+                    });
+                  }
+                }
+
+                */
+
+
+          };
