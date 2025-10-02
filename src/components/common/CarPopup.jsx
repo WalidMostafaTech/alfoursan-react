@@ -1,7 +1,6 @@
 import { FaMapMarkerAlt, FaSatelliteDish } from "react-icons/fa";
 import {
   FiBarChart2,
-  FiMail,
   FiMenu,
   FiNavigation,
   FiPlayCircle,
@@ -11,6 +10,7 @@ import {
   FiWifi,
 } from "react-icons/fi";
 import { ImLocation2 } from "react-icons/im";
+import { HiOutlineCommandLine } from "react-icons/hi2";
 import { IoSpeedometerSharp } from "react-icons/io5";
 import {
   MdOutlineCarCrash,
@@ -18,7 +18,7 @@ import {
   MdOutlineElectricBolt,
 } from "react-icons/md";
 
-const CarPopup = ({ car, onClose, closeBtn = true }) => {
+const CarPopup = ({ car }) => {
   const carDetails = [
     {
       label: car.lastSignel,
@@ -46,20 +46,10 @@ const CarPopup = ({ car, onClose, closeBtn = true }) => {
     },
   ];
 
+  console.log("car in popup:", car);
+
   return (
     <div className="bg-white p-4 rounded-xl shadow-lg space-y-6 w-[500px]">
-      {/* زرار إغلاق */}
-      {closeBtn && (
-        <div className="flex">
-          <button
-            onClick={onClose}
-            className="w-fit ml-auto text-gray-500 hover:text-gray-700 text-2xl cursor-pointer"
-          >
-            <MdClose />
-          </button>
-        </div>
-      )}
-
       {/* عنوان العربية */}
       <h4 className="font-bold text-lg">
         {car.name} <span className="text-mainColor">123123123</span>
@@ -87,14 +77,66 @@ const CarPopup = ({ car, onClose, closeBtn = true }) => {
 
       {/* الأيقونات */}
       <div className="w-full flex justify-evenly items-center gap-2 text-xl">
-        <FiMenu className="cursor-pointer hover:text-mainColor" />
-        <FiNavigation className="cursor-pointer hover:text-mainColor" />
-        <FiPlayCircle className="cursor-pointer hover:text-mainColor" />
-        <FiMail className="cursor-pointer hover:text-mainColor" />
-        <FiSliders className="cursor-pointer hover:text-mainColor" />
-        <FiUser className="cursor-pointer hover:text-mainColor" />
-        <FiBarChart2 className="cursor-pointer hover:text-mainColor" />
-        <FiShare2 className="cursor-pointer hover:text-mainColor" />
+        <span
+          title="Details"
+          className="cursor-pointer hover:text-mainColor"
+          onClick={() => window.getSettings(car.id)}
+        >
+          <FiMenu />
+        </span>
+        <a
+          title="Tracking"
+          href={car.tracking_url}
+          target="_blank"
+          className="cursor-pointer hover:text-mainColor"
+        >
+          <FiNavigation />
+        </a>
+        <a
+          title="Playback"
+          href={car.replay_url}
+          target="_blank"
+          className="cursor-pointer hover:text-mainColor"
+        >
+          <FiPlayCircle />
+        </a>
+        <span
+          title="Command"
+          className="cursor-pointer hover:text-mainColor"
+          onClick={() => window.getSettings(car.id, "command")}
+        >
+          <HiOutlineCommandLine />
+        </span>
+        <span
+          title="Fence"
+          onClick={() => window.showFenceModal()}
+          className="cursor-pointer hover:text-mainColor"
+        >
+          <FiSliders />
+        </span>
+        <a
+          title="Street View"
+          href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
+          target="_blank"
+          className="cursor-pointer hover:text-mainColor"
+        >
+          <FiUser />
+        </a>
+        <a
+          title="Reports"
+          href={car.report_url}
+          target="_blank"
+          className="cursor-pointer hover:text-mainColor"
+        >
+          <FiBarChart2 />
+        </a>
+        <span
+          title="Share"
+          className="cursor-pointer hover:text-mainColor"
+          onClick={() => window.openShareModal(car.id, car.serial_number)}
+        >
+          <FiShare2 />
+        </span>
       </div>
     </div>
   );

@@ -63,3 +63,14 @@ input::-webkit-inner-spin-button {
 .mapboxgl-popup-content {
   padding: 0 !important;
 }
+
+.mapboxgl-popup-close-button {
+  font-size: 35px;
+  padding: 10px;
+}
+
+.radix-dropdown {
+  position: fixed !important;
+  left: 60px !important; 
+  min-width: max-content;
+}

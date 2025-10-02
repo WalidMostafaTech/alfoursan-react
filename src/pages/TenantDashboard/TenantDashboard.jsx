@@ -25,30 +25,6 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
   return R * c;
 }
 
-// مصفوفة العربيات
-const carsArray = [
-  {
-    id: 1,
-    name: "Car 1",
-    image: "/car.png",
-    position: { lat: 30.0444, lng: 31.2357 },
-    bearing: 0,
-    speed: 0,
-    address: "جارٍ التحديد...",
-    lastUpdate: Date.now(),
-  },
-  {
-    id: 2,
-    name: "Car 2",
-    image: "/car.png",
-    position: { lat: 30.045, lng: 31.2365 },
-    bearing: 90,
-    speed: 0,
-    address: "جارٍ التحديد...",
-    lastUpdate: Date.now(),
-  },
-];
-
 const TenantDashboard = () => {
   const fetchDevices = async () => {
     const { data } = await axios.get(
@@ -57,7 +33,7 @@ const TenantDashboard = () => {
     return data.data;
   };
 
-  const { data: devices, isLoading } = useQuery({
+  const { data: devices } = useQuery({
     queryKey: ["devices"],
     queryFn: fetchDevices,
   });
@@ -86,7 +62,6 @@ const TenantDashboard = () => {
   }, [devices]);
 
   // 🔌 WebSocket hook
-  useCarSocket(cars, setCars, isInit);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyBuFc-F9K_-1QkQnLoTIecBlNz6LfCS1wg",
@@ -96,7 +71,16 @@ const TenantDashboard = () => {
   const [zoom, setZoom] = useState(16);
   const [selectedCarId, setSelectedCarId] = useState(null);
 
-  const [mapProvider, setMapProvider] = useState("google"); // google | mapbox
+  // const [mapProvider, setMapProvider] = useState("google");
+  const [mapProvider, setMapProvider] = useState(
+    localStorage.getItem("mapProvider") || "google"
+  );
+
+  // ✅ لما المستخدم يغير الخريطة، نخزنها
+  const handleMapProviderChange = (provider) => {
+    setMapProvider(provider);
+    localStorage.setItem("mapProvider", provider);
+  };
 
   const MAPBOX_TOKEN =
     "pk.eyJ1IjoiYWJkZWxyaG1hbm10MSIsImEiOiJja3kycjZwMjEwb2FzMnVwbjE4Mjdrb3V3In0.YE8v8xOauf5v6k1KqDHHFQ";
@@ -142,59 +126,61 @@ const TenantDashboard = () => {
     }
   };
 
+  useCarSocket(
+    cars,
+    setCars,
+    isInit,
+    getGoogleAddress,
+    getMapboxAddress,
+    mapProvider,
+    selectedCarId
+  );
+
   // حركة السيارات
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setCars((prevCars) =>
-  //       prevCars.map((car) => {
-  //         const speedFactor = 0.0001;
-  //         const rad = (car.bearing * Math.PI) / 180;
+  useEffect(() => {
+    if (!selectedCarId) return; // لو مفيش عربية مختارة ميتحسبش
 
-  //         const newLat = car.position.lat + Math.cos(rad) * speedFactor;
-  //         const newLng = car.position.lng + Math.sin(rad) * speedFactor;
+    const car = cars.find((c) => c.id === selectedCarId);
+    if (!car) return;
 
-  //         const now = Date.now();
-  //         const timeDiff = (now - car.lastUpdate) / 1000;
-  //         const distance = haversineDistance(
-  //           car.position.lat,
-  //           car.position.lng,
-  //           newLat,
-  //           newLng
-  //         );
-  //         const speed = (distance / (timeDiff / 3600)).toFixed(2);
+    const { lat, lng } = car.position;
 
-  //         // تحديث العنوان حسب الـ Provider
-  //         if (mapProvider === "google") {
-  //           getGoogleAddress(newLat, newLng, (addr) => {
-  //             setCars((prev) =>
-  //               prev.map((c) => (c.id === car.id ? { ...c, address: addr } : c))
-  //             );
-  //           });
-  //         } else if (mapProvider === "mapbox") {
-  //           getMapboxAddress(newLat, newLng, (addr) => {
-  //             setCars((prev) =>
-  //               prev.map((c) => (c.id === car.id ? { ...c, address: addr } : c))
-  //             );
-  //           });
-  //         }
+    if (
+      !car.lastAddressPos ||
+      haversineDistance(
+        car.lastAddressPos.lat,
+        car.lastAddressPos.lng,
+        lat,
+        lng
+      ) > 0.05
+    ) {
+      if (mapProvider === "google") {
+        getGoogleAddress(lat, lng, (addr) => {
+          setCars((prev) =>
+            prev.map((c) =>
+              c.id === car.id
+                ? { ...c, address: addr, lastAddressPos: { lat, lng } }
+                : c
+            )
+          );
+        });
+      } else {
+        getMapboxAddress(lat, lng, (addr) => {
+          setCars((prev) =>
+            prev.map((c) =>
+              c.id === car.id
+                ? { ...c, address: addr, lastAddressPos: { lat, lng } }
+                : c
+            )
+          );
+        });
+      }
+    }
+  }, [cars, mapProvider, selectedCarId]);
 
-  //         return {
-  //           ...car,
-  //           position: { lat: newLat, lng: newLng },
-  //           speed: Number(speed),
-  //           lastUpdate: now,
-  //         };
-  //       })
-  //     );
-  //   }, 1000);
-
-  //   return () => clearInterval(interval);
-  // }, [mapProvider]);
-
-  const focusCar = (car) => {
+  const handleSelectCar = (car) => {
     setCenter(car.position);
     setZoom(18);
-    setSelectedCarId(car.id);
 
     if (mapProvider === "mapbox") {
       setViewState({
@@ -203,6 +189,14 @@ const TenantDashboard = () => {
         zoom: 18,
       });
     }
+
+    // دايماً يفتح البوب اب
+    if (car.id !== selectedCarId) {
+      setSelectedCarId(car.id);
+    } else {
+      // لو ضغط على نفس العربية، يقفل البوب أب
+      setSelectedCarId(null);
+    }
   };
 
   if (loadError) return <div>Failed to load map</div>;
@@ -210,8 +204,15 @@ const TenantDashboard = () => {
 
   return (
     <section className="w-screen h-screen relative">
-      <SideMenu cars={cars} focusCar={focusCar} />
-      <MapSwitcher setMapProvider={setMapProvider} mapProvider={mapProvider} />
+      <SideMenu
+        cars={cars}
+        handleSelectCar={handleSelectCar}
+        selectedCarId={selectedCarId}
+      />
+      <MapSwitcher
+        setMapProvider={handleMapProviderChange}
+        mapProvider={mapProvider}
+      />
 
       {mapProvider === "google" ? (
         <GoogleMapView
@@ -219,7 +220,7 @@ const TenantDashboard = () => {
           center={center}
           zoom={zoom}
           selectedCarId={selectedCarId}
-          setSelectedCarId={setSelectedCarId}
+          handleSelectCar={handleSelectCar}
         />
       ) : (
         <MapboxMapView
@@ -228,8 +229,7 @@ const TenantDashboard = () => {
           setViewState={setViewState}
           MAPBOX_TOKEN={MAPBOX_TOKEN}
           selectedCarId={selectedCarId}
-          setSelectedCarId={setSelectedCarId}
-          focusCar={focusCar}
+          handleSelectCar={handleSelectCar}
         />
       )}
     </section>
