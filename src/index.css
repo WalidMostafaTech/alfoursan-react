@@ -71,6 +71,6 @@ input::-webkit-inner-spin-button {
 
 .radix-dropdown {
   position: fixed !important;
-  left: 60px !important; 
+  left: 45px !important; 
   min-width: max-content;
 }

@@ -5,9 +5,9 @@ import MapSwitcher from "../../components/common/MapSwitcher";
 import SideMenu from "./SideMenu/SideMenu";
 import GoogleMapView from "./Maps/GoogleMapView";
 import MapboxMapView from "./Maps/MapboxMapView";
-import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import useCarSocket from "../../hooks/useCarSocket";
+import { fetchDevices } from "../../services/api";
 
 // دالة حساب المسافة
 function haversineDistance(lat1, lng1, lat2, lng2) {
@@ -26,13 +26,6 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 }
 
 const TenantDashboard = () => {
-  const fetchDevices = async () => {
-    const { data } = await axios.get(
-      "https://alfursantracking.com/api/v1/tenant/get-devices"
-    );
-    return data.data;
-  };
-
   const { data: devices } = useQuery({
     queryKey: ["devices"],
     queryFn: fetchDevices,
@@ -44,39 +37,43 @@ const TenantDashboard = () => {
   // أول ما الأجهزة تتجاب من الـ API نحطها في state
   useEffect(() => {
     if (devices) {
-      setCars(
-        devices.map((d) => ({
-          ...d,
-          position: {
-            lat: parseFloat(d.latitude),
-            lng: parseFloat(d.longitude),
-          },
-          bearing: 0,
-          speed: 0,
-          address: d.address || "جارٍ التحديد...",
-          lastUpdate: Date.now(),
-        }))
-      );
+      const mappedCars = devices.map((d) => ({
+        ...d,
+        position: {
+          lat: parseFloat(d.latitude),
+          lng: parseFloat(d.longitude),
+        },
+        bearing: 0,
+        speed: 0,
+        address: d.address || "جارٍ التحديد...",
+        lastUpdate: Date.now(),
+      }));
+      setCars(mappedCars);
       setIsInit(true);
+
+      // ✅ بعد تحميل العربيات نركز على أول عربية
+      if (mappedCars.length > 0) {
+        const firstCar = mappedCars[0];
+        handleSelectCar(firstCar, true);
+      }
     }
   }, [devices]);
 
-  // 🔌 WebSocket hook
-
+  // تحميل سكريبت Google Maps مع اللغة العربية
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyBuFc-F9K_-1QkQnLoTIecBlNz6LfCS1wg",
+    language: "ar", // ✅ تحديد اللغة العربية
   });
 
-  const [center, setCenter] = useState({ lat: 30.0444, lng: 31.2357 });
+  const [center, setCenter] = useState({ lat: 24.7136, lng: 46.6753 });
   const [zoom, setZoom] = useState(16);
   const [selectedCarId, setSelectedCarId] = useState(null);
 
-  // const [mapProvider, setMapProvider] = useState("google");
   const [mapProvider, setMapProvider] = useState(
     localStorage.getItem("mapProvider") || "google"
   );
 
-  // ✅ لما المستخدم يغير الخريطة، نخزنها
+  // ✅ حفظ نوع الخريطة
   const handleMapProviderChange = (provider) => {
     setMapProvider(provider);
     localStorage.setItem("mapProvider", provider);
@@ -92,7 +89,7 @@ const TenantDashboard = () => {
     zoom: zoom,
   });
 
-  // Geocoder Google
+  // 🔍 دالة جلب العنوان من Google بالعربية
   const getGoogleAddress = (lat, lng, cb) => {
     if (!window.google) {
       cb("عنوان غير متاح");
@@ -101,14 +98,14 @@ const TenantDashboard = () => {
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === "OK" && results[0]) {
-        cb(results[0].formatted_address);
+        cb(results[0].formatted_address); // ✅ هيطلع بالعربي
       } else {
         cb("لم يتم العثور على عنوان");
       }
     });
   };
 
-  // Geocoder Mapbox
+  // 🔍 دالة جلب العنوان من Mapbox بالعربية
   const getMapboxAddress = async (lat, lng, cb) => {
     try {
       const res = await fetch(
@@ -126,6 +123,7 @@ const TenantDashboard = () => {
     }
   };
 
+  // WebSocket hook
   useCarSocket(
     cars,
     setCars,
@@ -136,9 +134,9 @@ const TenantDashboard = () => {
     selectedCarId
   );
 
-  // حركة السيارات
+  // 🧭 تحديث العنوان كل ما تتحرك العربية
   useEffect(() => {
-    if (!selectedCarId) return; // لو مفيش عربية مختارة ميتحسبش
+    if (!selectedCarId) return;
 
     const car = cars.find((c) => c.id === selectedCarId);
     if (!car) return;
@@ -178,29 +176,59 @@ const TenantDashboard = () => {
     }
   }, [cars, mapProvider, selectedCarId]);
 
-  const handleSelectCar = (car) => {
-    setCenter(car.position);
-    setZoom(18);
+  // دالة اختيار عربية
+  const handleSelectCar = (car, zoom = false) => {
+    if (!car) {
+      setSelectedCarId(null);
+      return;
+    }
 
-    if (mapProvider === "mapbox") {
+    const { position } = car || {};
+    const { lat, lng } = position || {};
+
+    // ✅ تأكد إن الإحداثيات أرقام
+    if (
+      !position ||
+      typeof lat !== "number" ||
+      typeof lng !== "number" ||
+      isNaN(lat) ||
+      isNaN(lng)
+    ) {
+      console.warn("❌ Invalid car position:", car);
+      setSelectedCarId(null);
+      return;
+    }
+
+    if (zoom) {
+      setCenter(position);
+      setZoom(18);
+
+      if (mapProvider === "mapbox") {
+        setViewState({
+          longitude: lng,
+          latitude: lat,
+          zoom: 18,
+        });
+      }
+    }
+
+    if (mapProvider === "google") {
       setViewState({
-        longitude: car.position.lng,
-        latitude: car.position.lat,
-        zoom: 18,
+        longitude: lng,
+        latitude: lat,
       });
     }
 
-    // دايماً يفتح البوب اب
     if (car.id !== selectedCarId) {
       setSelectedCarId(car.id);
     } else {
-      // لو ضغط على نفس العربية، يقفل البوب أب
       setSelectedCarId(null);
     }
   };
 
-  if (loadError) return <div>Failed to load map</div>;
-  if (!isLoaded && mapProvider === "google") return <div>Loading Map...</div>;
+  if (loadError) return <div>فشل تحميل الخريطة</div>;
+  if (!isLoaded && mapProvider === "google")
+    return <div>جاري تحميل الخريطة...</div>;
 
   return (
     <section className="w-screen h-screen relative">

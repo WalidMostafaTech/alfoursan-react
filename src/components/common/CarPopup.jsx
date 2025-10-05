@@ -12,11 +12,8 @@ import {
 import { ImLocation2 } from "react-icons/im";
 import { HiOutlineCommandLine } from "react-icons/hi2";
 import { IoSpeedometerSharp } from "react-icons/io5";
-import {
-  MdOutlineCarCrash,
-  MdClose,
-  MdOutlineElectricBolt,
-} from "react-icons/md";
+import { MdOutlineCarCrash, MdOutlineElectricBolt } from "react-icons/md";
+import { getCarStatus } from "../../utils/getCarStatus";
 
 const CarPopup = ({ car }) => {
   const carDetails = [
@@ -33,11 +30,11 @@ const CarPopup = ({ car }) => {
       icon: <ImLocation2 />,
     },
     {
-      label: "19.08km",
+      label: `${car.speed} km/h`,
       icon: <IoSpeedometerSharp />,
     },
     {
-      label: "Off (1h40m)",
+      label: getCarStatus(car),
       icon: <MdOutlineCarCrash />,
     },
     {
@@ -45,8 +42,6 @@ const CarPopup = ({ car }) => {
       icon: <MdOutlineElectricBolt />,
     },
   ];
-
-  console.log("car in popup:", car);
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-lg space-y-6 w-[500px]">

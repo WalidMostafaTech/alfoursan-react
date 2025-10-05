@@ -15,6 +15,9 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
+      window.API_BASE_URL =
+        "https://alfursantracking.com/api/v1/tenant/get-devices";
+
       function getSettings(id, command) {
         alert("Settings for car ID: " + id + " and command: " + command);
       }

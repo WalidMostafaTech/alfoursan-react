@@ -28,8 +28,8 @@ const useCarSocket = (cars, setCars, isInit) => {
       if (data.type === "gps" && data.data?.imei) {
         const gps = data.data.gps;
         if (gps?.longitude && gps?.latitude) {
-          setCars((prev) =>
-            prev.map((car) =>
+          setCars((prev) => {
+            const updated = prev.map((car) =>
               car.serial_number === data.data.imei
                 ? {
                     ...car,
@@ -41,17 +41,25 @@ const useCarSocket = (cars, setCars, isInit) => {
                     bearing: data.data.direction,
                     status: data.data.statusDecoded?.accOn ? "on" : "off",
                     lastUpdate: Date.now(),
+                    lastSignel: data.data.date,
+                    lastSignelGPS: data.data.date,
                   }
                 : car
-            )
-          );
+            );
+
+            // إعادة ترتيب العربيات بحيث اللي سرعتها > 0 تبقى فوق
+            return [...updated].sort((a, b) => {
+              const aMoving = a.speed > 0 ? 1 : 0;
+              const bMoving = b.speed > 0 ? 1 : 0;
+              return bMoving - aMoving; // العربيات المتحركة الأول
+            });
+          });
         }
       }
 
       // Alarm
       if (data.type === "alarm" && data.data?.imei) {
         console.warn("🚨 Alarm:", data.data.alarmTextAr);
-        // ممكن هنا تعرض Toast أو Notification
       }
 
       // Heartbeat

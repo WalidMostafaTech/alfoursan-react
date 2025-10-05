@@ -17,6 +17,7 @@ const MapboxMapView = ({
       onMove={(evt) => setViewState(evt.viewState)}
       style={{ width: "100%", height: "100%" }}
       mapStyle="mapbox://styles/mapbox/streets-v11"
+      onClick={() => handleSelectCar(null)}
     >
       {cars
         ?.filter(
@@ -31,30 +32,61 @@ const MapboxMapView = ({
             longitude={car.position.lng}
             latitude={car.position.lat}
             anchor="center"
-            onClick={() => handleSelectCar(car)}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              handleSelectCar(car);
+            }}
           >
             <div
               style={{
-                transform: `translate(-50%, -50%) rotate(${car.bearing}deg)`,
-                width: 40,
-                height: 40,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                transform: "translateY(-10px)", // يحركها لفوق شوية عشان ما تغطيش البواب
+                cursor: "pointer",
               }}
             >
-              <img
-                src={
-                  car.speed > 5
-                    ? "/car-green.png"
-                    : car.speed === 0
-                    ? "/car-red.png"
-                    : "/car-blue.png"
-                }
-                alt={car.name}
-                className="w-full h-full object-contain cursor-pointer"
-              />
+              {/* صورة العربية */}
+              <div
+                style={{
+                  transform: `rotate(${car.bearing}deg)`,
+                  width: 40,
+                  height: 40,
+                }}
+              >
+                <img
+                  src={
+                    car.speed > 5
+                      ? "/car-green.png"
+                      : car.speed === 0
+                      ? "/car-red.png"
+                      : "/car-blue.png"
+                  }
+                  alt={car.name}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* الكارت الأبيض بالاسم */}
+              <div
+                style={{
+                  background: "#fff",
+                  color: "#333",
+                  padding: "2px 6px",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  marginTop: "4px",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {car.name || "بدون اسم"}
+              </div>
             </div>
           </Marker>
         ))}
 
+      {/* Popup لما تختار عربية */}
       {selectedCarId &&
         (() => {
           const car = cars?.find(
@@ -67,11 +99,11 @@ const MapboxMapView = ({
           if (!car) return null;
           return (
             <Popup
-              longitude={car.position.lng-0.00005}
-              latitude={car.position.lat+0.0001}
+              longitude={car.position.lng - 0.0}
+              latitude={car.position.lat + 0.00012}
               maxWidth="none"
-              closeOnClick={false} // عشان ما يتقفلش لو ضغطت على الماركر
-              onClose={() => handleSelectCar(car)} // يقفل البوباب ويعمل reset
+              closeOnClick={false}
+              onClose={() => handleSelectCar(car)}
               style={{
                 padding: 0,
                 backgroundColor: "transparent",

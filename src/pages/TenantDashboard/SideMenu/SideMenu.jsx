@@ -3,8 +3,9 @@ import { IoSearchOutline } from "react-icons/io5";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { getCarStatus } from "../../../utils/getCarStatus";
+import { searchDevices } from "../../../services/api";
 
 const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
   const searchTypes = ["device", "driver", "group"];
@@ -16,14 +17,7 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
   // 🟢 API
   const fetchSearch = async ({ queryKey }) => {
     const [_key, { searchType, searchKey }] = queryKey;
-    const { data } = await axios.post(
-      "https://alfursantracking.com/api/v1/tenant/get-devices",
-      {
-        search_key: searchKey,
-        search_type: searchType,
-      }
-    );
-    return data.data;
+    return await searchDevices({ searchType, searchKey });
   };
 
   const {
@@ -68,22 +62,36 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
       <div className="bg-white h-full w-full rounded-2xl shadow-lg p-4 flex flex-col space-y-4">
         {/* 🔽 اختيار نوع السيرش */}
         <div className="flex items-center rounded-xl bg-mainColor/10 p-2">
-          <div className="relative group">
-            <p className="flex items-center gap-1 text-lg cursor-pointer text-mainColor capitalize">
-              {searchType} <MdKeyboardArrowDown />
-            </p>
-            <div className="absolute top-[calc(100%+0px)] left-0 bg-white shadow-lg rounded-lg p-2 flex-col gap-1 hidden group-hover:flex">
-              {searchTypes.map((type) => (
-                <p
-                  key={type}
-                  className="cursor-pointer text-lg text-gray-600 hover:text-mainColor hover:bg-mainColor/10 px-2"
-                  onClick={() => setSearchType(type)}
-                >
-                  {type}
-                </p>
-              ))}
-            </div>
-          </div>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <p className="flex items-center gap-1 text-lg cursor-pointer text-mainColor capitalize">
+                {searchType} <MdKeyboardArrowDown />
+              </p>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className="bg-white shadow-lg rounded-lg p-2 flex flex-col gap-1 z-50"
+                side="bottom"
+                align="start"
+                sideOffset={5}
+              >
+                {searchTypes.map((type) => (
+                  <DropdownMenu.Item
+                    key={type}
+                    className={`cursor-pointer text-lg rounded px-2 py-1 ${
+                      searchType === type
+                        ? "bg-mainColor text-white"
+                        : "text-gray-600 hover:text-mainColor hover:bg-mainColor/10"
+                    }`}
+                    onSelect={() => setSearchType(type)}
+                  >
+                    {type}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
 
           {/* 🟢 input */}
           <input
@@ -129,7 +137,7 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
           {filteredCars.map((car) => (
             <div
               key={car.id}
-              className="relative flex items-center justify-between gap-1 p-2 hover:bg-gray-400/10 rounded-lg"
+              className="relative flex items-center gap-2 p-2 hover:bg-gray-400/10 rounded-lg"
               style={{
                 color:
                   car.speed > 5 ? "green" : car.speed === 0 ? "red" : "blue",
@@ -137,13 +145,18 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
                   car.id === selectedCarId && "rgba(0, 0, 255, 0.1)",
               }}
             >
-              {/* اسم العربية */}
-              <span
-                onClick={() => handleSelectCar(car)}
-                className="cursor-pointer flex-1"
+              <div
+                onClick={() => handleSelectCar(car, true)}
+                className="flex items-center justify-between gap-2 flex-1"
               >
-                {car.name}
-              </span>
+                {/* اسم العربية */}
+                <span className="cursor-pointer flex-1 text-sm line-clamp-1">
+                  {car.name}
+                </span>
+                <span className="cursor-pointer text-sm">
+                  {getCarStatus(car)}
+                </span>
+              </div>
 
               {/* Dropdown Menu من Radix */}
               <DropdownMenu.Root>

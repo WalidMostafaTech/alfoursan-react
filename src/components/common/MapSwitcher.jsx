@@ -1,39 +1,47 @@
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { FiMap } from "react-icons/fi";
-import { BsFillTriangleFill } from "react-icons/bs"; // أيقونة مثلث
-import { MdPlayArrow } from "react-icons/md";
 
 const MapSwitcher = ({ mapProvider, setMapProvider }) => {
   return (
-    <div className="absolute top-3 right-3 z-20">
-      <div className="relative group">
-        <div className="bg-white shadow rounded p-2 cursor-pointer">
-          <FiMap className="text-2xl text-gray-700" />
-        </div>
+    <div className="absolute top-3 right-3 z-50">
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <div className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100">
+            <FiMap className="text-2xl text-gray-700" />
+          </div>
+        </DropdownMenu.Trigger>
 
-        <div className="absolute top-0 right-[calc(100%+5px)] min-w-max hidden group-hover:flex flex-col gap-2 bg-white shadow rounded-lg p-2">
-          <MdPlayArrow className="absolute top-3 -right-3 text-white text-2xl" />
-          <button
-            className={`px-3 py-1 rounded cursor-pointer ${
-              mapProvider === "google"
-                ? "bg-mainColor text-white"
-                : "hover:bg-mainColor/10"
-            }`}
-            onClick={() => setMapProvider("google")}
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content
+            className="bg-white shadow-xl rounded-lg p-2 flex flex-col gap-2 z-50"
+            side="left"
+            align="start"
+            sideOffset={5}
           >
-            Google Maps
-          </button>
-          <button
-            className={`px-3 py-1 rounded cursor-pointer ${
-              mapProvider === "mapbox"
-                ? "bg-mainColor text-white"
-                : "hover:bg-mainColor/10"
-            }`}
-            onClick={() => setMapProvider("mapbox")}
-          >
-            Mapbox
-          </button>
-        </div>
-      </div>
+            <DropdownMenu.Item
+              className={`px-3 py-1 rounded cursor-pointer ${
+                mapProvider === "google"
+                  ? "bg-mainColor text-white"
+                  : "hover:bg-mainColor/10 hover:text-mainColor"
+              }`}
+              onSelect={() => setMapProvider("google")}
+            >
+              Google Maps
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              className={`px-3 py-1 rounded cursor-pointer ${
+                mapProvider === "mapbox"
+                  ? "bg-mainColor text-white"
+                  : "hover:bg-mainColor/10 hover:text-mainColor"
+              }`}
+              onSelect={() => setMapProvider("mapbox")}
+            >
+              Mapbox
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
     </div>
   );
 };
