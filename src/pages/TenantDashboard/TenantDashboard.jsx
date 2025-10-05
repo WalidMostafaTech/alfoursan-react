@@ -227,8 +227,7 @@ const TenantDashboard = () => {
   };
 
   if (loadError) return <div>فشل تحميل الخريطة</div>;
-  if (!isLoaded && mapProvider === "google")
-    return <div>جاري تحميل الخريطة...</div>;
+  if (!isLoaded && mapProvider === "google") return <LoadingPage />;
 
   return (
     <section className="w-screen h-screen relative">
