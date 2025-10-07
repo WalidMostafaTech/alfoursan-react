@@ -38,5 +38,5 @@ export const getCarStatus = (car) => {
     return `Static (${getTimeDiffString(lastSignelGPS)})`;
   }
 
-  return "Unknown" + hoursSinceLastGPS.toFixed(2) + "h since last GPS"+ lastSignel;
+  return "Unknown" ;
 };

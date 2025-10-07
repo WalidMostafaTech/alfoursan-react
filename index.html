@@ -31,6 +31,52 @@
       function showFenceModal() {
         alert("Fence modal opened");
       }
+
+      function confirmGeofenceSettings(polygon) {
+        alert("Geofence settings confirmed" + JSON.stringify(polygon));
+      }
+
+      function editShape({ type, data }) {
+        if (!type || !data) {
+          console.error("❌ لازم تبعت type و data");
+          return;
+        }
+
+        let shapeData;
+
+        if (type === "polygon") {
+          if (!Array.isArray(data.polygonData)) {
+            console.error("❌ لازم تبعت polygonData كمصفوفة من الإحداثيات");
+            return;
+          }
+
+          shapeData = {
+            type: "polygon",
+            polygonData: data.polygonData,
+          };
+        } else if (type === "circle") {
+          if (!data.center || typeof data.radius !== "number") {
+            console.error("❌ لازم تبعت center و radius");
+            return;
+          }
+
+          shapeData = {
+            type: "circle",
+            center: data.center,
+            radius: data.radius,
+          };
+        } else {
+          console.error("❌ نوع غير معروف:", type);
+          return;
+        }
+
+        console.log("📤 إرسال شكل للتعديل:", shapeData);
+        window.dispatchEvent(
+          new CustomEvent("edit-shape", { detail: shapeData })
+        );
+      }
+
+      window.editShape = editShape;
     </script>
   </body>
 </html>

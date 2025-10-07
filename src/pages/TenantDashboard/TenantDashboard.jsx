@@ -8,6 +8,9 @@ import MapboxMapView from "./Maps/MapboxMapView";
 import { useQuery } from "@tanstack/react-query";
 import useCarSocket from "../../hooks/useCarSocket";
 import { fetchDevices } from "../../services/api";
+import LoadingPage from "../../components/Loading/LoadingPage";
+import PolygonMenu from "../../components/common/PolygonMenu";
+import MapActions from "./MapActions/MapActions";
 
 // دالة حساب المسافة
 function haversineDistance(lat1, lng1, lat2, lng2) {
@@ -52,9 +55,18 @@ const TenantDashboard = () => {
       setIsInit(true);
 
       // ✅ بعد تحميل العربيات نركز على أول عربية
-      if (mappedCars.length > 0) {
-        const firstCar = mappedCars[0];
-        handleSelectCar(firstCar, true);
+      if (mappedCars.length === 1) {
+        const onlyCar = mappedCars[0];
+        setCenter(onlyCar.position);
+        setZoom(18);
+
+        if (mapProvider === "mapbox") {
+          setViewState({
+            longitude: onlyCar.position.lng,
+            latitude: onlyCar.position.lat,
+            zoom: 18,
+          });
+        }
       }
     }
   }, [devices]);
@@ -62,11 +74,12 @@ const TenantDashboard = () => {
   // تحميل سكريبت Google Maps مع اللغة العربية
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyBuFc-F9K_-1QkQnLoTIecBlNz6LfCS1wg",
-    language: "ar", // ✅ تحديد اللغة العربية
+    language: "ar",
+    libraries: ["drawing"], // ✅ ضروري جدًا
   });
 
-  const [center, setCenter] = useState({ lat: 24.7136, lng: 46.6753 });
-  const [zoom, setZoom] = useState(16);
+  const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
+  const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
 
   const [mapProvider, setMapProvider] = useState(
@@ -236,9 +249,12 @@ const TenantDashboard = () => {
         handleSelectCar={handleSelectCar}
         selectedCarId={selectedCarId}
       />
-      <MapSwitcher
-        setMapProvider={handleMapProviderChange}
+
+      <MapActions
         mapProvider={mapProvider}
+        handleMapProviderChange={handleMapProviderChange}
+        setZoom={setZoom}
+        setViewState={setViewState}
       />
 
       {mapProvider === "google" ? (
