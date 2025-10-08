@@ -9,22 +9,19 @@ import useCarSocket from "../../hooks/useCarSocket";
 import { getDevices } from "../../services/api";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import MapActions from "./MapActions/MapActions";
-import DetailsModal from "./DetailsModal/DetailsModal";
 
-// ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
-const libraries = ["drawing"];
-const MAPBOX_TOKEN =
-  "pk.eyJ1IjoiYWJkZWxyaG1hbm10MSIsImEiOiJja3kycjZwMjEwb2FzMnVwbjE4Mjdrb3V3In0.YE8v8xOauf5v6k1KqDHHFQ";
-
-// 🧮 دالة حساب المسافة بين نقطتين (كم)
+// دالة حساب المسافة
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const toRad = (x) => (x * Math.PI) / 180;
+
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
+
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -35,7 +32,7 @@ const TenantDashboard = () => {
     searchKey: "",
   });
 
-  // ✅ جلب الأجهزة مع دعم البحث
+  // ✅ جلب الأجهزة (مع دعم البحث)
   const {
     data: devices,
     isFetching,
@@ -44,6 +41,8 @@ const TenantDashboard = () => {
     queryKey: ["devices", searchParams],
     queryFn: () => getDevices(searchParams),
   });
+  console.log("searchParams", searchParams);
+  
 
   const handleSearchFromMenu = (type, key) => {
     setSearchParams({ searchType: type, searchKey: key });
@@ -52,27 +51,8 @@ const TenantDashboard = () => {
 
   const [cars, setCars] = useState([]);
   const [isInit, setIsInit] = useState(false);
-  const [showDetails, setShowDetails] = useState(true);
-  const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
-  const [zoom, setZoom] = useState(6);
-  const [selectedCarId, setSelectedCarId] = useState(null);
-  const [mapProvider, setMapProvider] = useState(
-    localStorage.getItem("mapProvider") || "google"
-  );
-  const [viewState, setViewState] = useState({
-    longitude: center.lng,
-    latitude: center.lat,
-    zoom: zoom,
-  });
 
-  // ✅ تحميل سكريبت Google Maps مرة واحدة فقط
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyBuFc-F9K_-1QkQnLoTIecBlNz6LfCS1wg",
-    language: "ar",
-    libraries,
-  });
-
-  // 🧩 عند تحميل الأجهزة
+  // أول ما الأجهزة تتجاب من الـ API نحطها في state
   useEffect(() => {
     if (devices) {
       const mappedCars = devices.map((d) => ({
@@ -89,10 +69,12 @@ const TenantDashboard = () => {
       setCars(mappedCars);
       setIsInit(true);
 
+      // ✅ بعد تحميل العربيات نركز على أول عربية
       if (mappedCars.length === 1) {
         const onlyCar = mappedCars[0];
         setCenter(onlyCar.position);
         setZoom(18);
+
         if (mapProvider === "mapbox") {
           setViewState({
             longitude: onlyCar.position.lng,
@@ -102,33 +84,74 @@ const TenantDashboard = () => {
         }
       }
     }
-  }, [devices, mapProvider]);
+  }, [devices]);
 
-  // 🔍 دوال العنوان (Google / Mapbox)
+  // تحميل سكريبت Google Maps مع اللغة العربية
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: "AIzaSyBuFc-F9K_-1QkQnLoTIecBlNz6LfCS1wg",
+    language: "ar",
+    libraries: ["drawing"], // ✅ ضروري جدًا
+  });
+
+  const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
+  const [zoom, setZoom] = useState(6);
+  const [selectedCarId, setSelectedCarId] = useState(null);
+
+  const [mapProvider, setMapProvider] = useState(
+    localStorage.getItem("mapProvider") || "google"
+  );
+
+  // ✅ حفظ نوع الخريطة
+  const handleMapProviderChange = (provider) => {
+    setMapProvider(provider);
+    localStorage.setItem("mapProvider", provider);
+  };
+
+  const MAPBOX_TOKEN =
+    "pk.eyJ1IjoiYWJkZWxyaG1hbm10MSIsImEiOiJja3kycjZwMjEwb2FzMnVwbjE4Mjdrb3V3In0.YE8v8xOauf5v6k1KqDHHFQ";
+
+  // State للتحكم في Mapbox view
+  const [viewState, setViewState] = useState({
+    longitude: center.lng,
+    latitude: center.lat,
+    zoom: zoom,
+  });
+
+  // 🔍 دالة جلب العنوان من Google بالعربية
   const getGoogleAddress = (lat, lng, cb) => {
-    if (!window.google) return cb("عنوان غير متاح");
+    if (!window.google) {
+      cb("عنوان غير متاح");
+      return;
+    }
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === "OK" && results[0]) cb(results[0].formatted_address);
-      else cb("لم يتم العثور على عنوان");
+      if (status === "OK" && results[0]) {
+        cb(results[0].formatted_address); // ✅ هيطلع بالعربي
+      } else {
+        cb("لم يتم العثور على عنوان");
+      }
     });
   };
 
+  // 🔍 دالة جلب العنوان من Mapbox بالعربية
   const getMapboxAddress = async (lat, lng, cb) => {
     try {
       const res = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=ar`
       );
       const data = await res.json();
-      if (data.features?.length) cb(data.features[0].place_name);
-      else cb("لم يتم العثور على عنوان");
+      if (data.features && data.features.length > 0) {
+        cb(data.features[0].place_name);
+      } else {
+        cb("لم يتم العثور على عنوان");
+      }
     } catch (err) {
-      console.error(err);
+      console.log(err);
       cb("خطأ في جلب العنوان");
     }
   };
 
-  // 🔌 WebSocket hook لتحديث العربيات
+  // WebSocket hook
   useCarSocket(
     cars,
     setCars,
@@ -139,11 +162,13 @@ const TenantDashboard = () => {
     selectedCarId
   );
 
-  // 🧭 تحديث العنوان عند تحرك العربية
+  // 🧭 تحديث العنوان كل ما تتحرك العربية
   useEffect(() => {
     if (!selectedCarId) return;
+
     const car = cars.find((c) => c.id === selectedCarId);
     if (!car) return;
+
     const { lat, lng } = car.position;
 
     if (
@@ -155,27 +180,41 @@ const TenantDashboard = () => {
         lng
       ) > 0.05
     ) {
-      const updateAddress = (addr) => {
-        setCars((prev) =>
-          prev.map((c) =>
-            c.id === car.id
-              ? { ...c, address: addr, lastAddressPos: { lat, lng } }
-              : c
-          )
-        );
-      };
-      if (mapProvider === "google") getGoogleAddress(lat, lng, updateAddress);
-      else getMapboxAddress(lat, lng, updateAddress);
+      if (mapProvider === "google") {
+        getGoogleAddress(lat, lng, (addr) => {
+          setCars((prev) =>
+            prev.map((c) =>
+              c.id === car.id
+                ? { ...c, address: addr, lastAddressPos: { lat, lng } }
+                : c
+            )
+          );
+        });
+      } else {
+        getMapboxAddress(lat, lng, (addr) => {
+          setCars((prev) =>
+            prev.map((c) =>
+              c.id === car.id
+                ? { ...c, address: addr, lastAddressPos: { lat, lng } }
+                : c
+            )
+          );
+        });
+      }
     }
   }, [cars, mapProvider, selectedCarId]);
 
-  // 🚗 اختيار عربية من القائمة
+  // دالة اختيار عربية
   const handleSelectCar = (car, zoom = false) => {
-    if (!car) return setSelectedCarId(null);
+    if (!car) {
+      setSelectedCarId(null);
+      return;
+    }
 
-    const { position } = car;
+    const { position } = car || {};
     const { lat, lng } = position || {};
 
+    // ✅ تأكد إن الإحداثيات أرقام
     if (
       !position ||
       typeof lat !== "number" ||
@@ -184,12 +223,14 @@ const TenantDashboard = () => {
       isNaN(lng)
     ) {
       console.warn("❌ Invalid car position:", car);
-      return setSelectedCarId(null);
+      setSelectedCarId(null);
+      return;
     }
 
     if (zoom) {
       setCenter(position);
       setZoom(18);
+
       if (mapProvider === "mapbox") {
         setViewState({
           longitude: lng,
@@ -206,12 +247,11 @@ const TenantDashboard = () => {
       });
     }
 
-    setSelectedCarId(car.id !== selectedCarId ? car.id : null);
-  };
-
-  const handleMapProviderChange = (provider) => {
-    setMapProvider(provider);
-    localStorage.setItem("mapProvider", provider);
+    if (car.id !== selectedCarId) {
+      setSelectedCarId(car.id);
+    } else {
+      setSelectedCarId(null);
+    }
   };
 
   if (loadError) return <div>فشل تحميل الخريطة</div>;
@@ -252,8 +292,6 @@ const TenantDashboard = () => {
           handleSelectCar={handleSelectCar}
         />
       )}
-
-      {showDetails && <DetailsModal onClose={() => setShowDetails(false)} />}
     </section>
   );
 };

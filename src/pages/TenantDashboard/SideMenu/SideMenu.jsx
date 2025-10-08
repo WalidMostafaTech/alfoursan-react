@@ -4,44 +4,32 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdClose } from "react-icons/io";
 import { FaAngleRight } from "react-icons/fa";
-import { useQuery } from "@tanstack/react-query";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getCarStatus } from "../../../utils/getCarStatus";
-import { searchDevices } from "../../../services/api";
+import Loader from "../../../components/Loading/Loader";
 
-const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
+const SideMenu = ({
+  cars,
+  handleSelectCar,
+  selectedCarId,
+  onSearch,
+  isFetching,
+}) => {
   const searchTypes = ["device", "driver", "group"];
-
   const [searchType, setSearchType] = useState("device");
   const [searchKey, setSearchKey] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
-  const [isOpen, setIsOpen] = useState(true); // ✅ تحكم في الفتح والغلق
-
-  // 🟢 API
-  const fetchSearch = async ({ queryKey }) => {
-    const [_key, { searchType, searchKey }] = queryKey;
-    return await searchDevices({ searchType, searchKey });
-  };
-
-  const {
-    data: searchResults,
-    refetch,
-    isFetching,
-  } = useQuery({
-    queryKey: ["search", { searchType, searchKey }],
-    queryFn: fetchSearch,
-    enabled: false,
-  });
+  const [isOpen, setIsOpen] = useState(true);
 
   const handleSearch = () => {
     if (searchKey.trim() !== "") {
-      refetch();
+      onSearch(searchType, searchKey); // 🟢 نبعت القيم للـ Dashboard
+    } else {
+      onSearch("", ""); // ترجع كل العربيات
     }
   };
 
-  const displayedData = searchResults?.length > 0 ? searchResults : cars;
-
-  const filteredCars = displayedData.filter((car) => {
+  const filteredCars = cars.filter((car) => {
     if (activeFilter === "all") return true;
     if (activeFilter === "online") return !car.isOffline;
     if (activeFilter === "offline") return car.isOffline;
@@ -49,31 +37,25 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
   });
 
   const filterTypes = [
-    { label: "all", value: displayedData?.length || 0 },
-    {
-      label: "online",
-      value: displayedData?.filter((car) => !car.isOffline).length || 0,
-    },
-    {
-      label: "offline",
-      value: displayedData?.filter((car) => car.isOffline).length || 0,
-    },
+    { label: "all", value: cars?.length || 0 },
+    { label: "online", value: cars?.filter((c) => !c.isOffline).length || 0 },
+    { label: "offline", value: cars?.filter((c) => c.isOffline).length || 0 },
   ];
 
   return (
     <>
-      {/* 🔹 زرار إرجاع السايدبار بعد الإغلاق */}
-        <button
-          onClick={() => setIsOpen(true)}
-          className={`absolute top-32 left-4 -translate-y-1/2 bg-mainColor text-white p-2 rounded-r-lg shadow-md z-20 
-          cursor-pointer hover:bg-mainColor/90 transition-all duration-500 ease-in-out ${
-            !isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
-          }`}
-        >
-          <FaAngleRight size={20} />
-        </button>
+      {/* 🔹 زر إظهار السايدبار */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className={`absolute top-32 left-4 -translate-y-1/2 bg-mainColor text-white p-2 rounded-r-lg shadow-md z-50 
+        cursor-pointer hover:bg-mainColor/90 transition-all duration-500 ease-in-out ${
+          !isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+        }`}
+      >
+        <FaAngleRight size={20} />
+      </button>
 
-      {/* 🔹 السايدبار نفسها */}
+      {/* 🔹 السايدبار */}
       <aside
         className={`fixed top-24 left-4 z-10 transition-all duration-500 ease-in-out ${
           isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
@@ -158,9 +140,7 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
 
           {/* 🟢 عرض النتائج */}
           <div className="flex flex-col gap-2 overflow-y-auto flex-1">
-            {isFetching && (
-              <p className="text-gray-500 text-center">جارِ البحث...</p>
-            )}
+            {isFetching && <Loader />}
 
             {filteredCars.map((car) => (
               <div
@@ -177,7 +157,6 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
                   onClick={() => handleSelectCar(car, true)}
                   className="flex items-center justify-between gap-2 flex-1"
                 >
-                  {/* اسم العربية */}
                   <span className="cursor-pointer flex-1 text-sm line-clamp-1">
                     {car.name}
                   </span>
@@ -186,7 +165,7 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
                   </span>
                 </div>
 
-                {/* Dropdown Menu من Radix */}
+                {/* Dropdown Menu */}
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <span className="cursor-pointer text-gray-600 hover:text-mainColor">
@@ -196,7 +175,7 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
 
                   <DropdownMenu.Portal>
                     <DropdownMenu.Content
-                      className="radix-dropdown bg-white shadow-xl rounded-lg p-2 flex flex-col z-50"
+                      className="bg-white shadow-xl rounded-lg p-2 flex flex-col z-50"
                       sideOffset={5}
                       align="start"
                     >
@@ -208,18 +187,18 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
                       </DropdownMenu.Item>
                       <DropdownMenu.Item asChild>
                         <a
-                          className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                           href={car.tracking_url}
                           target="_blank"
+                          className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                         >
                           Tracking
                         </a>
                       </DropdownMenu.Item>
                       <DropdownMenu.Item asChild>
                         <a
-                          className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                           href={car.replay_url}
                           target="_blank"
+                          className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                         >
                           Playback
                         </a>
@@ -238,18 +217,18 @@ const SideMenu = ({ cars, handleSelectCar, selectedCarId }) => {
                       </DropdownMenu.Item>
                       <DropdownMenu.Item asChild>
                         <a
-                          className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                           href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
                           target="_blank"
+                          className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                         >
                           Street View
                         </a>
                       </DropdownMenu.Item>
                       <DropdownMenu.Item asChild>
                         <a
-                          className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                           href={car.report_url}
                           target="_blank"
+                          className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                         >
                           Reports
                         </a>

@@ -9,7 +9,6 @@ import useCarSocket from "../../hooks/useCarSocket";
 import { getDevices } from "../../services/api";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import MapActions from "./MapActions/MapActions";
-import DetailsModal from "./DetailsModal/DetailsModal";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing"];
@@ -52,7 +51,6 @@ const TenantDashboard = () => {
 
   const [cars, setCars] = useState([]);
   const [isInit, setIsInit] = useState(false);
-  const [showDetails, setShowDetails] = useState(true);
   const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
   const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
@@ -67,7 +65,7 @@ const TenantDashboard = () => {
 
   // ✅ تحميل سكريبت Google Maps مرة واحدة فقط
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyBuFc-F9K_-1QkQnLoTIecBlNz6LfCS1wg",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     language: "ar",
     libraries,
   });
@@ -252,8 +250,6 @@ const TenantDashboard = () => {
           handleSelectCar={handleSelectCar}
         />
       )}
-
-      {showDetails && <DetailsModal onClose={() => setShowDetails(false)} />}
     </section>
   );
 };

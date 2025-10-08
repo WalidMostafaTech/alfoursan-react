@@ -9,7 +9,7 @@ const MapActions = ({
   setViewState,
 }) => {
   return (
-    <div className="absolute top-3 right-3 z-50 space-y-2 flex flex-col items-center">
+    <div className="absolute top-3 right-3 z-20 space-y-2 flex flex-col items-center">
       {/* ✅ زرار اختيار نوع الخريطة */}
       <MapSwitcher
         setMapProvider={handleMapProviderChange}

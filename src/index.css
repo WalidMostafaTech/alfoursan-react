@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "daisyui";
 
 @theme {
   --color-mainColor: #5f59c3;
@@ -21,4 +22,11 @@
   position: fixed !important;
   left: 45px !important;
   min-width: max-content;
+}
+
+@layer {
+  .mainBtn {
+    @apply bg-mainColor text-white text-lg font-semibold py-2 px-4 rounded-lg shadow-md shadow-mainColor
+    hover:shadow-lg transition-all duration-300 cursor-pointer;
+  }
 }
