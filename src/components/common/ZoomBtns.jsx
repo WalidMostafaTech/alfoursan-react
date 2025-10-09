@@ -2,7 +2,7 @@ import { FiMinus, FiPlus } from "react-icons/fi";
 
 const ZoomBtns = ({ setZoom, mapProvider, setViewState }) => {
   return (
-    <>
+    <div className="bg-white shadow rounded overflow-hidden flex flex-col">
       <button
         onClick={() => {
           setZoom((prev) => {
@@ -13,7 +13,7 @@ const ZoomBtns = ({ setZoom, mapProvider, setViewState }) => {
             return newZoom;
           });
         }}
-        className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100"
+        className="p-2 cursor-pointer hover:bg-gray-100"
       >
         <FiPlus className="text-2xl text-gray-700" />
       </button>
@@ -28,11 +28,11 @@ const ZoomBtns = ({ setZoom, mapProvider, setViewState }) => {
             return newZoom;
           });
         }}
-        className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100"
+        className="p-2 cursor-pointer hover:bg-gray-100"
       >
         <FiMinus className="text-2xl text-gray-700" />
       </button>
-    </>
+    </div>
   );
 };
 

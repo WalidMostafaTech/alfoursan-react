@@ -7,6 +7,8 @@ import { FaAngleRight } from "react-icons/fa";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getCarStatus } from "../../../utils/getCarStatus";
 import Loader from "../../../components/Loading/Loader";
+import { openDetailsModal } from "../../../store/detailsModalSlice";
+import { useDispatch } from "react-redux";
 
 const SideMenu = ({
   cars,
@@ -20,6 +22,7 @@ const SideMenu = ({
   const [searchKey, setSearchKey] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [isOpen, setIsOpen] = useState(true);
+  const dispatch = useDispatch();
 
   const handleSearch = () => {
     if (searchKey.trim() !== "") {
@@ -181,7 +184,11 @@ const SideMenu = ({
                     >
                       <DropdownMenu.Item
                         className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
-                        onSelect={() => window.getSettings(car.id)}
+                        onSelect={() =>
+                          dispatch(
+                            openDetailsModal({ section: "", id: car.id })
+                          )
+                        }
                       >
                         Details
                       </DropdownMenu.Item>
@@ -205,7 +212,11 @@ const SideMenu = ({
                       </DropdownMenu.Item>
                       <DropdownMenu.Item
                         className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
-                        onSelect={() => window.getSettings(car.id, "command")}
+                        onSelect={() =>
+                          dispatch(
+                            openDetailsModal({ section: "command", id: car.id })
+                          )
+                        }
                       >
                         Command
                       </DropdownMenu.Item>

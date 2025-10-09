@@ -4,7 +4,7 @@ const FormBtn = ({
   loading,
   onClick = () => {},
   type = "submit",
-
+  variant = "primary",
 }) => {
   const isDisabled = disabled || loading;
   return (
@@ -12,7 +12,9 @@ const FormBtn = ({
       type={type}
       onClick={onClick}
       disabled={isDisabled}
-      className={`mainBtn ${loading ? "!cursor-wait contrast-50" : ""}`}
+      className={`mainBtn ${
+        loading ? "!cursor-wait contrast-50" : ""
+      } ${variant}`}
     >
       {loading ? (
         <>

@@ -17,7 +17,7 @@ const MainInput = ({
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
-  const commonInputClasses = `w-full lg:text-lg bg-white outline-none border-none p-3 rounded-md ring-1 transition-all ${
+  const commonInputClasses = `w-full lg:text-lg bg-white outline-none border-none p-2 rounded-md ring-1 transition-all ${
     isPassword && "pe-10"
   } ${
     error

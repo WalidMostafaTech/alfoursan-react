@@ -5,6 +5,10 @@
   --color-mainColor: #5f59c3;
 }
 
+body {
+  font-family: "Cairo", sans-serif;
+}
+
 /* fix hover in mobile */
 @custom-variant hover (&:hover);
 
@@ -24,9 +28,19 @@
   min-width: max-content;
 }
 
+
+
 @layer {
   .mainBtn {
     @apply bg-mainColor text-white text-lg font-semibold py-2 px-4 rounded-lg shadow-md shadow-mainColor
     hover:shadow-lg transition-all duration-300 cursor-pointer;
+
+    &.success {
+      @apply bg-green-600 shadow-green-600;
+    }
+
+    &.error {
+      @apply bg-red-700 shadow-red-700;
+    }
   }
 }

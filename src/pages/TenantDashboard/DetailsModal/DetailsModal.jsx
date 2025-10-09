@@ -3,24 +3,31 @@ import Details from "./sections/Details";
 import ServiceVersion from "./sections/ServiceVersion";
 import Membership from "./sections/Membership";
 import PreviousCommands from "./sections/PreviousCommands";
+import Command from "./sections/Command";
+import Alerts from "./sections/Alerts";
+import SpecificTask from "./sections/SpecificTask";
+import Reminders from "./sections/Reminders";
+import { useSelector } from "react-redux";
 
 const tabs = [
-  { key: "Details", label: "اعدادات عامة" },
-  { key: "ServiceVersion", label: "إصدار الخدمة" },
-  { key: "Membership", label: "عضوية" },
-  { key: "Command", label: "قائمه الاوامر" },
-  { key: "PreviousCommands", label: "الاوامر السابقه" },
-  { key: "Alerts", label: "إعدادات التنبيهات" },
-  { key: "SpecificTask", label: "تعيين مهمة محددة بوقت" },
-  { key: "Reminders", label: "تذكيرات مخصصة" },
+  { key: "details", label: "اعدادات عامة" },
+  { key: "serviceVersion", label: "إصدار الخدمة" },
+  { key: "membership", label: "عضوية" },
+  { key: "command", label: "قائمه الاوامر" },
+  { key: "previousCommands", label: "الاوامر السابقه" },
+  { key: "alerts", label: "إعدادات التنبيهات" },
+  { key: "specificTask", label: "تعيين مهمة محددة بوقت" },
+  { key: "reminders", label: "تذكيرات مخصصة" },
 ];
 
 const DetailsModal = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState("Details");
+  const { section, id } = useSelector((state) => state.detailsModal);
+  const [activeTab, setActiveTab] = useState(section || "details");
 
   return (
-    <dialog open className="modal" dir="rtl">
-      <div className="modal-box max-w-[80%] max-h-[90%] pt-10 relative">
+    <dialog open className="modal items-start detailsModal" dir="rtl">
+      {/*  model to top */}
+      <div className="modal-box  max-w-[80%] max-h-[90%] pt-10 mt-10 relative top-0">
         {/* زر الإغلاق */}
         <button
           onClick={onClose}
@@ -51,16 +58,14 @@ const DetailsModal = ({ onClose }) => {
 
         {/* 🔹 محتوى التبويب الحالي */}
         <div className="mt-4">
-          {activeTab === "Details" && <Details />}
-          {activeTab === "ServiceVersion" && <ServiceVersion />}
-          {activeTab === "Membership" && <Membership />}
-          {activeTab === "Command" && <p>🔹 محتوى التبويب Command</p>}
-          {activeTab === "PreviousCommands" && (
-            <PreviousCommands />
-          )}
-          {activeTab === "Alerts" && <p>🔹 محتوى التبويب Alerts</p>}
-          {activeTab === "SpecificTask" && <p>🔹 محتوى التبويب SpecificTask</p>}
-          {activeTab === "Reminders" && <p>🔹 محتوى التبويب Reminders</p>}
+          {activeTab === "details" && <Details />}
+          {activeTab === "serviceVersion" && <ServiceVersion />}
+          {activeTab === "membership" && <Membership />}
+          {activeTab === "command" && <Command />}
+          {activeTab === "previousCommands" && <PreviousCommands />}
+          {activeTab === "alerts" && <Alerts />}
+          {activeTab === "specificTask" && <SpecificTask />}
+          {activeTab === "reminders" && <Reminders />}
         </div>
       </div>
     </dialog>

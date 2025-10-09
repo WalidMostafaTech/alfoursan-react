@@ -1,4 +1,3 @@
-import AfterTitle from "../../../../components/common/AfterTitle";
 import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
 
@@ -49,7 +48,7 @@ const Details = () => {
         </div>
 
         {/* الحركية */}
-        <AfterTitle title="المركبه" />
+        <div className="divider my-10">المركبه</div>
 
         {/* رقم السيارة واستهلاك الوقود */}
 

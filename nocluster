@@ -1,7 +1,6 @@
 import { GoogleMap, InfoWindow, OverlayView } from "@react-google-maps/api";
 import CarPopup from "../../../components/common/CarPopup";
 import { useEffect, useRef } from "react";
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 const GoogleMapView = ({
   cars,
@@ -9,7 +8,6 @@ const GoogleMapView = ({
   zoom,
   selectedCarId,
   handleSelectCar,
-  showClusters,
 }) => {
   const mapRef = useRef(null);
   const drawingManagerRef = useRef(null);
@@ -17,53 +15,6 @@ const GoogleMapView = ({
   const onLoad = (map) => {
     mapRef.current = map;
   };
-
-  // ✅ Marker Cluster logic
-  useEffect(() => {
-    if (!mapRef.current || !window.google) return;
-    const map = mapRef.current;
-
-    // 🧹 تنظيف markers والـ clusters القديمة
-    if (window.carMarkers) {
-      window.carMarkers.forEach((m) => m.setMap(null));
-    }
-    if (window.carClusterer) {
-      window.carClusterer.clearMarkers();
-    }
-
-    // ✅ إنشاء markers لكل عربية
-    const markers = cars.map((car) => {
-      const marker = new window.google.maps.Marker({
-        position: car.position,
-        map: showClusters ? null : map, // لا نعرضهم مباشرة لو هنستخدم clustering
-        icon: {
-          url:
-            car.speed > 5
-              ? "/car-green.png"
-              : car.speed === 0
-              ? "/car-red.png"
-              : "/car-blue.png",
-          scaledSize: new window.google.maps.Size(40, 40),
-        },
-      });
-
-      marker.addListener("click", () => handleSelectCar(car));
-      return marker;
-    });
-
-    window.carMarkers = markers;
-
-    // ✅ لو التجميع مفعّل، نستخدم MarkerClusterer
-    if (showClusters) {
-      window.carClusterer = new MarkerClusterer({ map, markers });
-    }
-
-    // 🧹 تنظيف عند التغيير أو الخروج
-    return () => {
-      markers.forEach((m) => m.setMap(null));
-      if (window.carClusterer) window.carClusterer.clearMarkers();
-    };
-  }, [cars, showClusters]);
 
   // ✅ إضافة حدث لتفعيل الرسم
   useEffect(() => {
@@ -239,7 +190,70 @@ const GoogleMapView = ({
       onLoad={onLoad}
       onClick={() => selectedCarId && handleSelectCar(null)}
     >
-      {/* ✅ نافذة معلومات السيارة المحددة */}
+      {cars
+        ?.filter((car) => car.lastPosition)
+        .map((car) => (
+          <OverlayView
+            key={car.id}
+            position={car.position}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+            // eslint-disable-next-line no-unused-vars
+            getPixelPositionOffset={(width, height) => ({
+              x: 0,
+              y: 70,
+            })}
+          >
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelectCar(car);
+              }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                transform: "translate(-50%, -100%)",
+                cursor: "pointer",
+              }}
+            >
+              <div
+                style={{
+                  transform: `rotate(${car.bearing}deg)`,
+                  width: 40,
+                  height: 40,
+                }}
+              >
+                <img
+                  src={
+                    car.speed > 5
+                      ? "/car-green.png"
+                      : car.speed === 0
+                      ? "/car-red.png"
+                      : "/car-blue.png"
+                  }
+                  alt="car"
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </div>
+
+              <div
+                style={{
+                  background: "#fff",
+                  color: "#333",
+                  padding: "2px 6px",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  marginTop: "4px",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {car.name || "بدون اسم"}
+              </div>
+            </div>
+          </OverlayView>
+        ))}
+
       {selectedCarId &&
         (() => {
           const car = cars?.find((c) => c.id === selectedCarId);

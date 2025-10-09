@@ -10,6 +10,8 @@ import { getDevices } from "../../services/api";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import MapActions from "./MapActions/MapActions";
 import DetailsModal from "./DetailsModal/DetailsModal";
+import { useDispatch, useSelector } from "react-redux";
+import { closeDetailsModal } from "../../store/detailsModalSlice";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing"];
@@ -50,15 +52,17 @@ const TenantDashboard = () => {
     refetch();
   };
 
+  const dispatch = useDispatch();
+  const detailsModal = useSelector((state) => state.detailsModal);
+  const { provider: mapProvider } = useSelector((state) => state.mapType);
+
   const [cars, setCars] = useState([]);
   const [isInit, setIsInit] = useState(false);
-  const [showDetails, setShowDetails] = useState(true);
   const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
   const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
-  const [mapProvider, setMapProvider] = useState(
-    localStorage.getItem("mapProvider") || "google"
-  );
+  const [showClusters, setShowClusters] = useState(false);
+
   const [viewState, setViewState] = useState({
     longitude: center.lng,
     latitude: center.lat,
@@ -209,11 +213,6 @@ const TenantDashboard = () => {
     setSelectedCarId(car.id !== selectedCarId ? car.id : null);
   };
 
-  const handleMapProviderChange = (provider) => {
-    setMapProvider(provider);
-    localStorage.setItem("mapProvider", provider);
-  };
-
   if (loadError) return <div>فشل تحميل الخريطة</div>;
   if (!isLoaded && mapProvider === "google") return <LoadingPage />;
 
@@ -228,10 +227,10 @@ const TenantDashboard = () => {
       />
 
       <MapActions
-        mapProvider={mapProvider}
-        handleMapProviderChange={handleMapProviderChange}
         setZoom={setZoom}
         setViewState={setViewState}
+        showClusters={showClusters}
+        setShowClusters={setShowClusters}
       />
 
       {mapProvider === "google" ? (
@@ -241,6 +240,7 @@ const TenantDashboard = () => {
           zoom={zoom}
           selectedCarId={selectedCarId}
           handleSelectCar={handleSelectCar}
+          showClusters={showClusters}
         />
       ) : (
         <MapboxMapView
@@ -253,7 +253,9 @@ const TenantDashboard = () => {
         />
       )}
 
-      {showDetails && <DetailsModal onClose={() => setShowDetails(false)} />}
+      {detailsModal.show && (
+        <DetailsModal onClose={() => dispatch(closeDetailsModal())} />
+      )}
     </section>
   );
 };

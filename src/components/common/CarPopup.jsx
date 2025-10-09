@@ -14,6 +14,8 @@ import { HiOutlineCommandLine } from "react-icons/hi2";
 import { IoSpeedometerSharp } from "react-icons/io5";
 import { MdOutlineCarCrash, MdOutlineElectricBolt } from "react-icons/md";
 import { getCarStatus } from "../../utils/getCarStatus";
+import { useDispatch } from "react-redux";
+import { openDetailsModal } from "../../store/detailsModalSlice";
 
 const CarPopup = ({ car }) => {
   const carDetails = [
@@ -42,6 +44,8 @@ const CarPopup = ({ car }) => {
       icon: <MdOutlineElectricBolt />,
     },
   ];
+
+  const dispatch = useDispatch();
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-lg space-y-6 w-[500px]">
@@ -75,7 +79,9 @@ const CarPopup = ({ car }) => {
         <span
           title="Details"
           className="cursor-pointer hover:text-mainColor"
-          onClick={() => window.getSettings(car.id)}
+          onClick={() =>
+            dispatch(openDetailsModal({ section: "", id: car.id }))
+          }
         >
           <FiMenu />
         </span>
@@ -98,7 +104,9 @@ const CarPopup = ({ car }) => {
         <span
           title="Command"
           className="cursor-pointer hover:text-mainColor"
-          onClick={() => window.getSettings(car.id, "command")}
+          onClick={() =>
+            dispatch(openDetailsModal({ section: "command", id: car.id }))
+          }
         >
           <HiOutlineCommandLine />
         </span>

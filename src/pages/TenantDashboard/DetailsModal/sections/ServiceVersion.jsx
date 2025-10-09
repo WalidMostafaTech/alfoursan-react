@@ -1,4 +1,3 @@
-import AfterTitle from "../../../../components/common/AfterTitle";
 import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
 
@@ -12,8 +11,7 @@ const ServiceVersion = () => {
           <MainInput id="serviceVersion" label="اصدار الخدمة" />
         </div>
 
-        {/* الحركية */}
-        <AfterTitle title="خدمة بطاقة SIM" />
+        <div className="divider my-10">خدمة بطاقة SIM</div>
 
         {/* رقم السيارة واستهلاك الوقود */}
 
