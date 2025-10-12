@@ -1,7 +1,9 @@
 import { GoogleMap, InfoWindow, OverlayView } from "@react-google-maps/api";
 import CarPopup from "../../../components/common/CarPopup";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
+import { useSelector } from "react-redux";
+import GeofenceModal from "../GeofenceModal/GeofenceModal";
 
 const GoogleMapView = ({
   cars,
@@ -9,10 +11,12 @@ const GoogleMapView = ({
   zoom,
   selectedCarId,
   handleSelectCar,
-  showClusters,
 }) => {
+  const [geofenceModalOpen, setGeofenceModalOpen] = useState(false);
+
   const mapRef = useRef(null);
   const drawingManagerRef = useRef(null);
+  const { clusters } = useSelector((state) => state.map);
 
   const onLoad = (map) => {
     mapRef.current = map;
@@ -23,20 +27,39 @@ const GoogleMapView = ({
     if (!mapRef.current || !window.google) return;
     const map = mapRef.current;
 
-    // 🧹 تنظيف markers والـ clusters القديمة
-    if (window.carMarkers) {
-      window.carMarkers.forEach((m) => m.setMap(null));
-    }
-    if (window.carClusterer) {
-      window.carClusterer.clearMarkers();
+    // لو أول مرة نعمل ماركرات
+    if (!window.carMarkers) {
+      window.carMarkers = new Map();
     }
 
-    // ✅ إنشاء markers لكل عربية
-    const markers = cars.map((car) => {
-      const marker = new window.google.maps.Marker({
-        position: car.position,
-        map: showClusters ? null : map, // لا نعرضهم مباشرة لو هنستخدم clustering
-        icon: {
+    // ✅ تحديث أو إنشاء الماركرات
+    cars.forEach((car) => {
+      let marker = window.carMarkers.get(car.id);
+
+      if (!marker) {
+        // إنشاء ماركر جديد
+        marker = new window.google.maps.Marker({
+          position: car.position,
+          map: clusters ? null : map,
+          icon: {
+            url:
+              car.speed > 5
+                ? "/car-green.png"
+                : car.speed === 0
+                ? "/car-red.png"
+                : "/car-blue.png",
+            scaledSize: new window.google.maps.Size(40, 40),
+          },
+        });
+
+        marker.addListener("click", () => handleSelectCar(car));
+        window.carMarkers.set(car.id, marker);
+      } else {
+        // ✅ تحديث موقع الماركر الحالي بدل ما نحذفه
+        marker.setPosition(car.position);
+
+        // تحديث الايقونة لو السرعة اتغيرت
+        marker.setIcon({
           url:
             car.speed > 5
               ? "/car-green.png"
@@ -44,26 +67,48 @@ const GoogleMapView = ({
               ? "/car-red.png"
               : "/car-blue.png",
           scaledSize: new window.google.maps.Size(40, 40),
-        },
-      });
-
-      marker.addListener("click", () => handleSelectCar(car));
-      return marker;
+        });
+      }
     });
 
-    window.carMarkers = markers;
-
-    // ✅ لو التجميع مفعّل، نستخدم MarkerClusterer
-    if (showClusters) {
-      window.carClusterer = new MarkerClusterer({ map, markers });
+    // ✅ نحذف الماركرات اللي مش موجودة في القائمة الحالية
+    const currentIds = cars.map((c) => c.id);
+    for (const [id, marker] of window.carMarkers.entries()) {
+      if (!currentIds.includes(id)) {
+        marker.setMap(null);
+        window.carMarkers.delete(id);
+      }
     }
 
-    // 🧹 تنظيف عند التغيير أو الخروج
-    return () => {
-      markers.forEach((m) => m.setMap(null));
-      if (window.carClusterer) window.carClusterer.clearMarkers();
-    };
-  }, [cars, showClusters]);
+    // ✅ التعامل مع الـ clustering
+    if (clusters) {
+      // لو شغال الكلاستر
+      if (window.carClusterer) {
+        window.carClusterer.clearMarkers();
+      }
+
+      window.carClusterer = new MarkerClusterer({
+        map,
+        markers: Array.from(window.carMarkers.values()),
+      });
+
+      // نخلي كل الماركرات map=null علشان الكلاستر هو اللي يتحكم
+      for (const marker of window.carMarkers.values()) {
+        marker.setMap(null);
+      }
+    } else {
+      // لو قفلنا الكلاستر
+      if (window.carClusterer) {
+        window.carClusterer.clearMarkers();
+        window.carClusterer = null;
+      }
+
+      // ✅ نرجّع الماركرات تاني للخريطة
+      for (const marker of window.carMarkers.values()) {
+        marker.setMap(map);
+      }
+    }
+  }, [cars, clusters]);
 
   // ✅ إضافة حدث لتفعيل الرسم
   useEffect(() => {
@@ -109,20 +154,19 @@ const GoogleMapView = ({
       drawingManagerRef.current = manager;
 
       window.google.maps.event.addListener(manager, "overlaycomplete", (ev) => {
+        let overlay = ev.overlay; // الشكل اللي اتحرك أو اتعمل
         if (ev.type === "circle") {
-          const center = ev.overlay.getCenter();
-          const radius = ev.overlay.getRadius();
+          const center = overlay.getCenter();
+          const radius = overlay.getRadius();
           const circleData = {
             type: "circle",
             center: center.toJSON(),
             radius: radius.toFixed(2),
           };
-
-          if (window.confirmGeofenceSettings) {
+          if (window.confirmGeofenceSettings)
             window.confirmGeofenceSettings(circleData);
-          }
         } else if (ev.type === "polygon") {
-          const path = ev.overlay
+          const path = overlay
             .getPath()
             .getArray()
             .map((p) => p.toJSON());
@@ -130,13 +174,22 @@ const GoogleMapView = ({
             type: "polygon",
             path,
           };
-
-          if (window.confirmGeofenceSettings) {
+          if (window.confirmGeofenceSettings)
             window.confirmGeofenceSettings(polygonData);
-          }
         }
 
+          // setGeofenceData();
+          setGeofenceModalOpen(true);
+
+        // ✅ نجعل الشكل غير قابل للتعديل وغير قابل للسحب
+        overlay.setEditable(false);
+        overlay.setDraggable(false);
+
+        // ✅ نوقف وضع الرسم بعد ما المستخدم يخلص
         manager.setDrawingMode(null);
+
+        // ✅ نخزن الشكل الحالي عشان لو حبينا نحذفه بعدين
+        window.currentShape = overlay;
       });
     };
 
@@ -228,32 +281,43 @@ const GoogleMapView = ({
   }, []);
 
   return (
-    <GoogleMap
-      mapContainerStyle={{ width: "100%", height: "100%" }}
-      center={center}
-      zoom={zoom}
-      options={{
-        fullscreenControl: false,
-        mapTypeControl: true,
-      }}
-      onLoad={onLoad}
-      onClick={() => selectedCarId && handleSelectCar(null)}
-    >
-      {/* ✅ نافذة معلومات السيارة المحددة */}
-      {selectedCarId &&
-        (() => {
-          const car = cars?.find((c) => c.id === selectedCarId);
-          if (!car) return null;
-          return (
-            <InfoWindow
-              position={car.position}
-              onCloseClick={() => handleSelectCar(car)}
-            >
-              <CarPopup car={car} />
-            </InfoWindow>
-          );
-        })()}
-    </GoogleMap>
+    <>
+      <GoogleMap
+        mapContainerStyle={{ width: "100%", height: "100%" }}
+        center={center}
+        zoom={zoom}
+        options={{
+          fullscreenControl: false,
+          mapTypeControl: true,
+        }}
+        onLoad={onLoad}
+        onClick={() => selectedCarId && handleSelectCar(null)}
+      >
+        {/* ✅ نافذة معلومات السيارة المحددة */}
+        {selectedCarId &&
+          (() => {
+            const car = cars?.find((c) => c.id === selectedCarId);
+            if (!car) return null;
+            return (
+              <InfoWindow
+                position={car.position}
+                onCloseClick={() => handleSelectCar(car)}
+              >
+                <CarPopup car={car} />
+              </InfoWindow>
+            );
+          })()}
+      </GoogleMap>
+
+      <GeofenceModal
+        isOpen={geofenceModalOpen}
+        onClose={() => setGeofenceModalOpen(false)}
+        onConfirm={(data) => {
+          setGeofenceModalOpen(false);
+          // ممكن هنا تبعت البيانات للسيرفر أو تخزنها في الـ Redux
+        }}
+      />
+    </>
   );
 };
 

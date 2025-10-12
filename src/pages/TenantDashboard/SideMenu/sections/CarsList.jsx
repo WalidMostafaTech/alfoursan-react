@@ -1,0 +1,130 @@
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { BsThreeDotsVertical } from "react-icons/bs";
+import { openDetailsModal } from "../../../../store/detailsModalSlice";
+import { useDispatch } from "react-redux";
+import Loader from "../../../../components/Loading/Loader";
+import { getCarStatus } from "../../../../utils/getCarStatus";
+
+const CarsList = ({
+  handleSelectCar,
+  selectedCarId,
+  filteredCars,
+  isFetching,
+}) => {
+  const dispatch = useDispatch();
+
+  return (
+    <div className="flex flex-col gap-2 overflow-y-auto flex-1">
+      {isFetching && <Loader />}
+
+      {filteredCars.map((car) => (
+        <div
+          key={car.id}
+          className="relative flex items-center gap-2 p-2 hover:bg-gray-400/10 rounded-lg"
+          style={{
+            color: car.speed > 5 ? "green" : car.speed === 0 ? "red" : "blue",
+            backgroundColor: car.id === selectedCarId && "rgba(0, 0, 255, 0.1)",
+          }}
+        >
+          <div
+            onClick={() => handleSelectCar(car, true)}
+            className="flex items-center justify-between gap-2 flex-1"
+          >
+            <span className="cursor-pointer flex-1 text-sm line-clamp-1">
+              {car.name}
+            </span>
+            <span className="cursor-pointer text-sm">{getCarStatus(car)}</span>
+          </div>
+
+          {/* Dropdown Menu */}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <span className="cursor-pointer text-gray-600 hover:text-mainColor">
+                <BsThreeDotsVertical />
+              </span>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className="bg-white shadow-xl rounded-lg p-2 flex flex-col z-50"
+                sideOffset={5}
+                align="start"
+              >
+                <DropdownMenu.Item
+                  className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
+                  onSelect={() =>
+                    dispatch(openDetailsModal({ section: "", id: car.id }))
+                  }
+                >
+                  Details
+                </DropdownMenu.Item>
+                <DropdownMenu.Item asChild>
+                  <a
+                    href={car.tracking_url}
+                    target="_blank"
+                    className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
+                  >
+                    Tracking
+                  </a>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item asChild>
+                  <a
+                    href={car.replay_url}
+                    target="_blank"
+                    className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
+                  >
+                    Playback
+                  </a>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
+                  onSelect={() =>
+                    dispatch(
+                      openDetailsModal({ section: "command", id: car.id })
+                    )
+                  }
+                >
+                  Command
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
+                  onSelect={() => window.showFenceModal()}
+                >
+                  Fence
+                </DropdownMenu.Item>
+                <DropdownMenu.Item asChild>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
+                    target="_blank"
+                    className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
+                  >
+                    Street View
+                  </a>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item asChild>
+                  <a
+                    href={car.report_url}
+                    target="_blank"
+                    className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
+                  >
+                    Reports
+                  </a>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
+                  onSelect={() =>
+                    window.openShareModal(car.id, car.serial_number)
+                  }
+                >
+                  Share
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default CarsList;

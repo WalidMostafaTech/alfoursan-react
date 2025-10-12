@@ -15,6 +15,10 @@ const PolygonMenu = () => {
 
   const handleSelect = (type) => {
     setDrawType(type);
+
+    // نرسل حدث للعالم الخارجي
+    const event = new CustomEvent("start-drawing", { detail: { type } });
+    window.dispatchEvent(event);
   };
 
   return (

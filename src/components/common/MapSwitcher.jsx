@@ -1,11 +1,11 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { FiMap } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
-import { switchMap } from "../../store/mapTypeSlice";
+import { switchMap } from "../../store/mapSlice";
 
 const MapSwitcher = () => {
   const dispatch = useDispatch();
-  const { provider: mapProvider } = useSelector((state) => state.mapType);
+  const { provider: mapProvider } = useSelector((state) => state.map);
 
   return (
     <DropdownMenu.Root>

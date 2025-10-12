@@ -54,14 +54,13 @@ const TenantDashboard = () => {
 
   const dispatch = useDispatch();
   const detailsModal = useSelector((state) => state.detailsModal);
-  const { provider: mapProvider } = useSelector((state) => state.mapType);
+  const { provider: mapProvider } = useSelector((state) => state.map);
 
   const [cars, setCars] = useState([]);
   const [isInit, setIsInit] = useState(false);
   const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
   const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
-  const [showClusters, setShowClusters] = useState(false);
 
   const [viewState, setViewState] = useState({
     longitude: center.lng,
@@ -226,21 +225,15 @@ const TenantDashboard = () => {
         onSearch={handleSearchFromMenu}
       />
 
-      <MapActions
-        setZoom={setZoom}
-        setViewState={setViewState}
-        showClusters={showClusters}
-        setShowClusters={setShowClusters}
-      />
+      <MapActions setZoom={setZoom} setViewState={setViewState} />
 
       {mapProvider === "google" ? (
         <GoogleMapView
           cars={cars}
           center={center}
-          zoom={zoom}
+          zoom={zoom} 
           selectedCarId={selectedCarId}
           handleSelectCar={handleSelectCar}
-          showClusters={showClusters}
         />
       ) : (
         <MapboxMapView
