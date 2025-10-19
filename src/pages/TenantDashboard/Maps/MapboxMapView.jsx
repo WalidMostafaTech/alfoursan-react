@@ -1,6 +1,8 @@
 import Map, { Marker, Popup } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import CarPopup from "../../../components/common/CarPopup";
+import { useSelector } from "react-redux";
+import DeviceNamePopup from "../../../components/common/DeviceNamePopup";
 
 const MapboxMapView = ({
   cars,
@@ -10,6 +12,8 @@ const MapboxMapView = ({
   selectedCarId,
   handleSelectCar,
 }) => {
+  const { showDeviceName } = useSelector((state) => state.map);
+
   return (
     <Map
       mapboxAccessToken={MAPBOX_TOKEN}
@@ -67,21 +71,7 @@ const MapboxMapView = ({
                 />
               </div>
 
-              {/* الكارت الأبيض بالاسم */}
-              <div
-                style={{
-                  background: "#fff",
-                  color: "#333",
-                  padding: "2px 6px",
-                  borderRadius: "6px",
-                  fontSize: "12px",
-                  marginTop: "4px",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {car.name || "بدون اسم"}
-              </div>
+              <DeviceNamePopup car={car} showDeviceName={showDeviceName} />
             </div>
           </Marker>
         ))}
@@ -99,8 +89,8 @@ const MapboxMapView = ({
           if (!car) return null;
           return (
             <Popup
-              longitude={car.position.lng - 0.0}
-              latitude={car.position.lat + 0.00012}
+              longitude={car.position.lng}
+              latitude={car.position.lat}
               maxWidth="none"
               closeOnClick={false}
               onClose={() => handleSelectCar(car)}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import MainInput from "../../../components/form/MainInput";
 
-export default function GeofenceModal({ isOpen, onClose, onConfirm }) {
+export default function GeoFenceModal({ isOpen, onClose, onConfirm }) {
   const radius = 100;
   const [enter, setEnter] = useState(true);
   const [exit, setExit] = useState(true);

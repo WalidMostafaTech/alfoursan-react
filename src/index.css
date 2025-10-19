@@ -28,7 +28,14 @@ body {
   min-width: max-content;
 }
 
+/* google popup */
+.gm-style-iw {
+  /* padding: 0 !important; */
 
+  .gm-style-iw-d {
+    overflow: auto !important;
+  }
+}
 
 @layer {
   .mainBtn {

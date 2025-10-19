@@ -7,7 +7,7 @@ const useCarSocket = (cars, setCars, isInit) => {
     const ws = new WebSocket("wss://alfursantracking.com:2053");
 
     ws.onopen = () => {
-      console.log("✅ WebSocket connected");
+      // console.log("✅ WebSocket connected");
       cars.forEach((car) => {
         if (car.serial_number) {
           ws.send(
@@ -22,7 +22,7 @@ const useCarSocket = (cars, setCars, isInit) => {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("📩 WS message:", data);
+      // console.log("📩 WS message:", data);
 
       // GPS Update
       if (data.type === "gps" && data.data?.imei) {
@@ -59,7 +59,7 @@ const useCarSocket = (cars, setCars, isInit) => {
 
       // Alarm
       if (data.type === "alarm" && data.data?.imei) {
-        console.warn("🚨 Alarm:", data.data.alarmTextAr);
+        // console.warn("🚨 Alarm:", data.data.alarmTextAr);
       }
 
       // Heartbeat
@@ -78,7 +78,7 @@ const useCarSocket = (cars, setCars, isInit) => {
     };
 
     ws.onclose = () => {
-      console.log("❌ WebSocket closed");
+      // console.log("❌ WebSocket closed");
     };
 
     return () => {

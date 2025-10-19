@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { closeDetailsModal } from "../../store/detailsModalSlice";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
-const libraries = ["drawing"];
+const libraries = ["drawing", "geometry", "marker"];
 const MAPBOX_TOKEN =
   "pk.eyJ1IjoiYWJkZWxyaG1hbm10MSIsImEiOiJja3kycjZwMjEwb2FzMnVwbjE4Mjdrb3V3In0.YE8v8xOauf5v6k1KqDHHFQ";
 
@@ -231,7 +231,7 @@ const TenantDashboard = () => {
         <GoogleMapView
           cars={cars}
           center={center}
-          zoom={zoom} 
+          zoom={zoom}
           selectedCarId={selectedCarId}
           handleSelectCar={handleSelectCar}
         />

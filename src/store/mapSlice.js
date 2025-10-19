@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   provider: localStorage.getItem("mapProvider") || "google",
   clusters: false,
+  showDeviceName: false,
 };
 
 const mapSlice = createSlice({
@@ -16,9 +17,18 @@ const mapSlice = createSlice({
 
     toggleClusters: (state) => {
       state.clusters = !state.clusters;
+
+      if (state.clusters) {
+        state.provider = "google";
+        localStorage.setItem("mapProvider", "google");
+      }
+    },
+
+    toggleDeviceName: (state) => {
+      state.showDeviceName = !state.showDeviceName;
     },
   },
 });
 
-export const { switchMap, toggleClusters } = mapSlice.actions;
+export const { switchMap, toggleClusters, toggleDeviceName } = mapSlice.actions;
 export default mapSlice.reducer;

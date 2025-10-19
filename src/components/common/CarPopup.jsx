@@ -19,30 +19,12 @@ import { openDetailsModal } from "../../store/detailsModalSlice";
 
 const CarPopup = ({ car }) => {
   const carDetails = [
-    {
-      label: car.lastSignel,
-      icon: <FaSatelliteDish />,
-    },
-    {
-      label: "Wired",
-      icon: <FiWifi />,
-    },
-    {
-      label: car.lastSignelGPS,
-      icon: <ImLocation2 />,
-    },
-    {
-      label: `${car.speed} km/h`,
-      icon: <IoSpeedometerSharp />,
-    },
-    {
-      label: getCarStatus(car),
-      icon: <MdOutlineCarCrash />,
-    },
-    {
-      label: car.voltageLevel,
-      icon: <MdOutlineElectricBolt />,
-    },
+    { label: car.lastSignel, icon: <FaSatelliteDish /> },
+    { label: "Wired", icon: <FiWifi /> },
+    { label: car.lastSignelGPS, icon: <ImLocation2 /> },
+    { label: `${car.speed} km/h`, icon: <IoSpeedometerSharp /> },
+    { label: getCarStatus(car), icon: <MdOutlineCarCrash /> },
+    { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
   ];
 
   const dispatch = useDispatch();
@@ -50,8 +32,8 @@ const CarPopup = ({ car }) => {
   return (
     <div className="bg-white p-4 rounded-xl shadow-lg space-y-6 w-[500px]">
       {/* عنوان العربية */}
-      <h4 className="font-bold text-lg">
-        {car.name} <span className="text-mainColor">123123123</span>
+      <h4 className="font-bold text-lg flex items-center gap-4">
+        {car.name} <span className="text-mainColor">{getCarStatus(car)}</span>
       </h4>
 
       {/* بيانات */}

@@ -1,4 +1,4 @@
-import { GoogleMap, InfoWindow, OverlayView } from "@react-google-maps/api";
+import { GoogleMap, InfoWindow } from "@react-google-maps/api";
 import CarPopup from "../../../components/common/CarPopup";
 import { useEffect, useRef, useState } from "react";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
@@ -22,10 +22,12 @@ const GoogleMapView = ({
     mapRef.current = map;
   };
 
-  // ✅ إنشاء الماركرات (بدون flicker)
+  // ✅ إنشاء الماركرات (AdvancedMarkerElement بدون flicker)
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
     const map = mapRef.current;
+
+    const { AdvancedMarkerElement } = window.google.maps.marker;
 
     // لو أول مرة، نعمل cache للماركرات
     if (!window.carMarkers) {
@@ -37,43 +39,79 @@ const GoogleMapView = ({
       let marker = window.carMarkers.get(car.id);
 
       if (!marker) {
-        // إنشاء ماركر جديد
-        marker = new window.google.maps.Marker({
+        // ✅ إنشاء عنصر HTML للعربية
+        const content = document.createElement("div");
+        content.style.display = "flex";
+        content.style.flexDirection = "column";
+        content.style.alignItems = "center";
+        content.style.transform = "translate(-50%, -100%)";
+        content.style.cursor = "pointer";
+
+        // ✅ صورة العربية (بتتلف حسب الاتجاه)
+        const carImg = document.createElement("img");
+        carImg.src =
+          car.speed > 5
+            ? "/car-green.png"
+            : car.speed === 0
+            ? "/car-red.png"
+            : "/car-blue.png";
+        carImg.style.width = "40px";
+        carImg.style.height = "40px";
+        carImg.style.transform = `rotate(${car.bearing || 0}deg)`;
+        carImg.style.transition = "transform 0.2s linear";
+
+        // ✅ اسم الجهاز (اختياري)
+        const deviceNameDiv = document.createElement("div");
+        deviceNameDiv.textContent = showDeviceName ? car.deviceName || "" : "";
+        deviceNameDiv.style.background = "white";
+        deviceNameDiv.style.padding = "2px 5px";
+        deviceNameDiv.style.borderRadius = "6px";
+        deviceNameDiv.style.marginTop = "2px";
+        deviceNameDiv.style.fontSize = "12px";
+        deviceNameDiv.style.fontWeight = "500";
+        deviceNameDiv.style.boxShadow = "0 1px 4px rgba(0,0,0,0.2)";
+        deviceNameDiv.style.whiteSpace = "nowrap";
+
+        content.appendChild(carImg);
+        content.appendChild(deviceNameDiv);
+
+        // ✅ إنشاء ماركر باستخدام AdvancedMarkerElement
+        marker = new AdvancedMarkerElement({
           position: car.position,
           map: clusters ? map : null,
-          icon: {
-            url:
-              car.speed > 5
-                ? "/car-green.png"
-                : car.speed === 0
-                ? "/car-red.png"
-                : "/car-blue.png",
-            scaledSize: new window.google.maps.Size(40, 40),
-          },
+          content,
         });
 
+        // ✅ إضافة event click
         marker.addListener("click", () => handleSelectCar(car));
+
+        // حفظ الماركر
         window.carMarkers.set(car.id, marker);
       } else {
-        // تحديث مكان الماركر والأيقونة فقط
-        marker.setPosition(car.position);
-        marker.setIcon({
-          url:
-            car.speed > 5
-              ? "/car-green.png"
-              : car.speed === 0
-              ? "/car-red.png"
-              : "/car-blue.png",
-          scaledSize: new window.google.maps.Size(40, 40),
-        });
+        // ✅ تحديث موقع الماركر
+        marker.position = car.position;
+
+        // ✅ تحديث الصورة والاتجاه
+        const carImg = marker.content.querySelector("img");
+        carImg.src =
+          car.speed > 5
+            ? "/car-green.png"
+            : car.speed === 0
+            ? "/car-red.png"
+            : "/car-blue.png";
+        carImg.style.transform = `rotate(${car.bearing || 0}deg)`;
+
+        // ✅ تحديث اسم الجهاز لو متغير
+        const deviceNameDiv = marker.content.querySelector("div:last-child");
+        deviceNameDiv.textContent = showDeviceName ? car.deviceName || "" : "";
       }
     });
 
-    // حذف أي ماركرات لعربيات مش موجودة
+    // ✅ حذف أي ماركرات لعربيات مش موجودة
     const currentIds = cars.map((c) => c.id);
     for (const [id, marker] of window.carMarkers.entries()) {
       if (!currentIds.includes(id)) {
-        marker.setMap(null);
+        marker.map = null;
         window.carMarkers.delete(id);
       }
     }
@@ -101,15 +139,15 @@ const GoogleMapView = ({
         window.carClusterer = null;
       }
     }
-  }, [clusters, cars.length]); // ✅ بس عدد العربيات أو حالة الكلاستر
+  }, [clusters, cars.length, showDeviceName]); // ✅ بس عند تغير عدد العربيات أو الكلاستر أو اسم الجهاز
 
-  // ✅ تحديث مواقع الماركرات بدون إعادة بناء الكلاستر
+  // ✅ تحديث مواقع الماركرات فقط (بدون إعادة بناء)
   useEffect(() => {
     if (!window.carMarkers) return;
     cars.forEach((car) => {
       const marker = window.carMarkers.get(car.id);
       if (marker) {
-        marker.setPosition(car.position);
+        marker.position = car.position;
       }
     });
   }, [cars]);
@@ -278,6 +316,7 @@ const GoogleMapView = ({
         options={{
           fullscreenControl: false,
           mapTypeControl: true,
+          mapId: "85723f27e71983cdfc6bdafa", // لازم علشان AdvancedMarker يشتغل
         }}
         onLoad={onLoad}
         onClick={() => selectedCarId && handleSelectCar(null)}
@@ -299,55 +338,6 @@ const GoogleMapView = ({
               </InfoWindow>
             );
           })()}
-
-        {/* ✅ OverlayView لما الكلاستر مقفول */}
-        {!clusters &&
-          cars
-            ?.filter((car) => car.lastPosition)
-            .map((car) => (
-              <OverlayView
-                key={car.id}
-                position={car.position}
-                mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-              >
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectCar(car);
-                  }}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    transform: "translate(-50%, -100%)",
-                    cursor: "pointer",
-                    position: "relative",
-                  }}
-                  className="relative cursor-pointer"
-                >
-                  <div
-                    className="w-10 h-10"
-                    style={{
-                      transform: `rotate(${car.bearing}deg)`,
-                    }}
-                  >
-                    <img
-                      src={
-                        car.speed > 5
-                          ? "/car-green.png"
-                          : car.speed === 0
-                          ? "/car-red.png"
-                          : "/car-blue.png"
-                      }
-                      alt="car"
-                      className="w-full h-full"
-                    />
-                  </div>
-
-                  <DeviceNamePopup car={car} showDeviceName={showDeviceName} />
-                </div>
-              </OverlayView>
-            ))}
       </GoogleMap>
 
       {/* ✅ مودال الجيوفنس */}
