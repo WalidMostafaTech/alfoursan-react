@@ -15,13 +15,8 @@ const mapSlice = createSlice({
       localStorage.setItem("mapProvider", action.payload);
     },
 
-    toggleClusters: (state) => {
-      state.clusters = !state.clusters;
-
-      if (state.clusters) {
-        state.provider = "google";
-        localStorage.setItem("mapProvider", "google");
-      }
+    setClusters: (state, action) => {
+      state.clusters = action.payload;
     },
 
     toggleDeviceName: (state) => {
@@ -30,5 +25,23 @@ const mapSlice = createSlice({
   },
 });
 
-export const { switchMap, toggleClusters, toggleDeviceName } = mapSlice.actions;
+export const { switchMap, setClusters, toggleDeviceName } = mapSlice.actions;
+
+// 🔥 هنا الـ thunk اللي فيه التأخير
+export const toggleClusters = () => (dispatch, getState) => {
+  const { provider, clusters } = getState().map;
+
+  // لو هي مش جوجل نحولها ونستنى شويه
+  if (provider !== "google") {
+    dispatch(switchMap("google"));
+
+    setTimeout(() => {
+      dispatch(setClusters(!clusters));
+    }, 1000); // نص ثانية مثلاً
+  } else {
+    // لو هي جوجل خلاص شغّل الكلاستر عادي
+    dispatch(setClusters(!clusters));
+  }
+};
+
 export default mapSlice.reducer;

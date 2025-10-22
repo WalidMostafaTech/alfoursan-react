@@ -1,7 +1,6 @@
 import Map, { Marker, Popup } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import CarPopup from "../../../components/common/CarPopup";
-import { useSelector } from "react-redux";
 import DeviceNamePopup from "../../../components/common/DeviceNamePopup";
 
 const MapboxMapView = ({
@@ -12,8 +11,6 @@ const MapboxMapView = ({
   selectedCarId,
   handleSelectCar,
 }) => {
-  const { showDeviceName } = useSelector((state) => state.map);
-
   return (
     <Map
       mapboxAccessToken={MAPBOX_TOKEN}
@@ -71,7 +68,7 @@ const MapboxMapView = ({
                 />
               </div>
 
-              <DeviceNamePopup car={car} showDeviceName={showDeviceName} />
+              <DeviceNamePopup car={car} />
             </div>
           </Marker>
         ))}

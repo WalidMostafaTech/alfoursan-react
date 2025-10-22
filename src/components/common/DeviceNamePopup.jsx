@@ -1,4 +1,8 @@
-const DeviceNamePopup = ({ car, showDeviceName }) => {
+import { useSelector } from "react-redux";
+
+const DeviceNamePopup = ({ car }) => {
+  const { showDeviceName } = useSelector((state) => state.map);
+
   return (
     <div
       className={`bg-white text-black text-sm py-1 px-2 rounded-lg shadow-lg w-max 

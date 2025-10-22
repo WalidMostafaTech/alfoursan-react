@@ -20,7 +20,7 @@ const CarsList = ({
       {filteredCars.map((car) => (
         <div
           key={car.id}
-          className="relative flex items-center gap-2 p-2 hover:bg-gray-400/10 rounded-lg"
+          className="relative flex items-center gap-2 hover:bg-gray-400/10 rounded-lg"
           style={{
             color: car.speed > 5 ? "green" : car.speed === 0 ? "red" : "blue",
             backgroundColor: car.id === selectedCarId && "rgba(0, 0, 255, 0.1)",
@@ -28,18 +28,16 @@ const CarsList = ({
         >
           <div
             onClick={() => handleSelectCar(car, true)}
-            className="flex items-center justify-between gap-2 flex-1"
+            className="flex items-center justify-between gap-2 flex-1 p-2 text-sm cursor-pointer"
           >
-            <span className="cursor-pointer flex-1 text-sm line-clamp-1">
-              {car.name}
-            </span>
-            <span className="cursor-pointer text-sm">{getCarStatus(car)}</span>
+            <span className="flex-1 line-clamp-1">{car.name}</span>
+            <span>{getCarStatus(car)}</span>
           </div>
 
           {/* Dropdown Menu */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <span className="cursor-pointer text-gray-600 hover:text-mainColor">
+              <span className="cursor-pointer text-gray-600 hover:text-mainColor p-2">
                 <BsThreeDotsVertical />
               </span>
             </DropdownMenu.Trigger>
