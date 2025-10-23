@@ -28,7 +28,7 @@ const CarsList = ({
         >
           <div
             onClick={() => handleSelectCar(car, true)}
-            className="flex items-center justify-between gap-2 flex-1 p-2 text-sm cursor-pointer"
+            className="flex items-center justify-between gap-4 flex-1 p-2 text-sm cursor-pointer"
           >
             <span className="flex-1 line-clamp-1">{car.name}</span>
             <span>{getCarStatus(car)}</span>

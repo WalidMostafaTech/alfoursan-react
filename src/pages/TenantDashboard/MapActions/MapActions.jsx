@@ -2,16 +2,15 @@ import { useSelector } from "react-redux";
 import MapSwitcher from "../../../components/common/MapSwitcher";
 import PolygonMenu from "../../../components/common/PolygonMenu";
 import ZoomBtns from "../../../components/common/ZoomBtns";
+import MapTypes from "../../../components/common/MapTypes";
 
 const MapActions = ({ setZoom, setViewState }) => {
   const { provider: mapProvider } = useSelector((state) => state.map);
 
   return (
     <div className="absolute top-3 right-3 z-20 space-y-2 flex flex-col items-center">
-      {/* ✅ زر اختيار نوع الخريطة */}
       <MapSwitcher />
-
-      {/* ✅ قائمة أدوات الرسم */}
+      <MapTypes />
       <PolygonMenu
         onSelect={(type) => {
           if (mapProvider === "google") {
@@ -20,12 +19,10 @@ const MapActions = ({ setZoom, setViewState }) => {
             });
             window.dispatchEvent(event);
           } else {
-            alert("الرسم متاح في خريطة Google فقط حاليًا ✅");
+            alert("الرسم متاح في خريطة Google فقط ✅");
           }
         }}
       />
-
-      {/* ✅ أزرار الزوم */}
       <ZoomBtns
         setZoom={setZoom}
         mapProvider={mapProvider}
