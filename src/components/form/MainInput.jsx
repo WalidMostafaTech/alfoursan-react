@@ -17,7 +17,7 @@ const MainInput = ({
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
-  const commonInputClasses = `w-full lg:text-lg bg-white outline-none border-none p-2 rounded-md ring-1 transition-all ${
+  const commonInputClasses = `w-full lg:text-lg bg-white outline-none border-none p-2 rounded-md ring-1 transition-all placeholder:text-gray-400 ${
     isPassword && "pe-10"
   } ${
     error
@@ -70,13 +70,14 @@ const MainInput = ({
           onChange={onChange}
           onBlur={onBlur}
           disabled={disabled}
-          className={`select select-bordered bg-white w-full text-base ${
-            error ? "border-red-600" : "border-gray-300"
-          }`}
+          className={`${commonInputClasses} select pe-10 h-11`}
+          // className={`select select-bordered bg-white w-full text-base ${
+          //   error ? "border-red-600" : "border-gray-300"
+          // }`}
         >
-          <option disabled value="">
+          {/* <option disabled value="">
             {placeholder || "اختر قيمة"}
-          </option>
+          </option> */}
           {options.map((option, idx) => (
             <option key={`${option.value}-${idx}`} value={option.value}>
               {option.label}

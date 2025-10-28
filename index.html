@@ -15,27 +15,6 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      window.API_BASE_URL =
-        "https://alfursantracking.com/api/v1/tenant/get-devices";
-
-      function getSettings(id, command) {
-        alert("Settings for car ID: " + id + " and command: " + command);
-      }
-
-      function openShareModal(id, serialNumber) {
-        alert(
-          "Settings for car ID: " + id + " and serial number: " + serialNumber
-        );
-      }
-
-      function showFenceModal() {
-        alert("Fence modal opened");
-      }
-
-      function confirmGeofenceSettings(polygon) {
-        alert("Geofence settings confirmed" + JSON.stringify(polygon));
-      }
-
       function editShape({ type, data }) {
         if (!type || !data) {
           console.error("❌ لازم تبعت type و data");

@@ -1,25 +1,40 @@
 import { useState } from "react";
-import MainInput from "../../../components/form/MainInput";
+import { useDispatch } from "react-redux";
+import { closeGeoFenceModal } from "../../store/modalsSlice";
+import MainInput from "../form/MainInput";
 
-export default function GeoFenceModal({ isOpen, onClose, onConfirm }) {
-  const radius = 100;
+const GeoFenceModal = () => {
+  const dispatch = useDispatch();
+
+  const [name, setName] = useState("");
   const [enter, setEnter] = useState(true);
   const [exit, setExit] = useState(true);
   const [speedLimitEnabled, setSpeedLimitEnabled] = useState(false);
   const [speedLimit, setSpeedLimit] = useState(100);
+  const radius = 100;
 
   const handleConfirm = () => {
-    onConfirm({ name, radius, enter, exit, speedLimitEnabled, speedLimit });
+    console.log({
+      name,
+      radius,
+      enter,
+      exit,
+      speedLimitEnabled,
+      speedLimit,
+    });
+    dispatch(closeGeoFenceModal());
   };
 
-  if (!isOpen) return null;
+  const closeModal = () => {
+    dispatch(closeGeoFenceModal());
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-[500px] p-6 space-y-4">
+    <dialog open className="modal detailsModal" dir="rtl">
+      <div className="modal-box max-w-md space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">إعدادات السياج الجغرافي</h2>
-          <button className="text-gray-500" onClick={onClose}>
+          <button className="text-gray-500" onClick={closeModal}>
             ✕
           </button>
         </div>
@@ -64,7 +79,7 @@ export default function GeoFenceModal({ isOpen, onClose, onConfirm }) {
         )}
 
         <div className="flex justify-end gap-2">
-          <button className="btn btn-ghost" onClick={onClose}>
+          <button className="btn btn-ghost" onClick={closeModal}>
             إلغاء
           </button>
           <button className="btn btn-primary" onClick={handleConfirm}>
@@ -72,6 +87,9 @@ export default function GeoFenceModal({ isOpen, onClose, onConfirm }) {
           </button>
         </div>
       </div>
-    </div>
+      <label className="modal-backdrop" onClick={closeModal}></label>
+    </dialog>
   );
-}
+};
+
+export default GeoFenceModal;

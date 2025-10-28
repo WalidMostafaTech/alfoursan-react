@@ -1,6 +1,10 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { openDetailsModal } from "../../../../store/detailsModalSlice";
+import {
+  openDetailsModal,
+  openPolygonMenu,
+  openShareModal,
+} from "../../../../store/modalsSlice";
 import { useDispatch } from "react-redux";
 import Loader from "../../../../components/Loading/Loader";
 import { getCarStatus } from "../../../../utils/getCarStatus";
@@ -86,7 +90,7 @@ const CarsList = ({
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
-                  onSelect={() => window.showFenceModal()}
+                  onSelect={() => dispatch(openPolygonMenu())}
                 >
                   Fence
                 </DropdownMenu.Item>
@@ -110,9 +114,7 @@ const CarsList = ({
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
-                  onSelect={() =>
-                    window.openShareModal(car.id, car.serial_number)
-                  }
+                  onSelect={() => dispatch(openShareModal({ id: car.id }))}
                 >
                   Share
                 </DropdownMenu.Item>

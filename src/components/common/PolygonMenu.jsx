@@ -3,11 +3,20 @@ import { useState } from "react";
 import { FaDrawPolygon, FaCircle, FaSearch } from "react-icons/fa";
 import { PiPolygon } from "react-icons/pi";
 import { MdDelete, MdContentCopy, MdEdit } from "react-icons/md";
+import { LuSquareSplitHorizontal } from "react-icons/lu";
 import MainInput from "../form/MainInput";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  closePolygonMenu,
+  openAssociateDeviceModal,
+  openGeoFenceModal,
+  openPolygonMenu,
+} from "../../store/modalsSlice";
 
 const PolygonMenu = () => {
   const [drawType, setDrawType] = useState("");
-  const [open, setOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { polygonMenu } = useSelector((state) => state.modal);
 
   const fences = [
     { id: 1, name: "test (1)" },
@@ -20,14 +29,25 @@ const PolygonMenu = () => {
     setDrawType(type);
     const event = new CustomEvent("start-drawing", { detail: { type } });
     window.dispatchEvent(event);
-    setOpen(false); // ✅ قفل القائمة بعد الاختيار
+    dispatch(closePolygonMenu());
+  };
+
+  const handleOpenChange = (isOpen) => {
+    if (isOpen) {
+      dispatch(openPolygonMenu());
+    } else {
+      dispatch(closePolygonMenu());
+    }
   };
 
   return (
-    <DropdownMenu.Root open={open} onOpenChange={setOpen}>
+    <DropdownMenu.Root open={polygonMenu.show} onOpenChange={handleOpenChange}>
       {/* ✅ زر الفتح */}
       <DropdownMenu.Trigger asChild>
-        <div className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100">
+        <div
+          onClick={() => handleOpenChange(!polygonMenu.show)}
+          className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100"
+        >
           <PiPolygon className="text-2xl text-gray-700" />
         </div>
       </DropdownMenu.Trigger>
@@ -38,7 +58,7 @@ const PolygonMenu = () => {
           side="left"
           align="start"
           sideOffset={5}
-          className="bg-white shadow-xl rounded-xl w-[330px] p-4 z-[50] space-y-4"
+          className="bg-white shadow-xl rounded-xl w-[330px] p-4 z-50 space-y-4"
         >
           <h3 className="font-semibold text-lg">Geo-Fence Management</h3>
 
@@ -108,8 +128,18 @@ const PolygonMenu = () => {
                     </td>
                     <td>{fence.name}</td>
                     <td className="flex gap-2">
-                      <MdEdit className="text-lg cursor-pointer text-mainColor hover:text-mainColor" />
-                      <MdContentCopy className="text-lg cursor-pointer text-gray-500 hover:text-gray-700" />
+                      <MdEdit
+                        onClick={() => dispatch(openGeoFenceModal())}
+                        className="text-lg cursor-pointer text-mainColor hover:text-mainColor"
+                      />
+                      <MdContentCopy
+                        onClick={() => dispatch(openGeoFenceModal())}
+                        className="text-lg cursor-pointer text-gray-500 hover:text-gray-700"
+                      />
+                      <LuSquareSplitHorizontal
+                        onClick={() => dispatch(openAssociateDeviceModal())}
+                        className="text-lg cursor-pointer text-gray-500 hover:text-gray-700"
+                      />
                       <MdDelete className="text-lg cursor-pointer text-red-500 hover:text-red-700" />
                     </td>
                   </tr>

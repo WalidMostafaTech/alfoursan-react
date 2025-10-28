@@ -7,7 +7,8 @@ import Command from "./sections/Command";
 import Alerts from "./sections/Alerts";
 import SpecificTask from "./sections/SpecificTask";
 import Reminders from "./sections/Reminders";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { closeDetailsModal } from "../../../store/modalsSlice";
 
 const tabs = [
   { key: "details", label: "اعدادات عامة" },
@@ -20,9 +21,17 @@ const tabs = [
   { key: "reminders", label: "تذكيرات مخصصة" },
 ];
 
-const DetailsModal = ({ onClose }) => {
-  const { section, id } = useSelector((state) => state.detailsModal);
+const DetailsModal = () => {
+  const { detailsModal } = useSelector((state) => state.modal);
+  const { section, id } = detailsModal;
+
   const [activeTab, setActiveTab] = useState(section || "details");
+
+  const dispatch = useDispatch();
+
+  const onClose = () => {
+    dispatch(closeDetailsModal());
+  };
 
   return (
     <dialog open className="modal items-start detailsModal" dir="rtl">
@@ -68,6 +77,8 @@ const DetailsModal = ({ onClose }) => {
           {activeTab === "reminders" && <Reminders />}
         </div>
       </div>
+
+      <label className="modal-backdrop" onClick={onClose}></label>
     </dialog>
   );
 };

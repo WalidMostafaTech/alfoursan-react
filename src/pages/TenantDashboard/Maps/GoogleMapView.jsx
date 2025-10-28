@@ -1,15 +1,14 @@
 import { GoogleMap, InfoWindow } from "@react-google-maps/api";
 import CarPopup from "../../../components/common/CarPopup";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
-import { useSelector } from "react-redux";
-import GeoFenceModal from "../GeoFenceModal/GeoFenceModal";
+import { useDispatch, useSelector } from "react-redux";
 import DeviceNamePopup from "../../../components/common/DeviceNamePopup";
+import { openGeoFenceModal } from "../../../store/modalsSlice";
 
 // ✅ رمز السيارة (path)
 const CAR_PATH =
-  // "M42.3 110.94c2.22 24.11 2.48 51.07 1.93 79.75-13.76.05-24.14 1.44-32.95 6.69-4.96 2.96-8.38 6.28-10.42 12.15-1.37 4.3-.36 7.41 2.31 8.48 4.52 1.83 22.63-.27 28.42-1.54 2.47-.54 4.53-1.28 5.44-2.33.55-.63 1-1.4 1.35-2.31 1.49-3.93.23-8.44 3.22-12.08.73-.88 1.55-1.37 2.47-1.61-1.46 62.21-6.21 131.9-2.88 197.88 0 43.41 1 71.27 43.48 97.95 41.46 26.04 117.93 25.22 155.25-8.41 32.44-29.23 30.38-50.72 30.38-89.54 5.44-70.36 1.21-134.54-.79-197.69.69.28 1.32.73 1.89 1.42 2.99 3.64 1.73 8.15 3.22 12.08.35.91.8 1.68 1.35 2.31.91 1.05 2.97 1.79 5.44 2.33 5.79 1.27 23.9 3.37 28.42 1.54 2.67-1.07 3.68-4.18 2.31-8.48-2.04-5.87-5.46-9.19-10.42-12.15-8.7-5.18-18.93-6.6-32.44-6.69-.75-25.99-1.02-51.83-.01-77.89C275.52-48.32 29.74-25.45 42.3 110.94zm69.63-90.88C83.52 30.68 62.75 48.67 54.36 77.59c21.05-15.81 47.13-39.73 57.57-57.53zm89.14-4.18c28.41 10.62 49.19 28.61 57.57 57.53-21.05-15.81-47.13-39.73-57.57-57.53zM71.29 388.22l8.44-24.14c53.79 8.36 109.74 7.72 154.36-.15l7.61 22.8c-60.18 28.95-107.37 32.1-170.41 1.49zm185.26-34.13c5.86-34.1 4.8-86.58-1.99-120.61-12.64 47.63-9.76 74.51 1.99 120.61zM70.18 238.83l-10.34-47.2c45.37-57.48 148.38-53.51 193.32 0l-12.93 47.2c-57.58-14.37-114.19-13.21-170.05 0zM56.45 354.09c-5.86-34.1-4.8-86.58 1.99-120.61 12.63 47.63 9.76 74.51-1.99 120.61z";
-  "m42.3,110.94c2.22,24.11 2.48,51.07 1.93,79.75c-13.76,0.05 -24.14,1.44 -32.95,6.69c-4.96,2.96 -8.38,6.28 -10.42,12.15c-1.37,4.3 -0.36,7.41 2.31,8.48c4.52,1.83 22.63,-0.27 28.42,-1.54c2.47,-0.54 4.53,-1.28 5.44,-2.33c0.55,-0.63 1,-1.4 1.35,-2.31c1.49,-3.93 0.23,-8.44 3.22,-12.08c0.73,-0.88 1.55,-1.37 2.47,-1.61c-1.46,62.21 -6.21,131.9 -2.88,197.88c0,43.41 1,71.27 43.48,97.95c41.46,26.04 117.93,25.22 155.25,-8.41c32.44,-29.23 30.38,-50.72 30.38,-89.54c5.44,-70.36 1.21,-134.54 -0.79,-197.69c0.69,0.28 1.32,0.73 1.89,1.42c2.99,3.64 1.73,8.15 3.22,12.08c0.35,0.91 0.8,1.68 1.35,2.31c0.91,1.05 2.97,1.79 5.44,2.33c5.79,1.27 23.9,3.37 28.42,1.54c2.67,-1.07 3.68,-4.18 2.31,-8.48c-2.04,-5.87 -5.46,-9.19 -10.42,-12.15c-8.7,-5.18 -18.93,-6.6 -32.44,-6.69c-0.75,-25.99 -1.02,-51.83 -0.01,-77.89c6.25,-161.12 -239.53,-138.25 -226.97,-1.86zm69.63,-90.88c-28.41,10.62 -49.18,28.61 -57.57,57.53c21.05,-15.81 47.13,-39.73 57.57,-57.53zm89.14,-4.18c28.41,10.62 49.19,28.61 57.57,57.53c-21.05,-15.81 -47.13,-39.73 -57.57,-57.53zm-129.78,372.34l8.44,-24.14c53.79,8.36 109.74,7.72 154.36,-0.15l7.61,22.8c-60.18,28.95 -107.37,32.1 -170.41,1.49zm185.26,-34.13c5.86,-34.1 4.8,-86.58 -1.99,-120.61c-12.64,47.63 -9.76,74.51 1.99,120.61zm-186.37,-115.26l-10.34,-47.2c45.37,-57.48 148.38,-53.51 193.32,0l-12.93,47.2c-57.58,-14.37 -114.19,-13.21 -170.05,0zm-13.73,115.26c-5.86,-34.1 -4.8,-86.58 1.99,-120.61c12.63,47.63 9.76,74.51 -1.99,120.61z";
+  "M42.3 110.94c2.22 24.11 2.48 51.07 1.93 79.75-13.76.05-24.14 1.44-32.95 6.69-4.96 2.96-8.38 6.28-10.42 12.15-1.37 4.3-.36 7.41 2.31 8.48 4.52 1.83 22.63-.27 28.42-1.54 2.47-.54 4.53-1.28 5.44-2.33.55-.63 1-1.4 1.35-2.31 1.49-3.93.23-8.44 3.22-12.08.73-.88 1.55-1.37 2.47-1.61-1.46 62.21-6.21 131.9-2.88 197.88 0 43.41 1 71.27 43.48 97.95 41.46 26.04 117.93 25.22 155.25-8.41 32.44-29.23 30.38-50.72 30.38-89.54 5.44-70.36 1.21-134.54-.79-197.69.69.28 1.32.73 1.89 1.42 2.99 3.64 1.73 8.15 3.22 12.08.35.91.8 1.68 1.35 2.31.91 1.05 2.97 1.79 5.44 2.33 5.79 1.27 23.9 3.37 28.42 1.54 2.67-1.07 3.68-4.18 2.31-8.48-2.04-5.87-5.46-9.19-10.42-12.15-8.7-5.18-18.93-6.6-32.44-6.69-.75-25.99-1.02-51.83-.01-77.89C275.52-48.32 29.74-25.45 42.3 110.94zm69.63-90.88C83.52 30.68 62.75 48.67 54.36 77.59c21.05-15.81 47.13-39.73 57.57-57.53zm89.14-4.18c28.41 10.62 49.19 28.61 57.57 57.53-21.05-15.81-47.13-39.73-57.57-57.53zM71.29 388.22l8.44-24.14c53.79 8.36 109.74 7.72 154.36-.15l7.61 22.8c-60.18 28.95-107.37 32.1-170.41 1.49zm185.26-34.13c5.86-34.1 4.8-86.58-1.99-120.61-12.64 47.63-9.76 74.51 1.99 120.61zM70.18 238.83l-10.34-47.2c45.37-57.48 148.38-53.51 193.32 0l-12.93 47.2c-57.58-14.37-114.19-13.21-170.05 0zM56.45 354.09c-5.86-34.1-4.8-86.58 1.99-120.61 12.63 47.63 9.76 74.51-1.99 120.61z";
 const GoogleMapView = ({
   cars,
   center,
@@ -17,22 +16,25 @@ const GoogleMapView = ({
   selectedCarId,
   handleSelectCar,
 }) => {
-  const [geoFenceModalOpen, setGeoFenceModalOpen] = useState(false);
   const mapRef = useRef(null);
   const drawingManagerRef = useRef(null);
-  const { clusters, mapType } = useSelector((state) => state.map);
+  const { clusters, mapType, showDeviceName } = useSelector(
+    (state) => state.map
+  );
+
+  const dispatch = useDispatch();
 
   const onLoad = (map) => {
     mapRef.current = map;
   };
 
   // ✅ إنشاء ماركر بعلامة Symbol
-  const createRotatedMarker = (car, map) => {
+  const createRotatedMarker = (car, map, showDeviceName) => {
     const rotation = car.bearing || 0;
     const color =
       car.speed > 5 ? "#1dbf73" : car.speed === 0 ? "#e53935" : "#1e88e5";
 
-    const marker = new window.google.maps.Marker({
+    const markerOptions = {
       position: car.position,
       map,
       icon: {
@@ -44,9 +46,22 @@ const GoogleMapView = ({
         scale: 0.07,
         rotation: rotation,
         anchor: new window.google.maps.Point(156, 256),
+        labelOrigin: new window.google.maps.Point(156, 700),
       },
-    });
+    };
 
+    // ✅ نضيف اللابل فقط لو showDeviceName مفعّل
+    if (showDeviceName) {
+      markerOptions.label = {
+        text: car.name || "بدون اسم",
+        color: "#212121",
+        fontWeight: "bold",
+        fontSize: "12px",
+        className: `car-label`,
+      };
+    }
+
+    const marker = new window.google.maps.Marker(markerOptions);
     marker.addListener("click", () => handleSelectCar(car));
     return marker;
   };
@@ -81,12 +96,44 @@ const GoogleMapView = ({
           scale: 0.07,
           rotation: car.bearing || 0,
           anchor: new window.google.maps.Point(156, 256),
+          labelOrigin: new window.google.maps.Point(156, 700), // ⬅️ نزّل اللابل لتحت شوية
         },
+        label: showDeviceName
+          ? {
+              text: car.name || "بدون اسم",
+              color: "#212121",
+              fontWeight: "bold",
+              fontSize: "12px",
+              className: `car-label`,
+            }
+          : null,
       });
       marker.addListener("click", () => handleSelectCar(car));
       window.carMarkers.set(car.id, marker);
     });
   }, [mapRef.current]);
+
+  // ✅ تحديث ظهور أو إخفاء أسماء الأجهزة بدون إعادة بناء الماركرات
+  useEffect(() => {
+    if (!window.carMarkers) return;
+
+    window.carMarkers.forEach((marker, id) => {
+      const car = cars.find((c) => c.id === id);
+      if (!car) return;
+
+      if (showDeviceName) {
+        marker.setLabel({
+          text: car.name || "بدون اسم",
+          color: "#212121",
+          fontWeight: "bold",
+          fontSize: "12px",
+          className: "car-label",
+        });
+      } else {
+        marker.setLabel(null);
+      }
+    });
+  }, [showDeviceName, cars]);
 
   // ✅ بناء الماركرات والتجميع
   useEffect(() => {
@@ -112,6 +159,17 @@ const GoogleMapView = ({
         markers.set(car.id, marker);
       } else {
         marker.setPosition(car.position);
+        if (showDeviceName) {
+          marker.setLabel({
+            text: car.name || "بدون اسم",
+            color: "#212121",
+            fontWeight: "bold",
+            fontSize: "12px",
+            className: `car-label`,
+          });
+        } else {
+          marker.setLabel(null);
+        }
         const icon = marker.getIcon();
         marker.setIcon({ ...icon, fillColor: color, rotation });
       }
@@ -171,7 +229,7 @@ const GoogleMapView = ({
         if (!m.getMap()) m.setMap(map);
       });
     }
-  }, [cars, clusters]);
+  }, [cars, clusters, showDeviceName]);
 
   // ✅ تحديث المواقع والاتجاه أثناء الحركة
   useEffect(() => {
@@ -245,18 +303,18 @@ const GoogleMapView = ({
             center: center.toJSON(),
             radius: radius.toFixed(2),
           };
-          if (window.confirmGeofenceSettings)
-            window.confirmGeofenceSettings(circleData);
+
+          alert("Geofence settings confirmed" + JSON.stringify(circleData));
         } else if (ev.type === "polygon") {
           const path = overlay
             .getPath()
             .getArray()
             .map((p) => p.toJSON());
           const polygonData = { type: "polygon", path };
-          if (window.confirmGeofenceSettings)
-            window.confirmGeofenceSettings(polygonData);
+
+          alert("Geofence settings confirmed" + JSON.stringify(polygonData));
         }
-        setGeoFenceModalOpen(true);
+        dispatch(openGeoFenceModal());
         overlay.setEditable(false);
         overlay.setDraggable(false);
         manager.setDrawingMode(null);
@@ -372,15 +430,6 @@ const GoogleMapView = ({
             car.position ? <DeviceNamePopup key={car.id} car={car} /> : null
           )}
       </GoogleMap>
-
-      <GeoFenceModal
-        isOpen={geoFenceModalOpen}
-        onClose={() => setGeoFenceModalOpen(false)}
-        onConfirm={(data) => {
-          setGeoFenceModalOpen(false);
-          console.log("GeoFence data:", data);
-        }}
-      />
     </>
   );
 };

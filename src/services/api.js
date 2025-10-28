@@ -1,7 +1,7 @@
 import axios from "axios";
 import { dummyData } from "./data";
 
-const BASE_URL = window.API_BASE_URL;
+const BASE_URL = "https://alfursantracking.com/api/v1/tenant/get-devices";
 
 // export const getDevices = async (searchType, searchKey) => {
 //   const params = {};

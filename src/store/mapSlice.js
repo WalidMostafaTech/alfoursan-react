@@ -5,6 +5,7 @@ const initialState = {
   clusters: false,
   showDeviceName: false,
   mapType: localStorage.getItem("mapType") || "roadmap",
+  shareModal: false,
 };
 
 const mapSlice = createSlice({
@@ -57,7 +58,11 @@ export const toggleClusters = () => (dispatch, getState) => {
   }
 };
 
-export const { switchMap, setClusters, toggleDeviceName, setMapType } =
-  mapSlice.actions;
+export const {
+  switchMap,
+  setClusters,
+  toggleDeviceName,
+  setMapType,
+} = mapSlice.actions;
 
 export default mapSlice.reducer;

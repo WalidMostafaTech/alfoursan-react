@@ -9,9 +9,11 @@ import useCarSocket from "../../hooks/useCarSocket";
 import { getDevices } from "../../services/api";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import MapActions from "./MapActions/MapActions";
-import DetailsModal from "./DetailsModal/DetailsModal";
-import { useDispatch, useSelector } from "react-redux";
-import { closeDetailsModal } from "../../store/detailsModalSlice";
+import DetailsModal from "../../components/modals/DetailsModal/DetailsModal";
+import { useSelector } from "react-redux";
+import ShareModal from "../../components/modals/ShareModal";
+import GeoFenceModal from "../../components/modals/GeofenceModal";
+import AssociateDevice from "../../components/modals/AssociateDevice";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
@@ -52,8 +54,8 @@ const TenantDashboard = () => {
     refetch();
   };
 
-  const dispatch = useDispatch();
-  const detailsModal = useSelector((state) => state.detailsModal);
+  const { detailsModal, shareModal, geoFenceModal, associateDeviceModal } =
+    useSelector((state) => state.modal);
   const { provider: mapProvider } = useSelector((state) => state.map);
 
   const [cars, setCars] = useState([]);
@@ -246,9 +248,13 @@ const TenantDashboard = () => {
         />
       )}
 
-      {detailsModal.show && (
-        <DetailsModal onClose={() => dispatch(closeDetailsModal())} />
-      )}
+      {detailsModal.show && <DetailsModal />}
+
+      {shareModal.show && <ShareModal />}
+
+      {geoFenceModal.show && <GeoFenceModal />}
+
+      {associateDeviceModal.show && <AssociateDevice />}
     </section>
   );
 };

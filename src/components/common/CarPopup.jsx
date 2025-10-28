@@ -5,7 +5,6 @@ import {
   FiNavigation,
   FiPlayCircle,
   FiShare2,
-  FiSliders,
   FiUser,
   FiWifi,
 } from "react-icons/fi";
@@ -15,7 +14,8 @@ import { IoSpeedometerSharp } from "react-icons/io5";
 import { MdOutlineCarCrash, MdOutlineElectricBolt } from "react-icons/md";
 import { getCarStatus } from "../../utils/getCarStatus";
 import { useDispatch } from "react-redux";
-import { openDetailsModal } from "../../store/detailsModalSlice";
+import { openDetailsModal, openPolygonMenu, openShareModal } from "../../store/modalsSlice";
+import { PiPolygon } from "react-icons/pi";
 
 const CarPopup = ({ car }) => {
   const carDetails = [
@@ -94,10 +94,10 @@ const CarPopup = ({ car }) => {
         </span>
         <span
           title="Fence"
-          onClick={() => window.showFenceModal()}
+          onClick={() => dispatch(openPolygonMenu())}
           className="cursor-pointer hover:text-mainColor"
         >
-          <FiSliders />
+          <PiPolygon />
         </span>
         <a
           title="Street View"
@@ -118,7 +118,7 @@ const CarPopup = ({ car }) => {
         <span
           title="Share"
           className="cursor-pointer hover:text-mainColor"
-          onClick={() => window.openShareModal(car.id, car.serial_number)}
+          onClick={() => dispatch(openShareModal({ id: car.id }))}
         >
           <FiShare2 />
         </span>
