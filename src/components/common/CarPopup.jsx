@@ -14,7 +14,11 @@ import { IoSpeedometerSharp } from "react-icons/io5";
 import { MdOutlineCarCrash, MdOutlineElectricBolt } from "react-icons/md";
 import { getCarStatus } from "../../utils/getCarStatus";
 import { useDispatch } from "react-redux";
-import { openDetailsModal, openPolygonMenu, openShareModal } from "../../store/modalsSlice";
+import {
+  openDetailsModal,
+  openPolygonMenu,
+  openShareModal,
+} from "../../store/modalsSlice";
 import { PiPolygon } from "react-icons/pi";
 
 const CarPopup = ({ car }) => {
@@ -118,7 +122,7 @@ const CarPopup = ({ car }) => {
         <span
           title="Share"
           className="cursor-pointer hover:text-mainColor"
-          onClick={() => dispatch(openShareModal({ id: car.id }))}
+          onClick={() => dispatch(openShareModal(car.serial_number))}
         >
           <FiShare2 />
         </span>

@@ -6,7 +6,7 @@ import GoogleMapView from "./Maps/GoogleMapView";
 import MapboxMapView from "./Maps/MapboxMapView";
 import { useQuery } from "@tanstack/react-query";
 import useCarSocket from "../../hooks/useCarSocket";
-import { getDevices } from "../../services/api";
+// import { getDevices } from "../../services/api";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import MapActions from "./MapActions/MapActions";
 import DetailsModal from "../../components/modals/DetailsModal/DetailsModal";
@@ -14,6 +14,7 @@ import { useSelector } from "react-redux";
 import ShareModal from "../../components/modals/ShareModal";
 import GeoFenceModal from "../../components/modals/GeofenceModal";
 import AssociateDevice from "../../components/modals/AssociateDevice";
+import { getDevices } from "../../services/monitorServices";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
@@ -55,7 +56,7 @@ const TenantDashboard = () => {
   };
 
   const { detailsModal, shareModal, geoFenceModal, associateDeviceModal } =
-    useSelector((state) => state.modal);
+    useSelector((state) => state.modals);
   const { provider: mapProvider } = useSelector((state) => state.map);
 
   const [cars, setCars] = useState([]);
@@ -63,6 +64,14 @@ const TenantDashboard = () => {
   const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
   const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
+  const [activeFilter, setActiveFilter] = useState("all");
+
+  const filteredCars = cars.filter((car) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "online") return !car.isOffline;
+    if (activeFilter === "offline") return car.isOffline;
+    return true;
+  });
 
   const [viewState, setViewState] = useState({
     longitude: center.lng,
@@ -220,18 +229,20 @@ const TenantDashboard = () => {
   return (
     <section className="w-screen h-screen relative">
       <SideMenu
-        cars={cars}
+        cars={filteredCars}
         isFetching={isFetching}
         handleSelectCar={handleSelectCar}
         selectedCarId={selectedCarId}
         onSearch={handleSearchFromMenu}
+        activeFilter={activeFilter}
+        setActiveFilter={setActiveFilter}
       />
 
       <MapActions setZoom={setZoom} setViewState={setViewState} />
 
       {mapProvider === "google" ? (
         <GoogleMapView
-          cars={cars}
+          cars={filteredCars}
           center={center}
           zoom={zoom}
           selectedCarId={selectedCarId}
@@ -239,7 +250,7 @@ const TenantDashboard = () => {
         />
       ) : (
         <MapboxMapView
-          cars={cars}
+          cars={filteredCars}
           viewState={viewState}
           setViewState={setViewState}
           MAPBOX_TOKEN={MAPBOX_TOKEN}
@@ -248,6 +259,7 @@ const TenantDashboard = () => {
         />
       )}
 
+      {/* 🔹 Modals */}
       {detailsModal.show && <DetailsModal />}
 
       {shareModal.show && <ShareModal />}

@@ -1,10 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
 import mapSlice from "./mapSlice";
-import modalReducer from "./modalsSlice";
+import modalsReducer from "./modalsSlice";
 
 export const store = configureStore({
   reducer: {
-    modal: modalReducer,
+    modals: modalsReducer,
     map: mapSlice,
   },
 });

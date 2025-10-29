@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   detailsModal: { show: false, section: "", id: null },
-  shareModal: { show: false, section: "", id: null },
+  shareModal: { show: false, imei: null },
   polygonMenu: { show: false, section: "", id: null },
   geoFenceModal: { show: false, section: "", id: null },
   associateDeviceModal: { show: false, section: "", id: null },
@@ -23,11 +23,11 @@ const modalsSlice = createSlice({
 
     // ✅ Share modal
     openShareModal: (state, action) => {
-      const { section = "", id = null } = action.payload || {};
-      state.shareModal = { show: true, section, id };
+      const imei = action.payload || null;
+      state.shareModal = { show: true, imei };
     },
     closeShareModal: (state) => {
-      state.shareModal = { show: false, section: "", id: null };
+      state.shareModal = { show: false, imei: null };
     },
 
     // ✅ Polygon menu

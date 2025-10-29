@@ -12,16 +12,10 @@ const SideMenu = ({
   selectedCarId,
   onSearch,
   isFetching,
+  activeFilter,
+  setActiveFilter,
 }) => {
-  const [activeFilter, setActiveFilter] = useState("all");
   const [isOpen, setIsOpen] = useState(true);
-
-  const filteredCars = cars.filter((car) => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "online") return !car.isOffline;
-    if (activeFilter === "offline") return car.isOffline;
-    return true;
-  });
 
   return (
     <>
@@ -64,7 +58,7 @@ const SideMenu = ({
 
           {/* 🟢 عرض النتائج */}
           <CarsList
-            filteredCars={filteredCars}
+            cars={cars}
             handleSelectCar={handleSelectCar}
             selectedCarId={selectedCarId}
             isFetching={isFetching}

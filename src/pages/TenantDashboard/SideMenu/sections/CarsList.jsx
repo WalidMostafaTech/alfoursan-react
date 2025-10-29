@@ -9,19 +9,14 @@ import { useDispatch } from "react-redux";
 import Loader from "../../../../components/Loading/Loader";
 import { getCarStatus } from "../../../../utils/getCarStatus";
 
-const CarsList = ({
-  handleSelectCar,
-  selectedCarId,
-  filteredCars,
-  isFetching,
-}) => {
+const CarsList = ({ handleSelectCar, selectedCarId, cars, isFetching }) => {
   const dispatch = useDispatch();
 
   return (
     <div className="flex flex-col gap-2 overflow-y-auto flex-1">
       {isFetching && <Loader />}
 
-      {filteredCars.map((car) => (
+      {cars.map((car) => (
         <div
           key={car.id}
           className="relative flex items-center gap-2 hover:bg-gray-400/10 rounded-lg"
@@ -48,7 +43,7 @@ const CarsList = ({
 
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                className="bg-white shadow-xl rounded-lg p-2 flex flex-col z-50"
+                className="bg-white shadow-xl rounded-lg p-2 flex flex-col z-50 radix-dropdown"
                 sideOffset={5}
                 align="start"
               >
@@ -114,7 +109,7 @@ const CarsList = ({
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
-                  onSelect={() => dispatch(openShareModal({ id: car.id }))}
+                  onClick={() => dispatch(openShareModal(car.serial_number))}
                 >
                   Share
                 </DropdownMenu.Item>

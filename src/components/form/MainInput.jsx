@@ -12,12 +12,13 @@ const MainInput = ({
   onBlur,
   placeholder,
   disabled = false,
+  ...rest
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
-  const commonInputClasses = `w-full lg:text-lg bg-white outline-none border-none p-2 rounded-md ring-1 transition-all placeholder:text-gray-400 ${
+  const commonInputClasses = `w-full lg:text-lg bg-white outline-none border-none px-2 py-1.5 rounded-md ring-1 transition-all placeholder:text-gray-400 ${
     isPassword && "pe-10"
   } ${
     error
@@ -51,6 +52,7 @@ const MainInput = ({
           onBlur={onBlur}
           placeholder={placeholder}
           disabled={disabled}
+          {...rest}
           className={`${commonInputClasses} h-32 resize-none`}
         />
         {commonError}
@@ -70,7 +72,8 @@ const MainInput = ({
           onChange={onChange}
           onBlur={onBlur}
           disabled={disabled}
-          className={`${commonInputClasses} select pe-10 h-11`}
+          {...rest}
+          className={`${commonInputClasses} select pe-10 h-10`}
           // className={`select select-bordered bg-white w-full text-base ${
           //   error ? "border-red-600" : "border-gray-300"
           // }`}
@@ -89,7 +92,6 @@ const MainInput = ({
     );
   }
 
-
   // ✅ باقي أنواع الـ inputs (text - email - password ...)
   return (
     <div>
@@ -104,6 +106,7 @@ const MainInput = ({
           onBlur={onBlur}
           placeholder={placeholder}
           disabled={disabled}
+          {...rest}
           className={commonInputClasses}
         />
 

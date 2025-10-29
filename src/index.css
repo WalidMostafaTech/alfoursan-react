@@ -16,26 +16,36 @@ body {
 .mapboxgl-popup-content {
   padding: 0 !important;
 }
-
 .mapboxgl-popup-close-button {
   font-size: 35px;
   padding: 10px;
 }
 
-.radix-dropdown {
-  position: fixed !important;
-  left: 45px !important;
-  min-width: max-content;
-}
-
 /* google popup */
 .gm-style-iw {
   /* padding: 0 !important; */
-
   .gm-style-iw-d {
     overflow: auto !important;
   }
 }
+/* car label */
+.car-label {
+  background: white;
+  color: #212121;
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+}
+
+/* radix dropdown */
+
+/* .radix-dropdown {
+  position: fixed !important;
+  left: 45px !important;
+  top: -35px !important;
+  min-width: max-content;
+} */
 
 @layer {
   .mainBtn {
@@ -50,13 +60,4 @@ body {
       @apply bg-red-700 shadow-red-700;
     }
   }
-}
-
-.car-label {
-  background: white;
-  color: #212121;
-  border-radius: 6px;
-  padding: 4px 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  white-space: nowrap;
 }

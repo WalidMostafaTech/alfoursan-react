@@ -3,7 +3,6 @@ import CarPopup from "../../../components/common/CarPopup";
 import { useEffect, useRef } from "react";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { useDispatch, useSelector } from "react-redux";
-import DeviceNamePopup from "../../../components/common/DeviceNamePopup";
 import { openGeoFenceModal } from "../../../store/modalsSlice";
 
 // ✅ رمز السيارة (path)
@@ -424,11 +423,6 @@ const GoogleMapView = ({
               </InfoWindow>
             );
           })()}
-
-        {!clusters &&
-          cars.map((car) =>
-            car.position ? <DeviceNamePopup key={car.id} car={car} /> : null
-          )}
       </GoogleMap>
     </>
   );

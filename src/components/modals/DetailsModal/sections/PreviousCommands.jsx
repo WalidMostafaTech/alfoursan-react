@@ -61,7 +61,9 @@ const PreviousCommands = () => {
               <td className="py-3 px-4 text-gray-600">{cmd.reply}</td>
               <td className="py-3 px-4 text-gray-600">{cmd.responseTime}</td>
               <td className="py-3 px-4">
-                <button className="mainBtn error">Delete</button>
+                <button className="btn btn-sm btn-error bg-red-600 text-white">
+                  Delete
+                </button>
               </td>
             </tr>
           ))}

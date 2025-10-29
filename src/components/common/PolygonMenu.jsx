@@ -16,7 +16,7 @@ import {
 const PolygonMenu = () => {
   const [drawType, setDrawType] = useState("");
   const dispatch = useDispatch();
-  const { polygonMenu } = useSelector((state) => state.modal);
+  const { polygonMenu } = useSelector((state) => state.modals);
 
   const fences = [
     { id: 1, name: "test (1)" },

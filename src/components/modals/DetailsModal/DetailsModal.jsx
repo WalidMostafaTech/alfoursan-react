@@ -22,7 +22,7 @@ const tabs = [
 ];
 
 const DetailsModal = () => {
-  const { detailsModal } = useSelector((state) => state.modal);
+  const { detailsModal } = useSelector((state) => state.modals);
   const { section, id } = detailsModal;
 
   const [activeTab, setActiveTab] = useState(section || "details");
