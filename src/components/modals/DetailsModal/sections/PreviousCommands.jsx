@@ -1,24 +1,44 @@
-const PreviousCommands = () => {
-  const commands = [
-    {
-      no: 1,
-      name: "Restart Device",
-      content: "CMD_RESTART",
-      status: "Success",
-      sendTime: "2025-10-08 14:30",
-      reply: "Device restarted successfully",
-      responseTime: "1.2s",
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { deleteCommand } from "../../../../services/monitorServices";
+
+const PreviousCommands = ({ deviceSettings, refetch }) => {
+  const commands = deviceSettings?.commands || [];
+
+  // ✅ دالة تنسيق التاريخ
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // ✅ mutation للحذف
+  const { mutate: removeCommand, isPending } = useMutation({
+    mutationFn: deleteCommand,
+    onSuccess: () => {
+      toast.success("✅ Command deleted successfully");
+      refetch?.(); // 🔄 تحديث البيانات لو متوفر refetch
     },
-    {
-      no: 2,
-      name: "Get Location",
-      content: "CMD_LOCATE",
-      status: "Pending",
-      sendTime: "2025-10-08 14:35",
-      reply: "-",
-      responseTime: "-",
+    onError: (error) => {
+      console.error(error);
+      toast.error("❌ Failed to delete command");
     },
-  ];
+  });
+
+  // ✅ تنفيذ الحذف مع تأكيد
+  const handleDelete = (id) => {
+    if (!id) return;
+    if (window.confirm("هل أنت متأكد أنك تريد حذف هذا الأمر؟")) {
+      removeCommand(id);
+    }
+  };
 
   return (
     <section className="overflow-x-auto p-4">
@@ -38,14 +58,16 @@ const PreviousCommands = () => {
         <tbody className="bg-white divide-y divide-gray-100">
           {commands.map((cmd, index) => (
             <tr
-              key={index}
+              key={cmd.id || index}
               className="hover:bg-gray-50 transition-colors duration-200"
             >
-              <td className="py-3 px-4">{cmd.no}</td>
+              <td className="py-3 px-4">{cmd.imei || ""}</td>
               <td className="py-3 px-4 font-medium text-gray-700">
-                {cmd.name}
+                {cmd.command_name || ""}
               </td>
-              <td className="py-3 px-4 text-gray-600">{cmd.content}</td>
+              <td className="py-3 px-4 text-gray-600">
+                {cmd.command_content || ""}
+              </td>
               <td
                 className={`py-3 px-4 font-semibold ${
                   cmd.status === "Success"
@@ -55,14 +77,28 @@ const PreviousCommands = () => {
                     : "text-yellow-500"
                 }`}
               >
-                {cmd.status}
+                {cmd.status || ""}
               </td>
-              <td className="py-3 px-4 text-gray-600">{cmd.sendTime}</td>
-              <td className="py-3 px-4 text-gray-600">{cmd.reply}</td>
-              <td className="py-3 px-4 text-gray-600">{cmd.responseTime}</td>
+              <td className="py-3 px-4 text-gray-600">
+                {formatDateTime(cmd.send_time)}
+              </td>
+              <td className="py-3 px-4 text-gray-600">
+                {cmd.replay_content || ""}
+              </td>
+              <td className="py-3 px-4 text-gray-600">
+                {cmd.response_time || ""}
+              </td>
               <td className="py-3 px-4">
-                <button className="btn btn-sm btn-error bg-red-600 text-white">
-                  Delete
+                <button
+                  onClick={() => handleDelete(cmd.id)}
+                  disabled={isPending}
+                  className={`btn btn-sm text-white rounded-md px-3 py-1 ${
+                    isPending
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
+                  }`}
+                >
+                  {isPending ? "Deleting..." : "Delete"}
                 </button>
               </td>
             </tr>

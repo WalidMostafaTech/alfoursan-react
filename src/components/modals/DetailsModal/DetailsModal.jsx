@@ -9,6 +9,10 @@ import SpecificTask from "./sections/SpecificTask";
 import Reminders from "./sections/Reminders";
 import { useDispatch, useSelector } from "react-redux";
 import { closeDetailsModal } from "../../../store/modalsSlice";
+import { useQuery } from "@tanstack/react-query";
+import { getDeviceSettings } from "../../../services/monitorServices";
+import Loader from "../../Loading/Loader";
+import Maintenance from "./sections/Maintenance";
 
 const tabs = [
   { key: "details", label: "اعدادات عامة" },
@@ -17,8 +21,9 @@ const tabs = [
   { key: "command", label: "قائمه الاوامر" },
   { key: "previousCommands", label: "الاوامر السابقه" },
   { key: "alerts", label: "إعدادات التنبيهات" },
+  { key: "maintenance", label: "صيانة الاميال" },
   { key: "specificTask", label: "تعيين مهمة محددة بوقت" },
-  { key: "reminders", label: "تذكيرات مخصصة" },
+  // { key: "reminders", label: "تذكيرات مخصصة" },
 ];
 
 const DetailsModal = () => {
@@ -28,6 +33,16 @@ const DetailsModal = () => {
   const [activeTab, setActiveTab] = useState(section || "details");
 
   const dispatch = useDispatch();
+
+  // ✅ جلب بيانات الجهاز
+  const {
+    data: deviceSettings,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["deviceSettings", id],
+    queryFn: () => getDeviceSettings(id),
+  });
 
   const onClose = () => {
     dispatch(closeDetailsModal());
@@ -67,14 +82,42 @@ const DetailsModal = () => {
 
         {/* 🔹 محتوى التبويب الحالي */}
         <div className="mt-4">
-          {activeTab === "details" && <Details />}
-          {activeTab === "serviceVersion" && <ServiceVersion />}
-          {activeTab === "membership" && <Membership />}
-          {activeTab === "command" && <Command />}
-          {activeTab === "previousCommands" && <PreviousCommands />}
-          {activeTab === "alerts" && <Alerts />}
-          {activeTab === "specificTask" && <SpecificTask />}
-          {activeTab === "reminders" && <Reminders />}
+          {isLoading ? (
+            <Loader />
+          ) : (
+            <>
+              {activeTab === "details" && (
+                <Details deviceSettings={deviceSettings} refetch={refetch} />
+              )}
+              {activeTab === "serviceVersion" && (
+                <ServiceVersion deviceSettings={deviceSettings} />
+              )}
+              {activeTab === "membership" && <Membership />}
+              {activeTab === "command" && (
+                <Command deviceSettings={deviceSettings} deviceID={id} />
+              )}
+              {activeTab === "previousCommands" && (
+                <PreviousCommands
+                  deviceSettings={deviceSettings}
+                  refetch={refetch}
+                />
+              )}
+              {activeTab === "alerts" && (
+                <Alerts deviceSettings={deviceSettings} refetch={refetch} />
+              )}
+
+              {activeTab === "maintenance" && <Maintenance deviceID={id} />}
+              {activeTab === "specificTask" && (
+                <SpecificTask
+                  deviceSettings={deviceSettings}
+                  refetch={refetch}
+                  deviceID={id}
+                />
+              )}
+
+              {activeTab === "reminders" && <Reminders />}
+            </>
+          )}
         </div>
       </div>
 

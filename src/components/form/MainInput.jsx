@@ -18,7 +18,7 @@ const MainInput = ({
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
-  const commonInputClasses = `w-full lg:text-lg bg-white outline-none border-none px-2 py-1.5 rounded-md ring-1 transition-all placeholder:text-gray-400 ${
+  const commonInputClasses = `w-full text-lg bg-white outline-none border-none px-2 py-1.5 rounded-md ring-1 transition-all placeholder:text-gray-400 ${
     isPassword && "pe-10"
   } ${
     error
@@ -29,7 +29,7 @@ const MainInput = ({
   const commonLabel = label && (
     <label
       htmlFor={id}
-      className="block w-fit font-semibold mb-2 text-sm lg:text-base capitalize"
+      className="block w-fit font-semibold mb-2 capitalize"
     >
       {label} :
     </label>

@@ -1,25 +1,69 @@
 import api from "./api";
 
-import { dummyData } from "./data";
-export const getDevices = async (searchParams) => {
-  console.log("✅ Using dummyData instead of API",dummyData, searchParams);
-  return dummyData;
-};
-
-// export const getDevices = async (searchType, searchKey) => {
-//   const params = {};
-
-//   if (searchKey && searchType) {
-//     params.search_key = searchKey;
-//     params.search_type = searchType;
-//   }
-
-//   const { data } = await api.get("/data", { params });
-//   return data.data;
+// import { dummyData } from "./data";
+// export const getDevices = async (searchParams) => {
+//   console.log("✅ Using dummyData instead of API",dummyData, searchParams);
+//   return dummyData;
 // };
+
+export const getDevices = async (searchType, searchKey) => {
+  const params = {};
+
+  if (searchKey && searchType) {
+    params.search_key = searchKey;
+    params.search_type = searchType;
+  }
+
+  const { data } = await api.get("/data", { params });
+  return data.data;
+};
 
 export const getDeviceSettings = async (id) => {
   const { data } = await api.get(`/settings?device_id=${id}`);
+  return data.data;
+};
+
+export const updateDialogCar = async (id, formData) => {
+  const { data } = await api.post(`/update-car/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return data.data;
+};
+
+export const sendCommand = async (payload) => {
+  const { data } = await api.post(`/commands`, payload);
+  return data.data;
+};
+
+export const deleteCommand = async (id) => {
+  const { data } = await api.post(`/delete/commands`, { id });
+  return data.data;
+};
+
+export const updateDialogAlert = async (id, formData) => {
+  const { data } = await api.post(`/update-alerts/${id}`, formData);
+  return data.data;
+};
+
+export const getMaintenances = async (id) => {
+  const { data } = await api.get(`/listMaintenances?id=${id}`);
+  return data.data;
+};
+
+export const createMaintenances = async (formData) => {
+  const { data } = await api.post(`/maintenance`, formData);
+  return data.data;
+};
+
+export const deleteMaintenances = async (id) => {
+  const { data } = await api.delete(`/maintenance/${id}`);
+  return data.data;
+};
+
+export const sendScheduledTask = async (id, formData) => {
+  const { data } = await api.post(`/scheduled-task/${id}`, formData);
   return data.data;
 };
 

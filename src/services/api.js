@@ -10,7 +10,6 @@ const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     Accept: "application/json",
-    Authorization: `Bearer 143|Rz9e1TqeSeeEKWTMAJozDFokvhp0YNzCE2EdFNfffdc4d58f}`,
   },
 });
 

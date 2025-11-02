@@ -1,109 +1,253 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { FiX } from "react-icons/fi";
+
 import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
-import ImageUploader from "../../../form/ImageUploader";
+import { updateDialogCar } from "../../../../services/monitorServices";
 
-const Details = () => {
-  const [images, setImages] = useState([]);
-  const [imageError, setImageError] = useState("");
-  const [currentIcons, setCurrentIcons] = useState(0);
+const Details = ({ deviceSettings, refetch }) => {
+  const [formData, setFormData] = useState({
+    car_number: "",
+    fuel_consumption_per_100km: "",
+    contact_phone: "",
+    contact_person: "",
+    notes: "",
+  });
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [currentIcon, setCurrentIcon] = useState(0);
 
   const icons = [
     { src: "/car-green.png", value: "car" },
     { src: "/car-red.png", value: "bus" },
-    { src: "/car-green.png", value: "car" },
-    { src: "/car-red.png", value: "bus" },
-    { src: "/car-green.png", value: "car" },
-    { src: "/car-red.png", value: "bus" },
-    { src: "/car-green.png", value: "car" },
-    { src: "/car-red.png", value: "bus" },
-    { src: "/car-green.png", value: "car" },
-    { src: "/car-red.png", value: "bus" },
-    { src: "/car-green.png", value: "car" },
-    { src: "/car-red.png", value: "bus" },
-    { src: "/car-green.png", value: "car" },
-    { src: "/car-red.png", value: "bus" },
   ];
+
+  const device = deviceSettings?.device;
+
+  // ✅ تحميل بيانات السيارة داخل الفورم
+  useEffect(() => {
+    if (device?.car) {
+      setFormData({
+        car_number: device.car.car_number || "",
+        fuel_consumption_per_100km: device.car.fuel_consumption_per_100km || "",
+        contact_phone: device.car.contact_phone || "",
+        contact_person: device.car.contact_person || "",
+        notes: device.car.notes || "",
+      });
+
+      // الصورة الحالية من السيرفر
+      setPreview(device.car.image_full_path || "");
+    }
+  }, [device]);
+
+  // ✅ Mutation لتحديث بيانات السيارة
+  const { mutate: updateCar, isPending } = useMutation({
+    mutationFn: ({ id, formData }) => updateDialogCar(id, formData),
+    onSuccess: () => {
+      toast.success("تم تحديث بيانات السيارة بنجاح ✅");
+      refetch();
+    },
+    onError: () => {
+      toast.error("حدث خطأ أثناء تحديث البيانات ❌");
+    },
+  });
+
+  // ✅ تغيير القيم داخل الفورم
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ✅ عند اختيار صورة جديدة
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImage(file);
+    setPreview(URL.createObjectURL(file)); // عرض الصورة الجديدة
+  };
+
+  // ✅ حذف الصورة
+  const handleRemoveImage = () => {
+    setImage(null);
+    setPreview("");
+  };
+
+  // ✅ عند الضغط على "تحديث البيانات"
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!device?.car?.id) return;
+
+    const dataToSend = new FormData();
+    dataToSend.append("car_number", formData.car_number);
+    dataToSend.append(
+      "fuel_consumption_per_100km",
+      formData.fuel_consumption_per_100km
+    );
+    dataToSend.append("contact_phone", formData.contact_phone);
+    dataToSend.append("contact_person", formData.contact_person);
+    dataToSend.append("notes", formData.notes);
+    dataToSend.append("icon", icons[currentIcon].value);
+
+    if (image) dataToSend.append("image", image);
+
+    updateCar({ id: device.car.id, formData: dataToSend });
+  };
 
   return (
     <section>
-      <form className="space-y-6">
+      <div className="space-y-6">
+        {/* ✅ بيانات الجهاز */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MainInput
             id="deviceName"
             label="اسم الجهاز"
-            value="R12L-F-424279"
+            value={device.car?.name || ""}
             disabled
           />
-          <MainInput id="importTime" label="وقت الاستيراد" disabled />
-          <MainInput id="model" label="الموديل" value="R12L-F" disabled />
+          <MainInput
+            id="importTime"
+            label="وقت الاستيراد"
+            value={device.imported_at || ""}
+            disabled
+          />
+          <MainInput
+            id="model"
+            label="الموديل"
+            value={device.device_model?.name_ar || ""}
+            disabled
+          />
           <MainInput
             id="activationTime"
             label="وقت التفعيل"
-            value="2025-09-21"
+            value={device.activated_at || ""}
             disabled
           />
-          <MainInput id="imei" label="IMEI" value="353994714424279" disabled />
+          <MainInput
+            id="imei"
+            label="IMEI"
+            value={device.serial_number || ""}
+            disabled
+          />
           <MainInput
             id="expiryDate"
             label="انتهاء صلاحية المنصة"
-            value="2026-09-21"
+            value={device.platform_expiry || ""}
             disabled
           />
           <MainInput
             id="simCardNumber"
             label="SIM card number"
-            value="436888731137119"
+            value={device.sim_number || ""}
             disabled
           />
           <MainInput
             id="iccid"
             label="iccid"
-            value="89430103524285274807"
+            value={device.iccid || ""}
             disabled
           />
         </div>
 
-        <div className="divider my-10">المركبه</div>
+        <div className="divider my-10">المركبة</div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <MainInput id="carNumber" label="رقم السيارة" />
+        {/* ✅ نموذج التحديث */}
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MainInput
+              id="car_number"
+              name="car_number"
+              label="رقم السيارة"
+              value={formData.car_number}
+              onChange={handleChange}
+            />
 
-          <MainInput id="fuelConsumption" label="استهلاك الوقود / 100 كم" />
+            <MainInput
+              id="fuel_consumption_per_100km"
+              name="fuel_consumption_per_100km"
+              label="استهلاك الوقود / 100 كم"
+              value={formData.fuel_consumption_per_100km}
+              onChange={handleChange}
+            />
 
-          <MainInput id="phoneNumber" label="رقم الهاتف" />
+            <MainInput
+              id="contact_phone"
+              name="contact_phone"
+              label="رقم الهاتف"
+              value={formData.contact_phone}
+              onChange={handleChange}
+            />
 
-          <MainInput id="contactPerson" label="الشخص الذي يمكن الاتصال به" />
+            <MainInput
+              id="contact_person"
+              name="contact_person"
+              label="الشخص الذي يمكن الاتصال به"
+              value={formData.contact_person}
+              onChange={handleChange}
+            />
 
-          <ImageUploader
-            label="صور"
-            onChange={setImages}
-            error={imageError}
-            initialImages={images}
-          />
-
-          <div>
-            <p className="mb-2 font-medium text-gray-900">أيقونة السيارة</p>
-            <div className="flex flex-wrap items-center gap-2">
-              {icons.map((icon, index) => (
-                <img
-                  key={index}
-                  src={icon.src}
-                  alt={icon.value}
-                  className={`cursor-pointer rounded-lg w-14 p-1 ${
-                    currentIcons === index ? "bg-mainColor" : "bg-gray-200"
-                  }`}
-                  onClick={() => setCurrentIcons(index)}
+            {/* ✅ رفع الصورة العادي */}
+            <div>
+              <label className="block font-medium text-gray-900 mb-2">
+                صورة السيارة
+              </label>
+              <div className="flex items-center gap-4">
+                <MainInput
+                  id="image"
+                  type="file"
+                  onChange={handleImageChange}
                 />
-              ))}
+                {preview && (
+                  <div className="relative">
+                    <img
+                      src={preview}
+                      alt="Car Preview"
+                      className="w-32 h-32 rounded-lg object-cover border"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full shadow-md"
+                    >
+                      <FiX className="text-sm" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* ✅ اختيار الأيقونة */}
+            <div>
+              <p className="mb-2 font-medium text-gray-900">أيقونة السيارة</p>
+              <div className="flex flex-wrap items-center gap-2">
+                {icons.map((icon, index) => (
+                  <img
+                    key={index}
+                    src={icon.src}
+                    alt={icon.value}
+                    className={`cursor-pointer rounded-lg w-14 p-1 ${
+                      currentIcon === index ? "bg-mainColor" : "bg-gray-200"
+                    }`}
+                    onClick={() => setCurrentIcon(index)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <MainInput
+              id="notes"
+              name="notes"
+              label="ملاحظات"
+              type="textarea"
+              value={formData.notes}
+              onChange={handleChange}
+            />
           </div>
 
-          <MainInput id="remarks" label="ملاحظات" type="textarea" />
-        </div>
-
-        <FormBtn title="تحديث البيانات" />
-      </form>
+          <FormBtn title={"تحديث البيانات"} disabled={isPending} />
+        </form>
+      </div>
     </section>
   );
 };

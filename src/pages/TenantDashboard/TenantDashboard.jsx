@@ -89,7 +89,7 @@ const TenantDashboard = () => {
   // 🧩 عند تحميل الأجهزة
   useEffect(() => {
     if (devices) {
-      const mappedCars = devices.map((d) => ({
+      const mappedCars = devices?.devices.map((d) => ({
         ...d,
         position: {
           lat: parseFloat(d.latitude),
@@ -229,7 +229,8 @@ const TenantDashboard = () => {
   return (
     <section className="w-screen h-screen relative">
       <SideMenu
-        cars={filteredCars}
+        cars={cars}
+        filteredCars={filteredCars}
         isFetching={isFetching}
         handleSelectCar={handleSelectCar}
         selectedCarId={selectedCarId}

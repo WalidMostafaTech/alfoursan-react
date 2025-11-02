@@ -8,6 +8,7 @@ import Actions from "./sections/Actions";
 
 const SideMenu = ({
   cars,
+  filteredCars,
   handleSelectCar,
   selectedCarId,
   onSearch,
@@ -58,7 +59,7 @@ const SideMenu = ({
 
           {/* 🟢 عرض النتائج */}
           <CarsList
-            cars={cars}
+            cars={filteredCars}
             handleSelectCar={handleSelectCar}
             selectedCarId={selectedCarId}
             isFetching={isFetching}
