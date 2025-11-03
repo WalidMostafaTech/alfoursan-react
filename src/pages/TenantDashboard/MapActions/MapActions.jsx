@@ -3,6 +3,7 @@ import MapSwitcher from "../../../components/common/MapSwitcher";
 import ZoomBtns from "../../../components/common/ZoomBtns";
 import MapTypes from "../../../components/common/MapTypes";
 import PolygonMenu from "../../../components/modals/PolygonMenu";
+import SupportBtn from "../../../components/common/SupportBtn";
 
 const MapActions = ({ setZoom, setViewState }) => {
   const { provider: mapProvider } = useSelector((state) => state.map);
@@ -28,6 +29,7 @@ const MapActions = ({ setZoom, setViewState }) => {
         mapProvider={mapProvider}
         setViewState={setViewState}
       />
+      <SupportBtn />
     </div>
   );
 };

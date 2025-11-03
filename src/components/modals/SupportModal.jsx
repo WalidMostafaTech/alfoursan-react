@@ -1,0 +1,30 @@
+import { useDispatch } from "react-redux";
+import { toggleSupportModal } from "../../store/modalsSlice";
+
+const SupportModal = () => {
+  const dispatch = useDispatch();
+  const closeModal = () => {
+    dispatch(toggleSupportModal());
+  };
+  return (
+    <dialog open className="modal detailsModal" dir="rtl">
+      <div className="modal-box max-w-2xl max-h-[90%] pt-12 mt-10 relative top-0 text-center">
+        <button
+          className="btn btn-md btn-circle btn-ghost absolute right-2 top-2"
+          onClick={() => {}}
+        >
+          ✕
+        </button>
+
+        <h3 className="font-bold text-xl">Contact Support</h3>
+        <p className="py-4">
+          Get in touch with our support team for any inquiries or assistance.
+        </p>
+      </div>
+
+      <label className="modal-backdrop" onClick={closeModal}></label>
+    </dialog>
+  );
+};
+
+export default SupportModal;

@@ -6,6 +6,7 @@ const initialState = {
   polygonMenu: { show: false },
   geoFenceModal: { show: false, fenceData: {}, mission: "" },
   associateDeviceModal: { show: false, id: null },
+  supportModal: { show: false },
 };
 
 const modalsSlice = createSlice({
@@ -55,6 +56,11 @@ const modalsSlice = createSlice({
     closeAssociateDeviceModal: (state) => {
       state.associateDeviceModal = { show: false, id: null };
     },
+
+    // ✅ Support modal
+    toggleSupportModal: (state) => {
+      state.supportModal = { show: !state.supportModal.show };
+    },
   },
 });
 
@@ -69,6 +75,7 @@ export const {
   closeGeoFenceModal,
   openAssociateDeviceModal,
   closeAssociateDeviceModal,
+  toggleSupportModal,
 } = modalsSlice.actions;
 
 export default modalsSlice.reducer;

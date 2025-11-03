@@ -15,6 +15,7 @@ import ShareModal from "../../components/modals/ShareModal";
 import GeoFenceModal from "../../components/modals/GeofenceModal";
 import AssociateDevice from "../../components/modals/AssociateDevice";
 import { getDevices } from "../../services/monitorServices";
+import SupportModal from "../../components/modals/SupportModal";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
@@ -55,8 +56,13 @@ const TenantDashboard = () => {
     refetch();
   };
 
-  const { detailsModal, shareModal, geoFenceModal, associateDeviceModal } =
-    useSelector((state) => state.modals);
+  const {
+    detailsModal,
+    shareModal,
+    geoFenceModal,
+    associateDeviceModal,
+    supportModal,
+  } = useSelector((state) => state.modals);
   const { provider: mapProvider } = useSelector((state) => state.map);
 
   const [cars, setCars] = useState([]);
@@ -268,6 +274,8 @@ const TenantDashboard = () => {
       {geoFenceModal.show && <GeoFenceModal />}
 
       {associateDeviceModal.show && <AssociateDevice />}
+
+      {supportModal.show && <SupportModal />}
     </section>
   );
 };
