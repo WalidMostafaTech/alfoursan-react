@@ -250,7 +250,9 @@ const GoogleMapView = ({
     });
   }, [cars]);
 
+  // ##########################################
   // ✅ رسم الجيوفنس
+  // ##########################################
   useEffect(() => {
     const handleDrawingStart = (e) => {
       const { type } = e.detail;
@@ -303,7 +305,13 @@ const GoogleMapView = ({
             radius: radius.toFixed(2),
           };
 
-          alert("Geofence settings confirmed" + JSON.stringify(circleData));
+          dispatch(
+            openGeoFenceModal({ fenceData: circleData, mission: "add" })
+          );
+
+          console.log(
+            "Geofence settings confirmed" + JSON.stringify(circleData)
+          );
         } else if (ev.type === "polygon") {
           const path = overlay
             .getPath()
@@ -311,9 +319,14 @@ const GoogleMapView = ({
             .map((p) => p.toJSON());
           const polygonData = { type: "polygon", path };
 
-          alert("Geofence settings confirmed" + JSON.stringify(polygonData));
+          dispatch(
+            openGeoFenceModal({ fenceData: polygonData, mission: "add" })
+          );
+          console.log(
+            "Geofence settings confirmed" + JSON.stringify(polygonData)
+          );
         }
-        dispatch(openGeoFenceModal());
+
         overlay.setEditable(false);
         overlay.setDraggable(false);
         manager.setDrawingMode(null);
@@ -387,11 +400,150 @@ const GoogleMapView = ({
       }
     };
 
+    const handleClearShape = () => {
+      if (window.currentShape) {
+        window.currentShape.setMap(null); // 🧹 إزالة الشكل الحالي من الخريطة
+        window.currentShape = null;
+      }
+    };
+
+    const handleShowAllPolygons = (event) => {
+      const { fences } = event.detail;
+      if (!window.google || !mapRef.current || !fences) return;
+
+      const map = mapRef.current;
+
+      // 🧹 مسح الأشكال السابقة
+      if (window.allShapes) {
+        window.allShapes.forEach((shape) => shape.setMap(null));
+      }
+      window.allShapes = [];
+
+      const bounds = new window.google.maps.LatLngBounds();
+
+      fences.forEach((fence, index) => {
+        let shape;
+
+        if (
+          fence.type === "circle" &&
+          fence.latitude &&
+          fence.longitude &&
+          fence.radius
+        ) {
+          // ✅ رسم دائرة
+          shape = new window.google.maps.Circle({
+            center: {
+              lat: parseFloat(fence.latitude),
+              lng: parseFloat(fence.longitude),
+            },
+            radius: parseFloat(fence.radius),
+            strokeColor: "#FF5722",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: getColorByIndex(index),
+            fillOpacity: 0.35,
+            map: map,
+          });
+
+          // ✅ إضافة الدائرة إلى bounds
+          const center = shape.getCenter();
+          const radius = shape.getRadius();
+          const north = window.google.maps.geometry.spherical.computeOffset(
+            center,
+            radius,
+            0
+          );
+          const south = window.google.maps.geometry.spherical.computeOffset(
+            center,
+            radius,
+            180
+          );
+          const east = window.google.maps.geometry.spherical.computeOffset(
+            center,
+            radius,
+            90
+          );
+          const west = window.google.maps.geometry.spherical.computeOffset(
+            center,
+            radius,
+            270
+          );
+
+          bounds.extend(north);
+          bounds.extend(south);
+          bounds.extend(east);
+          bounds.extend(west);
+        } else if (
+          fence.type === "polygon" &&
+          fence.coordinates &&
+          fence.coordinates.length > 0
+        ) {
+          // ✅ تحويل الإحداثيات إذا كانت بشكل [lat, lng]
+          const paths = fence.coordinates.map((coord) =>
+            Array.isArray(coord) ? { lat: coord[0], lng: coord[1] } : coord
+          );
+
+          // ✅ رسم مضلع
+          shape = new window.google.maps.Polygon({
+            paths: paths,
+            strokeColor: "#2196F3",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: getColorByIndex(index),
+            fillOpacity: 0.35,
+            map: map,
+          });
+
+          // ✅ إضافة المضلع إلى bounds
+          paths.forEach((point) => bounds.extend(point));
+        }
+
+        if (shape) window.allShapes.push(shape);
+      });
+
+      // ✅ ضبط الخريطة لتناسب كل الـ polygons
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds);
+
+        // ✅ إضافة padding إذا كانت bounds صغيرة جداً
+        if (bounds.toSpan().lat() < 0.001 || bounds.toSpan().lng() < 0.001) {
+          map.setZoom(map.getZoom() - 2);
+        }
+      }
+    };
+
+    // ✅ دالة للحصول على ألوان مختلفة لكل polygon
+    const getColorByIndex = (index) => {
+      const colors = [
+        "#FF5722",
+        "#2196F3",
+        "#4CAF50",
+        "#FF9800",
+        "#9C27B0",
+        "#00BCD4",
+        "#8BC34A",
+        "#E91E63",
+        "#3F51B5",
+        "#009688",
+        "#CDDC39",
+        "#673AB7",
+      ];
+      return colors[index % colors.length];
+    };
+
     window.addEventListener("start-drawing", handleDrawingStart);
     window.addEventListener("edit-shape", handleEditShape);
+    window.addEventListener("clear-shape", handleClearShape);
+    window.addEventListener("show-all-polygons", handleShowAllPolygons);
     return () => {
       window.removeEventListener("start-drawing", handleDrawingStart);
       window.removeEventListener("edit-shape", handleEditShape);
+      window.removeEventListener("clear-shape", handleClearShape);
+      window.removeEventListener("show-all-polygons", handleShowAllPolygons);
+      if (window.allShapes) {
+        window.allShapes.forEach((shape) => shape.setMap(null));
+        window.allShapes = [];
+      }
     };
   }, []);
 

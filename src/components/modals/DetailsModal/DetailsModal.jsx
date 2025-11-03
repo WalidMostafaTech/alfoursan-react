@@ -94,7 +94,11 @@ const DetailsModal = () => {
               )}
               {activeTab === "membership" && <Membership />}
               {activeTab === "command" && (
-                <Command deviceSettings={deviceSettings} deviceID={id} />
+                <Command
+                  deviceSettings={deviceSettings}
+                  deviceID={id}
+                  refetch={refetch}
+                />
               )}
               {activeTab === "previousCommands" && (
                 <PreviousCommands

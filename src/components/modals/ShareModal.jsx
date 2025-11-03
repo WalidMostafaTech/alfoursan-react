@@ -69,9 +69,8 @@ const ShareModal = () => {
       setShareLink(data?.link);
       toast.success("✅ تم إنشاء الرابط بنجاح!");
     },
-    onError: (err) => {
-      console.error("❌ Error creating share link:", err);
-      toast.error("حدث خطأ أثناء إنشاء الرابط");
+    onError: (error) => {
+      toast.error(error?.response?.data?.message);
     },
   });
 

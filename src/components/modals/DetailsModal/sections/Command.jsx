@@ -6,7 +6,7 @@ import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
 import { sendCommand } from "../../../../services/monitorServices";
 
-const Command = ({ deviceID }) => {
+const Command = ({ deviceID, refetch }) => {
   const [activeCommand, setActiveCommand] = useState(0);
   const [selectedCommand, setSelectedCommand] = useState("");
 
@@ -79,10 +79,11 @@ const Command = ({ deviceID }) => {
     onSuccess: () => {
       toast.success("✅ Command sent successfully!");
       setSelectedCommand("");
+      refetch();
     },
     onError: (error) => {
       console.error(error);
-      toast.error("❌ Failed to send command");
+      toast.error(error?.response?.data?.message);
     },
   });
 

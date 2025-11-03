@@ -48,7 +48,7 @@ const Maintenance = ({ deviceID }) => {
       });
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error?.response?.data?.message);
     },
   });
 
@@ -73,7 +73,7 @@ const Maintenance = ({ deviceID }) => {
       refetch();
     },
     onError: (error) => {
-      toast.error("حدث خطأ أثناء الحذف ❌");
+      toast.error(error?.response?.data?.message);
       console.error(error);
     },
   });

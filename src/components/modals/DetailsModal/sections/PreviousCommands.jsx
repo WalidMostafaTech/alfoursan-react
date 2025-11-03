@@ -24,11 +24,11 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
     mutationFn: deleteCommand,
     onSuccess: () => {
       toast.success("✅ Command deleted successfully");
-      refetch?.(); // 🔄 تحديث البيانات لو متوفر refetch
+      refetch(); // 🔄 تحديث البيانات لو متوفر refetch
     },
     onError: (error) => {
       console.error(error);
-      toast.error("❌ Failed to delete command");
+      toast.error(error?.response?.data?.message);
     },
   });
 

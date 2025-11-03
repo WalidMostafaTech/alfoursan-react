@@ -46,8 +46,8 @@ const Alerts = ({ deviceSettings, refetch }) => {
       toast.success("تم تحديث إعدادات التنبيهات بنجاح ✅");
       refetch?.(); // لإعادة تحميل البيانات بعد التحديث
     },
-    onError: () => {
-      toast.error("حدث خطأ أثناء تحديث الإعدادات ❌");
+    onError: (error) => {
+      toast.error(error?.response?.data?.message);
     },
   });
 

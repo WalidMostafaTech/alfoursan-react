@@ -49,8 +49,8 @@ const Details = ({ deviceSettings, refetch }) => {
       toast.success("تم تحديث بيانات السيارة بنجاح ✅");
       refetch();
     },
-    onError: () => {
-      toast.error("حدث خطأ أثناء تحديث البيانات ❌");
+    onError: (error) => {
+      toast.error(error?.response?.data?.message);
     },
   });
 

@@ -64,7 +64,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
       refetch?.();
     },
     onError: (error) => {
-      toast.error("حدث خطأ أثناء إرسال المهمة ❌");
+      toast.error(error?.response?.data?.message);
       console.error(error);
     },
   });

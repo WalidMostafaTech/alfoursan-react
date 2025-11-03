@@ -3,13 +3,13 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   detailsModal: { show: false, section: "", id: null },
   shareModal: { show: false, imei: null },
-  polygonMenu: { show: false, section: "", id: null },
-  geoFenceModal: { show: false, section: "", id: null },
-  associateDeviceModal: { show: false, section: "", id: null },
+  polygonMenu: { show: false },
+  geoFenceModal: { show: false, fenceData: {}, mission: "" },
+  associateDeviceModal: { show: false, id: null },
 };
 
 const modalsSlice = createSlice({
-  name: "modal",
+  name: "modals",
   initialState,
   reducers: {
     // ✅ Details modal
@@ -31,30 +31,29 @@ const modalsSlice = createSlice({
     },
 
     // ✅ Polygon menu
-    openPolygonMenu: (state, action) => {
-      const { section = "", id = null } = action.payload || {};
-      state.polygonMenu = { show: true, section, id };
+    openPolygonMenu: (state) => {
+      state.polygonMenu = { show: true };
     },
     closePolygonMenu: (state) => {
-      state.polygonMenu = { show: false, section: "", id: null };
+      state.polygonMenu = { show: false };
     },
 
     // ✅ GeoFence modal
     openGeoFenceModal: (state, action) => {
-      const { section = "", id = null } = action.payload || {};
-      state.geoFenceModal = { show: true, section, id };
+      const { fenceData = {}, mission = "" } = action.payload || {};
+      state.geoFenceModal = { show: true, fenceData, mission };
     },
     closeGeoFenceModal: (state) => {
-      state.geoFenceModal = { show: false, section: "", id: null };
+      state.geoFenceModal = { show: false, fenceData: {}, mission: "" };
     },
 
     // ✅ Associate Device modal
     openAssociateDeviceModal: (state, action) => {
-      const { section = "", id = null } = action.payload || {};
-      state.associateDeviceModal = { show: true, section, id };
+      const { id = null } = action.payload || {};
+      state.associateDeviceModal = { show: true, id };
     },
     closeAssociateDeviceModal: (state) => {
-      state.associateDeviceModal = { show: false, section: "", id: null };
+      state.associateDeviceModal = { show: false, id: null };
     },
   },
 });

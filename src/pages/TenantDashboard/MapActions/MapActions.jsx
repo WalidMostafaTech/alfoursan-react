@@ -1,8 +1,8 @@
 import { useSelector } from "react-redux";
 import MapSwitcher from "../../../components/common/MapSwitcher";
-import PolygonMenu from "../../../components/common/PolygonMenu";
 import ZoomBtns from "../../../components/common/ZoomBtns";
 import MapTypes from "../../../components/common/MapTypes";
+import PolygonMenu from "../../../components/modals/PolygonMenu";
 
 const MapActions = ({ setZoom, setViewState }) => {
   const { provider: mapProvider } = useSelector((state) => state.map);
