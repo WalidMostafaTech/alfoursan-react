@@ -7,6 +7,9 @@ const Home = React.lazy(() => import("../pages/Home/Home"));
 const TenantDashboard = React.lazy(() =>
   import("../pages/TenantDashboard/TenantDashboard")
 );
+const CarReplay = React.lazy(() =>
+  import("../pages/CarReplay/CarReplay")
+);
 
 const router = createBrowserRouter([
   {
@@ -15,6 +18,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "tenant-dashboard/monitoring", element: <TenantDashboard /> },
+      { path: "car-replay", element: <CarReplay /> },
     ],
   },
 ]);

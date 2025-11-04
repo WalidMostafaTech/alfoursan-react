@@ -11,7 +11,6 @@ const SideMenu = ({
   filteredCars,
   handleSelectCar,
   selectedCarId,
-  onSearch,
   isFetching,
   activeFilter,
   setActiveFilter,
@@ -46,7 +45,7 @@ const SideMenu = ({
             <IoMdClose size={28} />
           </button>
 
-          <Search onSearch={onSearch} />
+          <Search cars={cars} handleSelectCar={handleSelectCar} />
 
           {/* الفلاتر */}
           <Filters

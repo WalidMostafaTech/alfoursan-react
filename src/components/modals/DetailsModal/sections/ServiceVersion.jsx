@@ -32,11 +32,18 @@ const ServiceVersion = ({ deviceSettings }) => {
         {/* رقم السيارة واستهلاك الوقود */}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <MainInput id="iccid" label="iccid" disabled />
+          <MainInput
+            id="iccid"
+            label="iccid"
+            value={deviceSettings?.device.iccid}
+            disabled
+          />
           <MainInput id="status" label="حالة" disabled />
         </div>
 
-        <p className="text-sm text-gray-600">الموعد النهائي: 2026-04-27</p>
+        <p className="text-sm text-gray-600">
+          الموعد النهائي: {subscription?.expiry_date}
+        </p>
 
         {/* <FormBtn title="تحديث البيانات" /> */}
       </form>

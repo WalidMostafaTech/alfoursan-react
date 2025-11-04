@@ -92,7 +92,9 @@ const DetailsModal = () => {
               {activeTab === "serviceVersion" && (
                 <ServiceVersion deviceSettings={deviceSettings} />
               )}
-              {activeTab === "membership" && <Membership />}
+              {activeTab === "membership" && (
+                <Membership deviceSettings={deviceSettings} />
+              )}
               {activeTab === "command" && (
                 <Command
                   deviceSettings={deviceSettings}

@@ -1,24 +1,5 @@
-const Membership = () => {
-  const members = [
-    {
-      name: "أحمد محمد",
-      account: "ahmed123",
-      contact: "ahmed@example.com",
-      phone: "01012345678",
-      plan: "باقة الذهبية",
-      start: "2025-01-01",
-      end: "2026-01-01",
-    },
-    {
-      name: "سارة علي",
-      account: "sara_ali",
-      contact: "sara@example.com",
-      phone: "01098765432",
-      plan: "باقة الفضية",
-      start: "2025-03-15",
-      end: "2026-03-15",
-    },
-  ];
+const Membership = ({ deviceSettings }) => {
+  const subscription = deviceSettings?.subscription;
 
   return (
     <section className="overflow-x-auto p-4">
@@ -35,22 +16,17 @@ const Membership = () => {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
-          {members.map((member, index) => (
-            <tr
-              key={index}
-              className="hover:bg-gray-50 transition-colors duration-200"
-            >
-              <td className="py-3 px-4">{member.name}</td>
-              <td className="py-3 px-4">{member.account}</td>
-              <td className="py-3 px-4 text-mainColor font-medium">
-                {member.contact}
-              </td>
-              <td className="py-3 px-4">{member.phone}</td>
-              <td className="py-3 px-4">{member.plan}</td>
-              <td className="py-3 px-4">{member.start}</td>
-              <td className="py-3 px-4">{member.end}</td>
-            </tr>
-          ))}
+          <tr className="hover:bg-gray-50 transition-colors duration-200">
+            <td className="py-3 px-4">{subscription.client_name || "-"}</td>
+            <td className="py-3 px-4">{subscription.account || "-"}</td>
+            <td className="py-3 px-4 text-mainColor font-medium">
+              {subscription.contact || "-"}
+            </td>
+            <td className="py-3 px-4">{subscription.phone || "-"}</td>
+            <td className="py-3 px-4">{subscription.package_name_ar || "-"}</td>
+            <td className="py-3 px-4">{subscription.start_from || "-"}</td>
+            <td className="py-3 px-4">{subscription.expiry_date || "-"}</td>
+          </tr>
         </tbody>
       </table>
     </section>

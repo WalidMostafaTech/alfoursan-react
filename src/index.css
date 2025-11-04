@@ -52,3 +52,37 @@ body {
     }
   }
 }
+
+.htmlContent {
+  /* overflow-wrap: break-word;
+  overflow-x: auto; */
+
+  iframe {
+    max-width: 100%;
+    margin-inline: auto;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  ul {
+    list-style: disc;
+
+    li {
+      margin-inline-start: 1.25rem;
+    }
+  }
+
+  ol {
+    list-style: decimal;
+
+    li {
+      margin-inline-start: 1rem;
+    }
+  }
+}

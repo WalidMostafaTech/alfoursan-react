@@ -6,15 +6,10 @@ import api from "./api";
 //   return dummyData;
 // };
 
-export const getDevices = async (searchType, searchKey) => {
-  const params = {};
-
-  if (searchKey && searchType) {
-    params.search_key = searchKey;
-    params.search_type = searchType;
-  }
-
-  const { data } = await api.get("/data", { params });
+export const getDevices = async ({ queryKey }) => {
+  const [_key, params] = queryKey;
+  const { full } = params || {};
+  const { data } = await api.get(`/data${full ? "?full=1" : ""}`);
   return data.data;
 };
 
@@ -69,5 +64,10 @@ export const sendScheduledTask = async (id, formData) => {
 
 export const createShareLink = async (params) => {
   const { data } = await api.post(`/share-link`, params);
+  return data.data;
+};
+
+export const getSupport = async () => {
+  const { data } = await api.get(`/contact-text`);
   return data.data;
 };

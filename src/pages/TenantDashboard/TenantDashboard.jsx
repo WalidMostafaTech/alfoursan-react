@@ -16,6 +16,7 @@ import GeoFenceModal from "../../components/modals/GeofenceModal";
 import AssociateDevice from "../../components/modals/AssociateDevice";
 import { getDevices } from "../../services/monitorServices";
 import SupportModal from "../../components/modals/SupportModal";
+import { toast } from "react-toastify";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
@@ -36,25 +37,21 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 }
 
 const TenantDashboard = () => {
-  const [searchParams, setSearchParams] = useState({
-    searchType: "",
-    searchKey: "",
-  });
-
-  // ✅ جلب الأجهزة مع دعم البحث
   const {
     data: devices,
     isFetching,
-    refetch,
+    // refetch: refetchDevices,
   } = useQuery({
-    queryKey: ["devices", searchParams],
-    queryFn: () => getDevices(searchParams),
+    queryKey: ["devices", { full: false }], // أول استعلام بدون full=1
+    queryFn: getDevices,
   });
 
-  const handleSearchFromMenu = (type, key) => {
-    setSearchParams({ searchType: type, searchKey: key });
-    refetch();
-  };
+  // 🔁 استعلام تاني بدون loading (silent update)
+  const { refetch: refetchFullDevices } = useQuery({
+    queryKey: ["devices", { full: true }],
+    queryFn: getDevices,
+    enabled: false, // مش هيشتغل إلا لما نطلبه
+  });
 
   const {
     detailsModal,
@@ -101,28 +98,30 @@ const TenantDashboard = () => {
           lat: parseFloat(d.latitude),
           lng: parseFloat(d.longitude),
         },
-        bearing: 0,
-        speed: 0,
         address: d.address || "جارٍ التحديد...",
         lastUpdate: Date.now(),
       }));
       setCars(mappedCars);
       setIsInit(true);
 
-      if (mappedCars.length === 1) {
-        const onlyCar = mappedCars[0];
-        setCenter(onlyCar.position);
-        setZoom(18);
-        if (mapProvider === "mapbox") {
-          setViewState({
-            longitude: onlyCar.position.lng,
-            latitude: onlyCar.position.lat,
-            zoom: 18,
-          });
+      // 🔁 بعدها اضرب API تانية بـ full=1 (بدون لودينج)
+      refetchFullDevices().then((res) => {
+        const fullDevices = res.data?.devices;
+        if (fullDevices) {
+          const updatedCars = fullDevices.map((d) => ({
+            ...d,
+            position: {
+              lat: parseFloat(d.latitude),
+              lng: parseFloat(d.longitude),
+            },
+            address: d.address || "جارٍ التحديد...",
+            lastUpdate: Date.now(),
+          }));
+          setCars(updatedCars);
         }
-      }
+      });
     }
-  }, [devices, mapProvider]);
+  }, [devices, refetchFullDevices]);
 
   // 🔍 دوال العنوان (Google / Mapbox)
   const getGoogleAddress = (lat, lng, cb) => {
@@ -203,7 +202,7 @@ const TenantDashboard = () => {
       isNaN(lat) ||
       isNaN(lng)
     ) {
-      console.warn("❌ Invalid car position:", car);
+      toast.warning(" لا يمكن تحديد موقع هذه السيارة حاليًا");
       return setSelectedCarId(null);
     }
 
@@ -240,7 +239,6 @@ const TenantDashboard = () => {
         isFetching={isFetching}
         handleSelectCar={handleSelectCar}
         selectedCarId={selectedCarId}
-        onSearch={handleSearchFromMenu}
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
       />
