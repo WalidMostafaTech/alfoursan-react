@@ -6,17 +6,16 @@ import GoogleMapView from "./Maps/GoogleMapView";
 import MapboxMapView from "./Maps/MapboxMapView";
 import { useQuery } from "@tanstack/react-query";
 import useCarSocket from "../../hooks/useCarSocket";
-// import { getDevices } from "../../services/api";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import MapActions from "./MapActions/MapActions";
-import DetailsModal from "../../components/modals/DetailsModal/DetailsModal";
 import { useSelector } from "react-redux";
-import ShareModal from "../../components/modals/ShareModal";
-import GeoFenceModal from "../../components/modals/GeofenceModal";
-import AssociateDevice from "../../components/modals/AssociateDevice";
 import { getDevices } from "../../services/monitorServices";
-import SupportModal from "../../components/modals/SupportModal";
 import { toast } from "react-toastify";
+import DetailsModal from "../../components/modals/DetailsModal/DetailsModal";
+import ShareModal from "../../components/modals/ShareModal";
+import GeoFenceModal from "../../components/modals/GeoFenceModal";
+import AssociateDevice from "../../components/modals/AssociateDevice";
+import SupportModal from "../../components/modals/SupportModal";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
@@ -37,13 +36,11 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 }
 
 const TenantDashboard = () => {
-  const {
-    data: devices,
-    isFetching,
-    // refetch: refetchDevices,
-  } = useQuery({
-    queryKey: ["devices", { full: false }], // أول استعلام بدون full=1
+  const { data: devices, isFetching } = useQuery({
+    queryKey: ["devices", { full: false }],
     queryFn: getDevices,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // 🔁 استعلام تاني بدون loading (silent update)

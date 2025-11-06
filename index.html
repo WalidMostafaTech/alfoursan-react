@@ -10,53 +10,15 @@
       rel="stylesheet"
     />
     <title>Al Foursan</title>
+
+    <!-- 🧩 نضيف هنا متغير الـ API -->
+    <script>
+      window.__API_BASE_URL__ =
+        "https://alfursan-alarb-for-rent-car.alfursantracking.com/monitor-api/monitor";
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-
-    <script>
-      function editShape({ type, data }) {
-        if (!type || !data) {
-          console.error("❌ لازم تبعت type و data");
-          return;
-        }
-
-        let shapeData;
-
-        if (type === "polygon") {
-          if (!Array.isArray(data.polygonData)) {
-            console.error("❌ لازم تبعت polygonData كمصفوفة من الإحداثيات");
-            return;
-          }
-
-          shapeData = {
-            type: "polygon",
-            polygonData: data.polygonData,
-          };
-        } else if (type === "circle") {
-          if (!data.center || typeof data.radius !== "number") {
-            console.error("❌ لازم تبعت center و radius");
-            return;
-          }
-
-          shapeData = {
-            type: "circle",
-            center: data.center,
-            radius: data.radius,
-          };
-        } else {
-          console.error("❌ نوع غير معروف:", type);
-          return;
-        }
-
-        console.log("📤 إرسال شكل للتعديل:", shapeData);
-        window.dispatchEvent(
-          new CustomEvent("edit-shape", { detail: shapeData })
-        );
-      }
-
-      window.editShape = editShape;
-    </script>
   </body>
 </html>

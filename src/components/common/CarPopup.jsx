@@ -20,6 +20,7 @@ import {
   openShareModal,
 } from "../../store/modalsSlice";
 import { PiPolygon } from "react-icons/pi";
+import { Link } from "react-router-dom";
 
 const CarPopup = ({ car }) => {
   const carDetails = [
@@ -79,14 +80,14 @@ const CarPopup = ({ car }) => {
         >
           <FiNavigation />
         </a>
-        <a
+        <Link
           title="Playback"
-          href={car.replay_url}
           target="_blank"
+          to={`/car-replay/${car.serial_number}`}
           className="cursor-pointer hover:text-mainColor"
         >
           <FiPlayCircle />
-        </a>
+        </Link>
         <span
           title="Command"
           className="cursor-pointer hover:text-mainColor"

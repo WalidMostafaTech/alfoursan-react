@@ -1,6 +1,6 @@
 import { GoogleMap, InfoWindow } from "@react-google-maps/api";
 import CarPopup from "../../../components/common/CarPopup";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { useDispatch, useSelector } from "react-redux";
 import { openGeoFenceModal } from "../../../store/modalsSlice";
@@ -25,6 +25,22 @@ const GoogleMapView = ({
     mapRef.current = map;
   };
 
+  // ✅ تثبيت بيانات السيارات باستخدام useMemo
+  const memoizedCars = useMemo(
+    () => cars,
+    [
+      JSON.stringify(
+        cars.map((c) => ({
+          id: c.id,
+          lat: c.position?.lat,
+          lng: c.position?.lng,
+          bearing: c.bearing,
+          speed: c.speed,
+        }))
+      ),
+    ]
+  );
+
   // ✅ إنشاء ماركر بعلامة Symbol
   const createRotatedMarker = (car, map, showDeviceName) => {
     const rotation = car.bearing || 0;
@@ -47,38 +63,35 @@ const GoogleMapView = ({
       },
     };
 
-    // ✅ نضيف اللابل فقط لو showDeviceName مفعّل
-    if (showDeviceName) {
-      markerOptions.label = {
-        text: car.name || "بدون اسم",
-        color: "#212121",
-        fontWeight: "bold",
-        fontSize: "12px",
-        className: `car-label`,
-      };
-    }
+    // if (showDeviceName) {
+    //   markerOptions.label = {
+    //     text: car.name || "بدون اسم",
+    //     color: "#212121",
+    //     fontWeight: "bold",
+    //     fontSize: "12px",
+    //     className: "car-label",
+    //   };
+    // }
 
     const marker = new window.google.maps.Marker(markerOptions);
+
     marker.addListener("click", () => handleSelectCar(car));
     return marker;
   };
 
-  // ✅ إعادة بناء الماركرات عند فتح الخريطة من جديد بعد تغيير الـ provider
+  // ✅ إعادة بناء الماركرات فقط عند تغيير provider أو IDs
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
 
-    // لو الماركرات موجودة من قبل (من جلسة Google سابقة) نحذفها
     if (window.carMarkers) {
       Array.from(window.carMarkers.values()).forEach((m) => m.setMap(null));
     }
 
-    // إعادة التهيئة بالكامل
     window.carMarkers = new Map();
     window.clusterMarkers = new Set();
     window.carClusterer = null;
 
-    // بناء الماركرات من الصفر
-    cars.forEach((car) => {
+    memoizedCars.forEach((car) => {
       if (!car.position) return;
       const marker = new window.google.maps.Marker({
         position: car.position,
@@ -93,17 +106,17 @@ const GoogleMapView = ({
           scale: 0.07,
           rotation: car.bearing || 0,
           anchor: new window.google.maps.Point(156, 256),
-          labelOrigin: new window.google.maps.Point(156, 700), // ⬅️ نزّل اللابل لتحت شوية
+          labelOrigin: new window.google.maps.Point(156, 700),
         },
-        label: showDeviceName
-          ? {
-              text: car.name || "بدون اسم",
-              color: "#212121",
-              fontWeight: "bold",
-              fontSize: "12px",
-              className: `car-label`,
-            }
-          : null,
+        // label: showDeviceName
+        //   ? {
+        //       text: car.name || "بدون اسم",
+        //       color: "#212121",
+        //       fontWeight: "bold",
+        //       fontSize: "12px",
+        //       className: "car-label",
+        //     }
+        //   : null,
       });
       marker.addListener("click", () => handleSelectCar(car));
       window.carMarkers.set(car.id, marker);
@@ -113,26 +126,25 @@ const GoogleMapView = ({
   // ✅ تحديث ظهور أو إخفاء أسماء الأجهزة بدون إعادة بناء الماركرات
   useEffect(() => {
     if (!window.carMarkers) return;
-
     window.carMarkers.forEach((marker, id) => {
-      const car = cars.find((c) => c.id === id);
+      const car = memoizedCars.find((c) => c.id === id);
       if (!car) return;
 
-      if (showDeviceName) {
-        marker.setLabel({
-          text: car.name || "بدون اسم",
-          color: "#212121",
-          fontWeight: "bold",
-          fontSize: "12px",
-          className: "car-label",
-        });
-      } else {
-        marker.setLabel(null);
-      }
+      // if (showDeviceName) {
+      //   marker.setLabel({
+      //     text: car.name || "بدون اسم",
+      //     color: "#212121",
+      //     fontWeight: "bold",
+      //     fontSize: "12px",
+      //     className: "car-label",
+      //   });
+      // } else {
+      //   marker.setLabel(null);
+      // }
     });
-  }, [showDeviceName, cars]);
+  }, [showDeviceName, memoizedCars]);
 
-  // ✅ بناء الماركرات والتجميع
+  // ✅ إدارة الماركرات والتجميع (بناء/تحديث فقط عند تغير السيارات فعلياً)
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
     const map = mapRef.current;
@@ -141,40 +153,38 @@ const GoogleMapView = ({
     if (!window.clusterMarkers) window.clusterMarkers = new Set();
 
     const markers = window.carMarkers;
-    const currentIds = cars.map((c) => c.id);
+    const currentIds = memoizedCars.map((c) => c.id);
     const existingIds = Array.from(markers.keys());
 
-    // ✅ إنشاء أو تحديث الماركرات
-    cars.forEach((car) => {
+    memoizedCars.forEach((car) => {
       const color =
         car.speed > 5 ? "#1dbf73" : car.speed === 0 ? "#e53935" : "#1e88e5";
       const rotation = car.bearing || 0;
 
       let marker = markers.get(car.id);
       if (!marker) {
-        marker = createRotatedMarker(car, map);
+        marker = createRotatedMarker(car, map, showDeviceName);
         markers.set(car.id, marker);
       } else {
         marker.setPosition(car.position);
+        const icon = marker.getIcon();
+        marker.setIcon({ ...icon, fillColor: color, rotation });
         if (showDeviceName) {
           marker.setLabel({
             text: car.name || "بدون اسم",
             color: "#212121",
             fontWeight: "bold",
             fontSize: "12px",
-            className: `car-label`,
+            className: "car-label",
           });
         } else {
           marker.setLabel(null);
         }
-        const icon = marker.getIcon();
-        marker.setIcon({ ...icon, fillColor: color, rotation });
       }
 
       if (!clusters && !marker.getMap()) marker.setMap(map);
     });
 
-    // ✅ حذف الماركرات اللي اتشالت
     existingIds.forEach((id) => {
       if (!currentIds.includes(id)) {
         const m = markers.get(id);
@@ -212,7 +222,6 @@ const GoogleMapView = ({
           }
         });
 
-        // ✅ الإصدار الجديد يستخدم render() بدلاً من repaint()
         clusterer.render();
       }
     } else {
@@ -226,13 +235,12 @@ const GoogleMapView = ({
         if (!m.getMap()) m.setMap(map);
       });
     }
-  }, [cars, clusters, showDeviceName]);
+  }, [memoizedCars, clusters, showDeviceName]);
 
-  // ✅ تحديث المواقع والاتجاه أثناء الحركة
+  // ✅ تحديث المواقع والاتجاه أثناء الحركة (فقط بدون إعادة بناء)
   useEffect(() => {
     if (!window.carMarkers) return;
-
-    cars.forEach((car) => {
+    memoizedCars.forEach((car) => {
       const marker = window.carMarkers.get(car.id);
       if (marker) {
         marker.setPosition(car.position);
@@ -246,7 +254,7 @@ const GoogleMapView = ({
         }
       }
     });
-  }, [cars]);
+  }, [memoizedCars]);
 
   // ##########################################
   // ✅ رسم الجيوفنس
@@ -306,10 +314,6 @@ const GoogleMapView = ({
           dispatch(
             openGeoFenceModal({ fenceData: circleData, mission: "add" })
           );
-
-          console.log(
-            "Geofence settings confirmed" + JSON.stringify(circleData)
-          );
         } else if (ev.type === "polygon") {
           const path = overlay
             .getPath()
@@ -319,9 +323,6 @@ const GoogleMapView = ({
 
           dispatch(
             openGeoFenceModal({ fenceData: polygonData, mission: "add" })
-          );
-          console.log(
-            "Geofence settings confirmed" + JSON.stringify(polygonData)
           );
         }
 
@@ -400,7 +401,7 @@ const GoogleMapView = ({
 
     const handleClearShape = () => {
       if (window.currentShape) {
-        window.currentShape.setMap(null); // 🧹 إزالة الشكل الحالي من الخريطة
+        window.currentShape.setMap(null);
         window.currentShape = null;
       }
     };
@@ -411,7 +412,6 @@ const GoogleMapView = ({
 
       const map = mapRef.current;
 
-      // 🧹 مسح الأشكال السابقة
       if (window.allShapes) {
         window.allShapes.forEach((shape) => shape.setMap(null));
       }
@@ -428,7 +428,6 @@ const GoogleMapView = ({
           fence.longitude &&
           fence.radius
         ) {
-          // ✅ رسم دائرة
           shape = new window.google.maps.Circle({
             center: {
               lat: parseFloat(fence.latitude),
@@ -443,7 +442,6 @@ const GoogleMapView = ({
             map: map,
           });
 
-          // ✅ إضافة الدائرة إلى bounds
           const center = shape.getCenter();
           const radius = shape.getRadius();
           const north = window.google.maps.geometry.spherical.computeOffset(
@@ -476,12 +474,10 @@ const GoogleMapView = ({
           fence.coordinates &&
           fence.coordinates.length > 0
         ) {
-          // ✅ تحويل الإحداثيات إذا كانت بشكل [lat, lng]
           const paths = fence.coordinates.map((coord) =>
             Array.isArray(coord) ? { lat: coord[0], lng: coord[1] } : coord
           );
 
-          // ✅ رسم مضلع
           shape = new window.google.maps.Polygon({
             paths: paths,
             strokeColor: "#2196F3",
@@ -492,25 +488,21 @@ const GoogleMapView = ({
             map: map,
           });
 
-          // ✅ إضافة المضلع إلى bounds
           paths.forEach((point) => bounds.extend(point));
         }
 
         if (shape) window.allShapes.push(shape);
       });
 
-      // ✅ ضبط الخريطة لتناسب كل الـ polygons
       if (!bounds.isEmpty()) {
         map.fitBounds(bounds);
 
-        // ✅ إضافة padding إذا كانت bounds صغيرة جداً
         if (bounds.toSpan().lat() < 0.001 || bounds.toSpan().lng() < 0.001) {
           map.setZoom(map.getZoom() - 2);
         }
       }
     };
 
-    // ✅ دالة للحصول على ألوان مختلفة لكل polygon
     const getColorByIndex = (index) => {
       const colors = [
         "#FF5722",
@@ -561,7 +553,7 @@ const GoogleMapView = ({
       >
         {selectedCarId &&
           (() => {
-            const car = cars.find((c) => c.id === selectedCarId);
+            const car = memoizedCars.find((c) => c.id === selectedCarId);
             if (!car) return null;
             return (
               <InfoWindow

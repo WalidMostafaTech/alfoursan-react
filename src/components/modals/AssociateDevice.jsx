@@ -7,6 +7,7 @@ import MainInput from "../form/MainInput";
 import {
   addDeviceToFence,
   getFenceDevices,
+  removeDeviceFromFence,
 } from "../../services/fencesServices";
 import Loader from "../Loading/Loader";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -20,7 +21,7 @@ const AssociateDevice = () => {
   const [status, setStatus] = useState("all");
   const [searchStatus, setSearchStatus] = useState("all");
 
-  const [currentPage, setCurrentPage] = useState(1);
+  // const [currentPage, setCurrentPage] = useState(1);
   const [selectedDevices, setSelectedDevices] = useState([]);
 
   const {
@@ -45,6 +46,20 @@ const AssociateDevice = () => {
     },
     onError: (error) => {
       console.error("خطأ أثناء الربط:", error);
+      toast.error(error?.response?.data?.message);
+    },
+  });
+
+  const { mutate: removeDevices, isPending: isRemoving } = useMutation({
+    mutationFn: () =>
+      removeDeviceFromFence(associateDeviceModal.id, selectedDevices),
+    onSuccess: () => {
+      toast.success("تم حذف الأجهزة بنجاح ✅");
+      refetch();
+      setSelectedDevices([]);
+    },
+    onError: (error) => {
+      console.error("خطاء في حذف الأجهزة:", error);
       toast.error(error?.response?.data?.message);
     },
   });
@@ -162,8 +177,12 @@ const AssociateDevice = () => {
                   {isAdding ? "جارٍ الربط..." : "ربط مجموعة"}
                 </button>
 
-                <button className="btn btn-error bg-red-700 text-white">
-                  إلغاء مجموعة
+                <button
+                  onClick={() => removeDevices()}
+                  className="btn btn-error "
+                  disabled={selectedDevices.length === 0 || isRemoving}
+                >
+                  {isRemoving ? "جارٍ الحذف..." : "حذف مجموعة"}
                 </button>
               </div>
 

@@ -71,3 +71,10 @@ export const getSupport = async () => {
   const { data } = await api.get(`/contact-text`);
   return data.data;
 };
+
+export const getReplay = async ({ serial_number, from_time, to_time }) => {
+  const { data } = await api.get(`/replay`, {
+    params: { serial_number, from_time, to_time },
+  });
+  return data.data;
+};

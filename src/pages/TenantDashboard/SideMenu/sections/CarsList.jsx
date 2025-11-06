@@ -8,6 +8,7 @@ import {
 import { useDispatch } from "react-redux";
 import Loader from "../../../../components/Loading/Loader";
 import { getCarStatus } from "../../../../utils/getCarStatus";
+import { Link } from "react-router-dom";
 
 const CarsList = ({ handleSelectCar, selectedCarId, cars, isFetching }) => {
   const dispatch = useDispatch();
@@ -65,13 +66,13 @@ const CarsList = ({ handleSelectCar, selectedCarId, cars, isFetching }) => {
                   </a>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item asChild>
-                  <a
-                    href={car.replay_url}
+                  <Link
+                    to={`/car-replay/${car.serial_number}`}
                     target="_blank"
                     className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"
                   >
                     Playback
-                  </a>
+                  </Link>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor"

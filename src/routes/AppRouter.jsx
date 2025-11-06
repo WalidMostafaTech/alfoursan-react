@@ -18,7 +18,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "tenant-dashboard/monitoring", element: <TenantDashboard /> },
-      { path: "car-replay", element: <CarReplay /> },
+      { path: "car-replay/:serial_number", element: <CarReplay /> },
     ],
   },
 ]);

@@ -47,3 +47,10 @@ export const addDeviceToFence = async (id, device_ids) => {
   });
   return data?.data;
 };
+
+export const removeDeviceFromFence = async (id, device_ids) => {
+  const { data } = await api.post(`/fences/${id}/devices/unsync`, {
+    device_ids,
+  });
+  return data?.data;
+};
