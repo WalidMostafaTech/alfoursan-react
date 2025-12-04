@@ -23,7 +23,6 @@ const tabs = [
   { key: "alerts", label: "إعدادات التنبيهات" },
   { key: "maintenance", label: "صيانة الاميال" },
   { key: "specificTask", label: "تعيين مهمة محددة بوقت" },
-  // { key: "reminders", label: "تذكيرات مخصصة" },
 ];
 
 const DetailsModal = () => {

@@ -66,8 +66,10 @@ const ShareModal = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: createShareLink,
     onSuccess: (data) => {
-      setShareLink(data?.link);
-      toast.success("✅ تم إنشاء الرابط بنجاح!");
+      console.log("daadadad", data);
+
+      setShareLink(data?.url);
+      toast.success(" تم إنشاء الرابط بنجاح!");
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message);
@@ -89,7 +91,6 @@ const ShareModal = () => {
       payload[`commands[${index}]`] = cmd;
     });
 
-    console.log("🚀 payload:", payload);
     mutate(payload);
   };
 
@@ -115,7 +116,9 @@ const ShareModal = () => {
           {/* مدة صلاحية الرابط */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-medium text-sm mb-2">مدة صلاحية الرابط</span>
+              <span className="label-text font-medium text-sm mb-2">
+                مدة صلاحية الرابط
+              </span>
             </label>
             <div className="flex gap-2">
               <MainInput
@@ -138,7 +141,9 @@ const ShareModal = () => {
           {/* الأوامر */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-medium mb-1 text-sm">الأوامر</span>
+              <span className="label-text font-medium mb-1 text-sm">
+                الأوامر
+              </span>
             </label>
             <div className="border border-base-300 rounded-lg p-3 bg-base-100 flex flex-col gap-2 max-h-40 overflow-y-auto">
               {commands.map((command, index) => (
@@ -176,7 +181,10 @@ const ShareModal = () => {
                   <MainInput type="text" value={shareLink} readOnly />
                 </div>
                 <button
-                  onClick={() => copyToClipboard(shareLink)}
+                  onClick={() => {
+                    copyToClipboard(shareLink);
+                    toast.success("تم نسخ الرابط بنجاح");
+                  }}
                   type="button"
                   className="btn btn-sm join-item"
                 >

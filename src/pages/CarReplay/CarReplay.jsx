@@ -3,8 +3,14 @@ import {
   GoogleMap,
   Marker,
   Polyline,
+  InfoWindow,
   useLoadScript,
 } from "@react-google-maps/api";
+import { GiPathDistance } from "react-icons/gi";
+import { IoMdSpeedometer } from "react-icons/io";
+import { IoCalendarSharp } from "react-icons/io5";
+import { IoMdLocate } from "react-icons/io";
+
 import { carPath } from "../../services/carPath";
 import ReplayControls from "./ReplayControls/ReplayControls";
 import ReplayFilter from "./ReplayFilter/ReplayFilter";
@@ -14,6 +20,8 @@ import { getReplay } from "../../services/monitorServices";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loading/Loader";
 import LoadingPage from "../../components/Loading/LoadingPage";
+import MapTypes from "../../components/common/MapTypes";
+import TraceColor from "./TraceColor/TraceColor";
 
 const containerStyle = {
   width: "100%",
@@ -22,6 +30,9 @@ const containerStyle = {
 
 const CarReplay = () => {
   const { serial_number } = useParams();
+  const [showInfo, setShowInfo] = useState(false);
+
+  const [mapType, setMapType] = useState("roadmap");
 
   const today = new Date().toISOString().split("T")[0];
   const [dateRange, setDateRange] = useState({
@@ -30,7 +41,7 @@ const CarReplay = () => {
   });
 
   const {
-    data: points = [],
+    data: { data: points = [], meta } = [],
     isLoading,
     refetch,
   } = useQuery({
@@ -51,6 +62,37 @@ const CarReplay = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const intervalRef = useRef(null);
+  // ✅ استخدم موقع افتراضي لو مفيش نقاط
+  const defaultPosition = { lat: 23.8859, lng: 45.0792 };
+
+  const [mapRef, setMapRef] = useState(null);
+  const [initialCenter, setInitialCenter] = useState(defaultPosition);
+
+  // تحديد نقطة البداية أول مرة فقط
+  useEffect(() => {
+    if (points.length > 0) {
+      setInitialCenter({ lat: points[0].latitude, lng: points[0].longitude });
+    }
+  }, [points]);
+
+  useEffect(() => {
+    if (!mapRef || points.length === 0) return;
+
+    const carLatLng = new window.google.maps.LatLng(
+      currentPoint.latitude,
+      currentPoint.longitude
+    );
+
+    const bounds = mapRef.getBounds();
+
+    // لو bounds لسه مش جاهزة (أول ثانية بعد التحميل)
+    if (!bounds) return;
+
+    // لو العربية خرجت بره الشاشة → حرّك الخريطة
+    if (!bounds.contains(carLatLng)) {
+      mapRef.panTo(carLatLng);
+    }
+  }, [currentIndex, mapRef, points]);
 
   useEffect(() => {
     if (isPlaying && points.length > 0) {
@@ -110,30 +152,34 @@ const CarReplay = () => {
     refetch();
   };
 
-  // ✅ استخدم موقع افتراضي لو مفيش نقاط
-  const defaultPosition = { lat: 23.8859, lng: 45.0792 };
   const currentPoint = points[currentIndex] || {
     latitude: 23.8859,
     longitude: 45.0792,
     direction: 0,
   };
 
-  const fullPath =
-    points.length > 0
-      ? points.map((p) => ({ lat: p.latitude, lng: p.longitude }))
-      : [];
-  const traveledPath = fullPath.slice(0, currentIndex + 1);
+  const formatDate = (dateString) => {
+    const formattedDate = new Date(dateString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
+    return formattedDate;
+  };
 
   return (
     <div className="relative">
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={
-          points.length > 0
-            ? { lat: points[0].latitude, lng: points[0].longitude }
-            : defaultPosition
-        }
+        onLoad={(map) => setMapRef(map)}
+        center={initialCenter} // ثابت ولن يتغير
         zoom={points.length > 0 ? 16 : 6}
+        mapTypeId={mapType}
       >
         {/* المسار الكامل */}
         {points.length > 0 && (
@@ -259,12 +305,49 @@ const CarReplay = () => {
               rotation: currentPoint.direction,
               scaledSize: new window.google.maps.Size(40, 40),
             }}
-          />
+            onClick={() => setShowInfo(true)} // لما تضغط على العربية
+          >
+            {showInfo && (
+              <InfoWindow onCloseClick={() => setShowInfo(false)}>
+                <div className="p-2 w-[400px]">
+                  <h3 className="text-lg font-bold text-mainColor mb-4">
+                    {meta?.name}
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <p className="flex items-center gap-1 font-medium">
+                      <IoMdSpeedometer size={16} />
+                      {currentPoint.speed} km/h
+                    </p>
+                    <p className="flex items-center gap-1 font-medium">
+                      <IoCalendarSharp size={16} />
+                      {formatDate(currentPoint.date)}
+                    </p>
+                    <p className="flex items-center gap-1 font-medium">
+                      <GiPathDistance size={16} />
+                      {currentPoint.distance.toFixed(6)} km
+                    </p>
+                    <p className="flex items-center gap-1 font-medium">
+                      <IoMdLocate size={16} />
+                      {currentPoint.latitude.toFixed(6)},
+                      {currentPoint.longitude.toFixed(6)}
+                    </p>
+                  </div>
+                </div>
+              </InfoWindow>
+            )}
+          </Marker>
         )}
       </GoogleMap>
 
+      <TraceColor />
+
       {/* فلتر التاريخ */}
       <ReplayFilter onDateChange={handleDateChange} />
+
+      <div className="absolute top-[15%] right-3 z-20 space-y-2 flex flex-col items-center">
+        <MapTypes onChange={setMapType} />
+      </div>
 
       {/* الكنترولز */}
       {isLoading ? (

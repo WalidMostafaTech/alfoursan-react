@@ -3,7 +3,7 @@ import { MdLayers } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { setMapType } from "../../store/mapSlice";
 
-const MapTypes = () => {
+const MapTypes = ({ onChange }) => {
   const dispatch = useDispatch();
   const { mapType } = useSelector((state) => state.map);
 
@@ -13,6 +13,14 @@ const MapTypes = () => {
     { label: "تضاريس", value: "terrain" },
     { label: "هجين", value: "hybrid" },
   ];
+
+  const handleMapTypeChange = (type) => {
+    if (onChange) {
+      onChange(type);
+    } else {
+      dispatch(setMapType(type));
+    }
+  };
 
   return (
     <DropdownMenu.Root>
@@ -37,7 +45,7 @@ const MapTypes = () => {
                   ? "bg-mainColor text-white"
                   : "hover:bg-mainColor/10 hover:text-mainColor"
               }`}
-              onSelect={() => dispatch(setMapType(type.value))}
+              onSelect={() => handleMapTypeChange(type.value)}
             >
               {type.label}
             </DropdownMenu.Item>

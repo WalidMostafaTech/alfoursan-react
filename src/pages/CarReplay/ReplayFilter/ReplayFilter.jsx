@@ -26,8 +26,55 @@ const ReplayFilter = ({ onDateChange }) => {
       return;
     }
 
-    // استدعاء الدالة القادمة من CarReplay
     onDateChange(from, to);
+  };
+
+  // دوال اختصارات التواريخ
+  const setYesterday = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const y = d.toISOString().split("T")[0];
+    setFrom(y);
+    setTo(y);
+    onDateChange(y, y);
+  };
+
+  const setToday = () => {
+    setFrom(today);
+    setTo(today);
+    onDateChange(today, today);
+  };
+
+  const setThisWeek = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday
+    const start = new Date(now);
+    start.setDate(now.getDate() - dayOfWeek); // بداية الأسبوع
+
+    const weekStart = start.toISOString().split("T")[0];
+    const weekEnd = today;
+
+    setFrom(weekStart);
+    setTo(weekEnd);
+    onDateChange(weekStart, weekEnd);
+  };
+
+  const setLastWeek = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+
+    const end = new Date(now);
+    end.setDate(now.getDate() - dayOfWeek - 1);
+
+    const start = new Date(end);
+    start.setDate(end.getDate() - 6);
+
+    const lastWeekStart = start.toISOString().split("T")[0];
+    const lastWeekEnd = end.toISOString().split("T")[0];
+
+    setFrom(lastWeekStart);
+    setTo(lastWeekEnd);
+    onDateChange(lastWeekStart, lastWeekEnd);
   };
 
   return (
@@ -37,7 +84,9 @@ const ReplayFilter = ({ onDateChange }) => {
         className="flex flex-wrap items-center justify-center gap-4"
       >
         <div className="flex items-center gap-1">
-          <label className="text-sm" htmlFor="from">From:</label>
+          <label className="text-sm" htmlFor="from">
+            From:
+          </label>
           <MainInput
             id="from"
             type="date"
@@ -48,7 +97,9 @@ const ReplayFilter = ({ onDateChange }) => {
         </div>
 
         <div className="flex items-center gap-1">
-          <label className="text-sm" htmlFor="to">To:</label>
+          <label className="text-sm" htmlFor="to">
+            To:
+          </label>
           <MainInput
             id="to"
             type="date"
@@ -57,6 +108,39 @@ const ReplayFilter = ({ onDateChange }) => {
             onChange={(e) => setTo(e.target.value)}
           />
         </div>
+
+        {/* الاختصارات */}
+        <button
+          type="button"
+          onClick={setYesterday}
+          className="text-mainColor cursor-pointer hover:underline"
+        >
+          Yesterday
+        </button>
+
+        <button
+          type="button"
+          onClick={setToday}
+          className="text-mainColor cursor-pointer hover:underline"
+        >
+          Today
+        </button>
+
+        <button
+          type="button"
+          onClick={setThisWeek}
+          className="text-mainColor cursor-pointer hover:underline"
+        >
+          This Week
+        </button>
+
+        <button
+          type="button"
+          onClick={setLastWeek}
+          className="text-mainColor cursor-pointer hover:underline"
+        >
+          Last Week
+        </button>
 
         <button
           type="submit"

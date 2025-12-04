@@ -5,13 +5,22 @@ const getTimeDiffString = (pastTime) => {
   );
   const pastSaudi = new Date(pastTime);
 
-  const diffMs = nowSaudi - pastSaudi;
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const hours = Math.floor(diffMinutes / 60);
-  const minutes = diffMinutes % 60;
+  let diffMs = nowSaudi - pastSaudi;
+  if (diffMs < 0) diffMs = 0;
 
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m`;
+  const minutesTotal = Math.floor(diffMs / (1000 * 60));
+  const days = Math.floor(minutesTotal / (60 * 24));
+  const hours = Math.floor((minutesTotal % (60 * 24)) / 60);
+  const minutes = minutesTotal % 60;
+
+  // ⏱ لو أقل من 24 ساعة → ساعات ودقايق فقط
+  if (days === 0) {
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  }
+
+  // 📅 لو أكتر من يوم → يوم + ساعة + دقيقة
+  return `${days}d ${hours}h ${minutes}m`;
 };
 
 function getTimeDiffDetailed(lastSignelGPS) {
