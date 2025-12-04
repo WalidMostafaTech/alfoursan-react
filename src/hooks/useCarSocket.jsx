@@ -38,7 +38,7 @@ const useCarSocket = (cars, setCars, isInit) => {
                       lng: parseFloat(gps.longitude),
                     },
                     speed: data.data.speed || 0,
-                    bearing: data.data.direction,
+                    direction: data.data.direction,
                     status: data.data.statusDecoded?.accOn ? "on" : "off",
                     lastUpdate: Date.now(),
                     lastSignel: data.data.date,

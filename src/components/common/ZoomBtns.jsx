@@ -15,7 +15,7 @@ const ZoomBtns = ({ setZoom, mapProvider, setViewState }) => {
         }}
         className="p-2 cursor-pointer hover:bg-gray-100"
       >
-        <FiPlus className="text-2xl text-gray-700" />
+        <FiPlus className="text-xl text-gray-700" />
       </button>
 
       <button
@@ -30,7 +30,7 @@ const ZoomBtns = ({ setZoom, mapProvider, setViewState }) => {
         }}
         className="p-2 cursor-pointer hover:bg-gray-100"
       >
-        <FiMinus className="text-2xl text-gray-700" />
+        <FiMinus className="text-xl text-gray-700" />
       </button>
     </div>
   );

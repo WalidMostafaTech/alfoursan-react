@@ -27,7 +27,7 @@
           strokeColor: "#000",
           strokeWeight: 0.7,
           scale: 0.07,
-          rotation: car.bearing || 0,
+          rotation: car.direction || 0,
           anchor: new window.google.maps.Point(156, 256),
           labelOrigin: new window.google.maps.Point(156, 700), // ⬅️ نزّل اللابل لتحت شوية
         },
@@ -94,7 +94,7 @@
     cars.forEach((car) => {
       const color =
         car.speed > 5 ? "#1dbf73" : car.speed === 0 ? "#e53935" : "#1e88e5";
-      const rotation = car.bearing || 0;
+      const rotation = car.direction || 0;
 
       let marker = markers.get(car.id);
       if (!marker) {
@@ -184,7 +184,7 @@
       const marker = window.carMarkers.get(car.id);
       if (marker) {
         marker.setPosition(car.position);
-        const rotation = car.bearing || 0;
+        const rotation = car.direction || 0;
         const icon = marker.getIcon();
         if (icon.rotation !== rotation) {
           marker.setIcon({

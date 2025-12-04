@@ -31,13 +31,13 @@ const ReplayFilter = ({ onDateChange }) => {
   };
 
   return (
-    <header className="absolute w-screen top-0 left-0 bg-white shadow-lg rounded-b-4xl p-4">
+    <header className="absolute w-screen top-0 left-0 bg-white shadow-lg rounded-b-4xl p-3">
       <form
         onSubmit={handleSubmit}
         className="flex flex-wrap items-center justify-center gap-4"
       >
         <div className="flex items-center gap-1">
-          <label htmlFor="from">From:</label>
+          <label className="text-sm" htmlFor="from">From:</label>
           <MainInput
             id="from"
             type="date"
@@ -48,7 +48,7 @@ const ReplayFilter = ({ onDateChange }) => {
         </div>
 
         <div className="flex items-center gap-1">
-          <label htmlFor="to">To:</label>
+          <label className="text-sm" htmlFor="to">To:</label>
           <MainInput
             id="to"
             type="date"
@@ -60,14 +60,14 @@ const ReplayFilter = ({ onDateChange }) => {
 
         <button
           type="submit"
-          className="btn btn-primary bg-mainColor border-mainColor text-lg"
+          className="btn btn-sm btn-primary bg-mainColor border-mainColor"
           title="Search"
         >
           <FaPlay />
         </button>
       </form>
 
-      <p className="text-stone-600 mt-2 text-center text-sm">
+      <p className="text-stone-600 mt-2 text-center text-xs">
         The maximum time range cannot exceed one month
       </p>
     </header>

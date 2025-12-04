@@ -99,7 +99,7 @@ const Details = ({ deviceSettings, refetch }) => {
     <section>
       <div className="space-y-6">
         {/* ✅ بيانات الجهاز */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <MainInput
             id="deviceName"
             label="اسم الجهاز"
@@ -150,11 +150,11 @@ const Details = ({ deviceSettings, refetch }) => {
           />
         </div>
 
-        <div className="divider my-10">المركبة</div>
+        <div className="divider my-4">المركبة</div>
 
         {/* ✅ نموذج التحديث */}
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <MainInput
               id="car_number"
               name="car_number"
@@ -189,13 +189,11 @@ const Details = ({ deviceSettings, refetch }) => {
 
             {/* ✅ رفع الصورة العادي */}
             <div>
-              <label className="block font-medium text-gray-900 mb-2">
-                صورة السيارة
-              </label>
               <div className="flex items-center gap-4">
                 <MainInput
                   id="image"
                   type="file"
+                  label={"صورة السيارة"}
                   onChange={handleImageChange}
                 />
                 {preview && (
@@ -203,7 +201,7 @@ const Details = ({ deviceSettings, refetch }) => {
                     <img
                       src={preview}
                       alt="Car Preview"
-                      className="w-32 h-32 rounded-lg object-cover border"
+                      className="w-26 h-26 rounded-lg object-cover border"
                     />
                     <button
                       type="button"
@@ -219,14 +217,14 @@ const Details = ({ deviceSettings, refetch }) => {
 
             {/* ✅ اختيار الأيقونة */}
             <div>
-              <p className="mb-2 font-medium text-gray-900">أيقونة السيارة</p>
+              <p className="mb-2 text-sm font-medium text-gray-900">أيقونة السيارة</p>
               <div className="flex flex-wrap items-center gap-2">
                 {icons.map((icon, index) => (
                   <img
                     key={index}
                     src={icon.src}
                     alt={icon.value}
-                    className={`cursor-pointer rounded-lg w-14 p-1 ${
+                    className={`cursor-pointer rounded w-10 p-1 ${
                       currentIcon === index ? "bg-mainColor" : "bg-gray-200"
                     }`}
                     onClick={() => setCurrentIcon(index)}

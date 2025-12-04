@@ -18,7 +18,7 @@ const MapTypes = () => {
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <div className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100">
-          <MdLayers className="text-2xl text-gray-700" />
+          <MdLayers className="text-xl text-gray-700" />
         </div>
       </DropdownMenu.Trigger>
 
@@ -32,7 +32,7 @@ const MapTypes = () => {
           {mapTypes.map((type) => (
             <DropdownMenu.Item
               key={type.value}
-              className={`px-3 py-1 rounded cursor-pointer ${
+              className={`px-3 py-1 rounded cursor-pointer text-sm ${
                 mapType === type.value
                   ? "bg-mainColor text-white"
                   : "hover:bg-mainColor/10 hover:text-mainColor"

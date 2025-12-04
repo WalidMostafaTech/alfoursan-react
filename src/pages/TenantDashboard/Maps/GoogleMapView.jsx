@@ -5,6 +5,7 @@ import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { useDispatch, useSelector } from "react-redux";
 import { openGeoFenceModal } from "../../../store/modalsSlice";
 import { carPath } from "../../../services/carPath";
+import { getCarStatus } from "../../../utils/getCarStatus";
 
 const GoogleMapView = ({
   cars,
@@ -34,7 +35,7 @@ const GoogleMapView = ({
           id: c.id,
           lat: c.position?.lat,
           lng: c.position?.lng,
-          bearing: c.bearing,
+          direction: c.direction,
           speed: c.speed,
         }))
       ),
@@ -43,9 +44,8 @@ const GoogleMapView = ({
 
   // ✅ إنشاء ماركر بعلامة Symbol
   const createRotatedMarker = (car, map, showDeviceName) => {
-    const rotation = car.bearing || 0;
-    const color =
-      car.speed > 5 ? "#1dbf73" : car.speed === 0 ? "#e53935" : "#1e88e5";
+    const { color } = getCarStatus(car);
+    const rotation = car.direction || 0;
 
     const markerOptions = {
       position: car.position,
@@ -56,7 +56,7 @@ const GoogleMapView = ({
         fillOpacity: 1,
         strokeColor: "#000",
         strokeWeight: 0.7,
-        scale: 0.07,
+        scale: 0.05,
         rotation: rotation,
         anchor: new window.google.maps.Point(156, 256),
         labelOrigin: new window.google.maps.Point(156, 700),
@@ -93,18 +93,19 @@ const GoogleMapView = ({
 
     memoizedCars.forEach((car) => {
       if (!car.position) return;
+      const { color } = getCarStatus(car);
+
       const marker = new window.google.maps.Marker({
         position: car.position,
         map: mapRef.current,
         icon: {
           path: carPath,
-          fillColor:
-            car.speed > 5 ? "#1dbf73" : car.speed === 0 ? "#e53935" : "#1e88e5",
+          fillColor: color,
           fillOpacity: 1,
           strokeColor: "#000",
           strokeWeight: 0.7,
-          scale: 0.07,
-          rotation: car.bearing || 0,
+          scale: 0.05,
+          rotation: car.direction || 0,
           anchor: new window.google.maps.Point(156, 256),
           labelOrigin: new window.google.maps.Point(156, 700),
         },
@@ -157,9 +158,9 @@ const GoogleMapView = ({
     const existingIds = Array.from(markers.keys());
 
     memoizedCars.forEach((car) => {
-      const color =
-        car.speed > 5 ? "#1dbf73" : car.speed === 0 ? "#e53935" : "#1e88e5";
-      const rotation = car.bearing || 0;
+      const { color } = getCarStatus(car);
+
+      const rotation = car.direction || 0;
 
       let marker = markers.get(car.id);
       if (!marker) {
@@ -244,7 +245,7 @@ const GoogleMapView = ({
       const marker = window.carMarkers.get(car.id);
       if (marker) {
         marker.setPosition(car.position);
-        const rotation = car.bearing || 0;
+        const rotation = car.direction || 0;
         const icon = marker.getIcon();
         if (icon.rotation !== rotation) {
           marker.setIcon({

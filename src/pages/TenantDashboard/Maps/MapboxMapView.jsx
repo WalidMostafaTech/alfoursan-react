@@ -50,7 +50,7 @@ const MapboxMapView = ({
               {/* صورة العربية */}
               <div
                 style={{
-                  transform: `rotate(${car.bearing}deg)`,
+                  transform: `rotate(${car.direction}deg)`,
                   width: 40,
                   height: 40,
                 }}

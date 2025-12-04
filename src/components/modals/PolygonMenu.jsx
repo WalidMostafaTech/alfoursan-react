@@ -175,7 +175,7 @@ const PolygonMenu = () => {
           onClick={() => handleOpenChange(!polygonMenu.show)}
           className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100"
         >
-          <PiPolygon className="text-2xl text-gray-700" />
+          <PiPolygon className="text-xl text-gray-700" />
         </div>
       </DropdownMenu.Trigger>
 
@@ -184,7 +184,7 @@ const PolygonMenu = () => {
           side="left"
           align="start"
           sideOffset={5}
-          className="bg-white shadow-xl rounded-xl w-96 p-4 z-50 space-y-4"
+          className="bg-white shadow-xl rounded-xl w-80 p-4 z-50 space-y-4"
           // ❌ اشيل الـ preventDefault
           onPointerDownOutside={(e) => e.stopPropagation()}
         >
@@ -206,23 +206,23 @@ const PolygonMenu = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => handleSelect("circle")}
-                className={`btn btn-sm ${
+                className={`btn btn-xs ${
                   drawType === "circle"
                     ? "btn-primary text-white"
                     : "btn-outline"
                 }`}
               >
-                <FaCircle className="text-xl" />
+                <FaCircle className="text-lg" />
               </button>
               <button
                 onClick={() => handleSelect("polygon")}
-                className={`btn btn-sm ${
+                className={`btn btn-xs ${
                   drawType === "polygon"
                     ? "btn-primary text-white"
                     : "btn-outline"
                 }`}
               >
-                <FaDrawPolygon className="text-xl" />
+                <FaDrawPolygon className="text-lg" />
               </button>
             </div>
           </div>
@@ -232,7 +232,7 @@ const PolygonMenu = () => {
             <div className="flex-1">
               <MainInput placeholder="Search by name" />
             </div>
-            <span className="bg-mainColor text-white p-3 rounded-md cursor-pointer hover:bg-mainColor/80 content-center">
+            <span className="btn btn-square btn-sm btn-primary">
               <FaSearch />
             </span>
           </div>
@@ -243,7 +243,7 @@ const PolygonMenu = () => {
           ) : (
             <>
               {/* Actions */}
-              <div className="flex justify-between text-sm text-mainColor mb-2">
+              <div className="flex justify-between text-xs text-mainColor mb-2">
                 <button
                   className="hover:underline cursor-pointer"
                   onClick={handleShowAll}
@@ -265,13 +265,13 @@ const PolygonMenu = () => {
 
               {/* Table */}
               <div className="overflow-y-auto max-h-96 rounded-md">
-                <table className="table table-zebra w-full text-sm">
+                <table className="table table-zebra w-full text-xs">
                   <thead>
                     <tr>
                       <th>
                         <input
                           type="checkbox"
-                          className="checkbox checkbox-sm checkbox-primary"
+                          className="checkbox checkbox-xs checkbox-primary"
                           checked={selectAll}
                           onChange={handleSelectAll}
                         />
@@ -294,7 +294,7 @@ const PolygonMenu = () => {
                         <td>
                           <input
                             type="checkbox"
-                            className="checkbox checkbox-sm checkbox-primary"
+                            className="checkbox checkbox-xs checkbox-primary"
                             checked={selectedIds.includes(fence.id)}
                             onChange={() => handleRowSelect(fence.id)}
                           />
@@ -310,7 +310,7 @@ const PolygonMenu = () => {
                                 })
                               )
                             }
-                            className="text-lg cursor-pointer text-mainColor hover:text-mainColor"
+                            className="text-sm cursor-pointer text-mainColor hover:text-mainColor"
                           />
                           <MdContentCopy
                             onClick={() =>
@@ -321,7 +321,7 @@ const PolygonMenu = () => {
                                 })
                               )
                             }
-                            className="text-lg cursor-pointer text-gray-500 hover:text-gray-700"
+                            className="text-sm cursor-pointer text-gray-500 hover:text-gray-700"
                           />
                           <LuSquareSplitHorizontal
                             onClick={() =>
@@ -329,11 +329,11 @@ const PolygonMenu = () => {
                                 openAssociateDeviceModal({ id: fence.id })
                               )
                             }
-                            className="text-lg cursor-pointer text-gray-500 hover:text-gray-700"
+                            className="text-sm cursor-pointer text-gray-500 hover:text-gray-700"
                           />
                           <MdDelete
                             onClick={() => handleDelete(fence.id)}
-                            className="text-lg cursor-pointer text-red-500 hover:text-red-700"
+                            className="text-sm cursor-pointer text-red-500 hover:text-red-700"
                           />
                         </td>
                       </tr>

@@ -5,7 +5,7 @@ const Membership = ({ deviceSettings }) => {
     <section className="overflow-x-auto p-4">
       <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <thead className="bg-mainColor/10 text-mainColor">
-          <tr>
+          <tr className="text-xs">
             <th className="py-3 px-4 text-right">اسم العميل</th>
             <th className="py-3 px-4 text-right">الحساب</th>
             <th className="py-3 px-4 text-right">الاتصال</th>
@@ -16,7 +16,7 @@ const Membership = ({ deviceSettings }) => {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
-          <tr className="hover:bg-gray-50 transition-colors duration-200">
+          <tr className="hover:bg-gray-50 transition-colors duration-200 text-xs">
             <td className="py-3 px-4">{subscription.client_name || "-"}</td>
             <td className="py-3 px-4">{subscription.account || "-"}</td>
             <td className="py-3 px-4 text-mainColor font-medium">

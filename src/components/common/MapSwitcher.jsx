@@ -11,7 +11,7 @@ const MapSwitcher = () => {
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <div className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100">
-          <FiMap className="text-2xl text-gray-700" />
+          <FiMap className="text-xl text-gray-700" />
         </div>
       </DropdownMenu.Trigger>
 
@@ -23,7 +23,7 @@ const MapSwitcher = () => {
           sideOffset={5}
         >
           <DropdownMenu.Item
-            className={`px-3 py-1 rounded cursor-pointer ${
+            className={`px-3 py-1 rounded cursor-pointer text-sm ${
               mapProvider === "google"
                 ? "bg-mainColor text-white"
                 : "hover:bg-mainColor/10 hover:text-mainColor"
@@ -34,7 +34,7 @@ const MapSwitcher = () => {
           </DropdownMenu.Item>
 
           <DropdownMenu.Item
-            className={`px-3 py-1 rounded cursor-pointer ${
+            className={`px-3 py-1 rounded cursor-pointer text-sm ${
               mapProvider === "mapbox"
                 ? "bg-mainColor text-white"
                 : "hover:bg-mainColor/10 hover:text-mainColor"

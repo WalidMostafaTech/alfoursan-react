@@ -23,40 +23,52 @@ import { PiPolygon } from "react-icons/pi";
 import { Link } from "react-router-dom";
 
 const CarPopup = ({ car }) => {
+  const { status } = getCarStatus(car);
+
+  const formatDate = (isoString) => {
+    if (!isoString) return "—";
+    const date = new Date(isoString);
+    return date.toLocaleString("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const carDetails = [
-    { label: car.lastSignel, icon: <FaSatelliteDish /> },
+    { label: formatDate(car.lastSignel), icon: <FaSatelliteDish /> },
     { label: "Wired", icon: <FiWifi /> },
-    { label: car.lastSignelGPS, icon: <ImLocation2 /> },
+    { label: formatDate(car.lastSignelGPS), icon: <ImLocation2 /> },
     { label: `${car.speed} km/h`, icon: <IoSpeedometerSharp /> },
-    { label: getCarStatus(car), icon: <MdOutlineCarCrash /> },
+    { label: status, icon: <MdOutlineCarCrash /> },
     { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
   ];
 
   const dispatch = useDispatch();
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-lg space-y-6 w-[500px]">
+    <div className="bg-white p-3 rounded-xl shadow-lg space-y-4 w-[400px]">
       {/* عنوان العربية */}
-      <h4 className="font-bold text-lg flex items-center gap-4">
-        {car.name} <span className="text-mainColor">{getCarStatus(car)}</span>
+      <h4 className="font-bold text-sm flex items-center gap-4">
+        {car.name} <span className="text-mainColor">{status}</span>
       </h4>
 
       {/* بيانات */}
       <div className="grid grid-cols-2 gap-2">
         {carDetails.map((detail, index) => (
           <div key={index} className="flex items-center gap-2">
-            <span className="text-lg text-gray-400"> {detail.icon}</span>
-            <p className="text-gray-600 text-base font-medium">
-              {detail.label}
-            </p>
+            <span className="text-sm text-gray-400"> {detail.icon}</span>
+            <p className="text-gray-600 text-sm font-medium">{detail.label}</p>
           </div>
         ))}
       </div>
 
       {/* العنوان */}
-      <div className="flex items-center gap-2">
-        <FaMapMarkerAlt className="text-mainColor text-2xl" />
-        <p className="text-base text-gray-600 font-medium flex-1">
+      <div className="flex items-center gap-1">
+        <FaMapMarkerAlt className="text-mainColor text-lg" />
+        <p className="text-gray-600 font-medium flex-1 text-sm">
           {car.address}
         </p>
       </div>
@@ -65,7 +77,7 @@ const CarPopup = ({ car }) => {
       <div className="w-full flex justify-evenly items-center gap-2 text-xl">
         <span
           title="Details"
-          className="cursor-pointer hover:text-mainColor"
+          className="cursor-pointer hover:text-mainColor text-base"
           onClick={() =>
             dispatch(openDetailsModal({ section: "", id: car.id }))
           }
@@ -76,7 +88,7 @@ const CarPopup = ({ car }) => {
           title="Tracking"
           href={car.tracking_url}
           target="_blank"
-          className="cursor-pointer hover:text-mainColor"
+          className="cursor-pointer hover:text-mainColor text-base"
         >
           <FiNavigation />
         </a>
@@ -84,13 +96,13 @@ const CarPopup = ({ car }) => {
           title="Playback"
           target="_blank"
           to={`/car-replay/${car.serial_number}`}
-          className="cursor-pointer hover:text-mainColor"
+          className="cursor-pointer hover:text-mainColor text-base"
         >
           <FiPlayCircle />
         </Link>
         <span
           title="Command"
-          className="cursor-pointer hover:text-mainColor"
+          className="cursor-pointer hover:text-mainColor text-base"
           onClick={() =>
             dispatch(openDetailsModal({ section: "command", id: car.id }))
           }
@@ -100,7 +112,7 @@ const CarPopup = ({ car }) => {
         <span
           title="Fence"
           onClick={() => dispatch(openPolygonMenu())}
-          className="cursor-pointer hover:text-mainColor"
+          className="cursor-pointer hover:text-mainColor text-base"
         >
           <PiPolygon />
         </span>
@@ -108,7 +120,7 @@ const CarPopup = ({ car }) => {
           title="Street View"
           href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
           target="_blank"
-          className="cursor-pointer hover:text-mainColor"
+          className="cursor-pointer hover:text-mainColor text-base"
         >
           <FiUser />
         </a>
@@ -116,13 +128,13 @@ const CarPopup = ({ car }) => {
           title="Reports"
           href={car.report_url}
           target="_blank"
-          className="cursor-pointer hover:text-mainColor"
+          className="cursor-pointer hover:text-mainColor text-base"
         >
           <FiBarChart2 />
         </a>
         <span
           title="Share"
-          className="cursor-pointer hover:text-mainColor"
+          className="cursor-pointer hover:text-mainColor text-base"
           onClick={() => dispatch(openShareModal(car.serial_number))}
         >
           <FiShare2 />

@@ -112,7 +112,7 @@ const AssociateDevice = () => {
         {/* Filters */}
         <div className="px-6 py-4 border-b border-gray-300 bg-gray-50">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm">
               <label className="font-medium">العميل:</label>
 
               <div className="w-40">
@@ -124,7 +124,7 @@ const AssociateDevice = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm">
               <label className="font-medium">الجهاز:</label>
 
               <div className="w-40">
@@ -136,7 +136,7 @@ const AssociateDevice = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm">
               <label className="font-medium">الحالة:</label>
 
               <div className="w-40">
@@ -154,7 +154,7 @@ const AssociateDevice = () => {
             </div>
 
             <button
-              className="btn btn-primary mr-auto"
+              className="btn btn-primary btn-sm mr-auto"
               onClick={() => setSearchStatus(status)}
             >
               <IoSearchOutline size={18} />
@@ -170,7 +170,7 @@ const AssociateDevice = () => {
             <div className="px-6 py-3 flex items-center justify-between border-b border-gray-300 bg-white">
               <div className="flex gap-2">
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary btn-sm"
                   disabled={selectedDevices.length === 0 || isAdding}
                   onClick={() => addDevices()}
                 >
@@ -179,7 +179,7 @@ const AssociateDevice = () => {
 
                 <button
                   onClick={() => removeDevices()}
-                  className="btn btn-error "
+                  className="btn btn-error btn-sm "
                   disabled={selectedDevices.length === 0 || isRemoving}
                 >
                   {isRemoving ? "جارٍ الحذف..." : "حذف مجموعة"}
@@ -195,7 +195,7 @@ const AssociateDevice = () => {
 
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="table">
+              <table className="table text-xs">
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="w-12">

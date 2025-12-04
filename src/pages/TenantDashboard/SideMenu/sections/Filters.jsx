@@ -11,7 +11,7 @@ const Filters = ({ cars, activeFilter, setActiveFilter }) => {
         <button
           key={index}
           onClick={() => setActiveFilter(type.label)}
-          className={`p-1 flex-1 text-base rounded-lg capitalize cursor-pointer ${
+          className={`p-1 flex-1 text-xs rounded-lg capitalize cursor-pointer ${
             activeFilter === type.label
               ? "bg-mainColor text-white"
               : "text-gray-600 hover:bg-mainColor/10 hover:text-mainColor"

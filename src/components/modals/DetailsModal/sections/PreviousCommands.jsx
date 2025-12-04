@@ -42,7 +42,7 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
 
   return (
     <section className="overflow-x-auto p-4">
-      <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm text-xs">
         <thead className="bg-mainColor/10 text-mainColor">
           <tr>
             <th className="py-3 px-4 text-left">No.</th>
@@ -92,7 +92,7 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
                 <button
                   onClick={() => handleDelete(cmd.id)}
                   disabled={isPending}
-                  className={`btn btn-sm text-white rounded-md px-3 py-1 ${
+                  className={`btn btn-xs text-white rounded-md px-3 py-1 ${
                     isPending
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-red-600 hover:bg-red-700"

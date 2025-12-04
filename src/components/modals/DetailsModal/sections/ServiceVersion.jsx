@@ -27,7 +27,7 @@ const ServiceVersion = ({ deviceSettings }) => {
           />
         </div>
 
-        <div className="divider my-10">خدمة بطاقة SIM</div>
+        <div className="divider my-14">خدمة بطاقة SIM</div>
 
         {/* رقم السيارة واستهلاك الوقود */}
 
@@ -41,7 +41,7 @@ const ServiceVersion = ({ deviceSettings }) => {
           <MainInput id="status" label="حالة" disabled />
         </div>
 
-        <p className="text-sm text-gray-600">
+        <p className="text-xs text-gray-600">
           الموعد النهائي: {subscription?.expiry_date}
         </p>
 

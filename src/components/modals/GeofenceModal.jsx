@@ -93,7 +93,7 @@ const GeoFenceModal = () => {
     <dialog open className="modal detailsModal" dir="rtl">
       <div className="modal-box max-w-md space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold">
+          <h2 className="text-lg font-bold">
             {mission === "edit"
               ? "تعديل السياج الجغرافي"
               : mission === "copy"
@@ -112,7 +112,7 @@ const GeoFenceModal = () => {
         />
 
         {fenceData.type === "circle" && (
-          <label className="block">
+          <label className="block text-sm">
             نصف القطر:{" "}
             <span className="text-mainColor font-bold">
               {formData.radius || fenceData.radius}
@@ -122,10 +122,10 @@ const GeoFenceModal = () => {
 
         {/* الدخول والخروج */}
         <div className="flex gap-4">
-          <label className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              className="checkbox checkbox-primary"
+              className="checkbox checkbox-primary checkbox-sm"
               checked={formData.notify_on_enter}
               onChange={() =>
                 handleChange("notify_on_enter", !formData.notify_on_enter)
@@ -133,10 +133,10 @@ const GeoFenceModal = () => {
             />
             الدخول
           </label>
-          <label className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              className="checkbox checkbox-primary"
+              className="checkbox checkbox-primary checkbox-sm"
               checked={formData.notify_on_exit}
               onChange={() =>
                 handleChange("notify_on_exit", !formData.notify_on_exit)
@@ -147,10 +147,10 @@ const GeoFenceModal = () => {
         </div>
 
         {/* تفعيل حد السرعة */}
-        <label className="flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
-            className="toggle toggle-primary"
+            className="toggle toggle-primary toggle-sm"
             checked={formData.speed_limit_enabled}
             onChange={() =>
               handleChange("speed_limit_enabled", !formData.speed_limit_enabled)
@@ -175,11 +175,11 @@ const GeoFenceModal = () => {
 
         {/* الأزرار */}
         <div className="flex justify-end gap-2">
-          <button className="btn btn-ghost" onClick={closeModal}>
+          <button className="btn btn-ghost btn-sm" onClick={closeModal}>
             إلغاء
           </button>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary btn-sm"
             onClick={handleConfirm}
             disabled={isPending}
           >

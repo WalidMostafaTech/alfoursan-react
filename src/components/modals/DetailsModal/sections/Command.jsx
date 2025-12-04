@@ -120,7 +120,7 @@ const Command = ({ deviceID, refetch }) => {
           <button
             key={index}
             onClick={() => setActiveCommand(index)}
-            className={`px-3 py-2 text-start rounded transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-2 text-sm text-start rounded transition-all whitespace-nowrap cursor-pointer ${
               activeCommand === index
                 ? "text-mainColor border-e-4 border-mainColor bg-mainColor/10"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
@@ -150,7 +150,7 @@ const Command = ({ deviceID, refetch }) => {
 
           {commands[activeCommand].type === "static" && (
             <>
-              <p className="text-gray-600 bg-mainColor/10 p-2 rounded-lg">
+              <p className="text-gray-600 bg-mainColor/10 p-2 rounded-lg text-sm">
                 {commands[activeCommand].content}
               </p>
             </>

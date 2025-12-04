@@ -10,11 +10,11 @@ const ReplayControls = ({
   onSpeedChange,
 }) => {
   return (
-    <div className="absolute w-[90%] max-w-5xl bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-full px-10 py-6 flex items-center gap-4">
+    <div className="absolute w-[90%] max-w-4xl bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-full px-8 py-4 flex items-center gap-4">
       {/* Play / Pause */}
       <button
         onClick={onTogglePlay}
-        className="text-mainColor text-2xl cursor-pointer"
+        className="text-mainColor text-xl cursor-pointer"
       >
         {isPlaying ? <FaPause /> : <FaPlay />}
       </button>
@@ -33,7 +33,7 @@ const ReplayControls = ({
       <select
         value={speed}
         onChange={(e) => onSpeedChange(Number(e.target.value))}
-        className="border-none outline-0 p-2 cursor-pointer text-xl"
+        className="border-none outline-0 p-2 cursor-pointer text-sm"
       >
         <option value={1}>x1</option>
         <option value={2}>x2</option>

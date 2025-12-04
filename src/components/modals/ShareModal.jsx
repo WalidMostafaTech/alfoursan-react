@@ -115,7 +115,7 @@ const ShareModal = () => {
           {/* مدة صلاحية الرابط */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-medium">مدة صلاحية الرابط</span>
+              <span className="label-text font-medium text-sm mb-2">مدة صلاحية الرابط</span>
             </label>
             <div className="flex gap-2">
               <MainInput
@@ -129,7 +129,7 @@ const ShareModal = () => {
               </div>
             </div>
             {errors.duration && (
-              <p className="text-error text-sm mt-1">
+              <p className="text-error text-xs mt-1">
                 {errors.duration.message}
               </p>
             )}
@@ -138,14 +138,14 @@ const ShareModal = () => {
           {/* الأوامر */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-medium mb-1">الأوامر</span>
+              <span className="label-text font-medium mb-1 text-sm">الأوامر</span>
             </label>
             <div className="border border-base-300 rounded-lg p-3 bg-base-100 flex flex-col gap-2 max-h-40 overflow-y-auto">
               {commands.map((command, index) => (
                 <label key={index} className="label cursor-pointer">
                   <input
                     type="checkbox"
-                    className="checkbox checkbox-primary checkbox-sm"
+                    className="checkbox checkbox-primary checkbox-xs"
                     checked={selectedCommands.includes(command.value)}
                     onChange={(e) => {
                       const newCommands = e.target.checked
@@ -154,12 +154,12 @@ const ShareModal = () => {
                       setValue("selectedCommands", newCommands);
                     }}
                   />
-                  <span className="text-gray-700">{command.label}</span>
+                  <span className="text-gray-700 text-sm">{command.label}</span>
                 </label>
               ))}
             </div>
             {errors.selectedCommands && (
-              <p className="text-error text-sm mt-1">
+              <p className="text-error text-xs mt-1">
                 {errors.selectedCommands.message}
               </p>
             )}
@@ -178,7 +178,7 @@ const ShareModal = () => {
                 <button
                   onClick={() => copyToClipboard(shareLink)}
                   type="button"
-                  className="btn join-item"
+                  className="btn btn-sm join-item"
                 >
                   نسخ
                 </button>
@@ -186,7 +186,7 @@ const ShareModal = () => {
                   href={shareLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="btn btn-primary join-item"
+                  className="btn btn-sm btn-primary join-item"
                 >
                   فتح
                 </a>
@@ -199,13 +199,13 @@ const ShareModal = () => {
             <button
               type="button"
               onClick={closeModal}
-              className="btn btn-outline px-8"
+              className="btn btn-sm btn-outline px-8"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="btn btn-primary px-8"
+              className="btn btn-sm btn-primary px-8"
               disabled={isPending}
             >
               {isPending ? "جاري الإرسال..." : "إرسال"}

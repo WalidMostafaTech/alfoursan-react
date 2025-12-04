@@ -72,11 +72,11 @@ const Alerts = ({ deviceSettings, refetch }) => {
           <label key={index} className="flex items-center gap-2">
             <input
               type="checkbox"
-              className="toggle toggle-primary"
+              className="toggle toggle-primary toggle-sm"
               checked={formData[item.key] === 1}
               onChange={() => handleToggle(item.key)}
             />
-            <span className="text-gray-700 text-sm font-medium">
+            <span className="text-gray-700 text-xs font-medium">
               {item.label}
             </span>
           </label>

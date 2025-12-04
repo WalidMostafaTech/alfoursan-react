@@ -91,7 +91,7 @@ const CarReplay = () => {
       fillOpacity: 1,
       strokeColor: "#000",
       strokeWeight: 0.7,
-      scale: 0.07,
+      scale: 0.05,
       anchor: new google.maps.Point(150, 40),
     };
   }, [isLoaded]);
@@ -138,18 +138,44 @@ const CarReplay = () => {
         {/* المسار الكامل */}
         {points.length > 0 && (
           <>
-            <Polyline
+            {/* <Polyline
               path={fullPath}
               options={{
                 strokeColor: "#a10a29",
-                strokeWeight: 6,
+                strokeWeight: 5,
                 strokeOpacity: 0.6,
               }}
-            />
-            <Polyline
+            /> */}
+
+            {points.slice(1).map((point, index) => {
+              const prev = points[index];
+              const curr = point;
+
+              const speed = curr.speed;
+              let color = "#1dbf73"; // أخضر افتراضي
+              if (speed > 100 && speed <= 120) color = "#FFD700"; // أصفر
+              else if (speed > 120) color = "#FF0000"; // أحمر
+
+              return (
+                <Polyline
+                  key={index}
+                  path={[
+                    { lat: prev.latitude, lng: prev.longitude },
+                    { lat: curr.latitude, lng: curr.longitude },
+                  ]}
+                  options={{
+                    strokeColor: color,
+                    strokeWeight: 5,
+                    strokeOpacity: 0.9,
+                  }}
+                />
+              );
+            })}
+
+            {/* <Polyline
               path={traveledPath}
-              options={{ strokeColor: "#1dbf73", strokeWeight: 6 }}
-            />
+              options={{ strokeColor: "#1dbf73", strokeWeight: 5 }}
+            /> */}
 
             {/* بداية */}
             <Marker
@@ -162,7 +188,7 @@ const CarReplay = () => {
               }}
               icon={{
                 path: window.google.maps.SymbolPath.CIRCLE,
-                scale: 16,
+                scale: 14,
                 fillColor: "#1dbf73",
                 fillOpacity: 1,
                 strokeWeight: 2,
@@ -184,13 +210,40 @@ const CarReplay = () => {
               }}
               icon={{
                 path: window.google.maps.SymbolPath.CIRCLE,
-                scale: 16,
+                scale: 14,
                 fillColor: "#ff4b4b",
                 fillOpacity: 1,
                 strokeWeight: 2,
                 strokeColor: "#fff",
               }}
             />
+
+            {points.map(
+              (point, index) =>
+                point.speed === 0 && (
+                  <Marker
+                    key={index}
+                    position={{
+                      lat: point.latitude,
+                      lng: point.longitude,
+                    }}
+                    label={{
+                      text: "P",
+                      color: "white",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                    icon={{
+                      path: window.google.maps.SymbolPath.CIRCLE,
+                      scale: 12,
+                      fillColor: "#0f0f84",
+                      fillOpacity: 1,
+                      strokeWeight: 1,
+                      strokeColor: "#fff",
+                    }}
+                  />
+                )
+            )}
           </>
         )}
 

@@ -9,7 +9,7 @@ const SupportBtn = () => {
       onClick={() => dispatch(toggleSupportModal())}
       className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100"
     >
-      <FaHeadset className="text-2xl text-gray-700" />
+      <FaHeadset className="text-xl text-gray-700" />
     </div>
   );
 };

@@ -66,7 +66,7 @@ const DetailsModal = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`relative p-3 text-xl whitespace-nowrap transition-colors cursor-pointer ${
+              className={`relative p-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === tab.key
                   ? "text-mainColor font-semibold"
                   : "text-gray-600 hover:text-gray-800"

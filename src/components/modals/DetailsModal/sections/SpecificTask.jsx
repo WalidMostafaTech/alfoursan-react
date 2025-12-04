@@ -139,7 +139,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
           {/* ✅ نوع التنفيذ */}
           <div className="form-control w-full max-w-xs" dir="rtl">
             <label className="label">
-              <span className="label-text text-lg font-semibold text-gray-700">
+              <span className="label-text text-sm font-semibold text-gray-700">
                 نوع التنفيذ
               </span>
             </label>
@@ -149,22 +149,22 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
                 <input
                   type="radio"
                   name="execution_type"
-                  className="radio radio-primary"
+                  className="radio radio-primary radio-sm"
                   checked={executionType === "everyday"}
                   onChange={() => handleExecutionTypeChange("everyday")}
                 />
-                <span className="text-gray-700 font-medium">يوميًا</span>
+                <span className="text-gray-700 font-medium text-sm">يوميًا</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="execution_type"
-                  className="radio radio-primary"
+                  className="radio radio-primary radio-sm"
                   checked={executionType === "date_range"}
                   onChange={() => handleExecutionTypeChange("date_range")}
                 />
-                <span className="text-gray-700 font-medium">نطاق التاريخ</span>
+                <span className="text-gray-700 font-medium text-sm">نطاق التاريخ</span>
               </label>
             </div>
           </div>
@@ -172,10 +172,10 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
           {/* ✅ تفعيل المهمة */}
           <div>
             <label className="flex items-center gap-2 mt-6">
-              <span className="text-gray-700 font-medium">تفعيل المهمة :</span>
+              <span className="text-gray-700 font-medium text-sm">تفعيل المهمة :</span>
               <input
                 type="checkbox"
-                className="toggle toggle-primary"
+                className="toggle toggle-primary toggle-sm"
                 id="is_enabled"
                 checked={formData.is_enabled === 1}
                 onChange={handleChange}

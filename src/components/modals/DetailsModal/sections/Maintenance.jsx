@@ -88,16 +88,16 @@ const Maintenance = ({ deviceID }) => {
 
   return (
     <article>
-      <h2 className="text-xl font-semibold tracking-wide mb-4">
+      <h2 className="font-semibold tracking-wide mb-4">
         الصيانة بالأميال{" "}
-        <span className="bg-sky-600 text-white py-1 px-2 rounded">
+        <span className="bg-sky-600 text-white py-1 px-2 rounded text-sm">
           {5370.11} km
         </span>
       </h2>
 
       {/* ✅ زر فتح الفورم */}
       <button
-        className="btn btn-primary my-2"
+        className="btn btn-primary btn-sm my-2"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? "إغلاق النموذج" : "إضافة جديد"}
@@ -155,14 +155,14 @@ const Maintenance = ({ deviceID }) => {
               {/* ✅ إشعارات */}
               <div className="form-control w-full max-w-xs" dir="rtl">
                 <label className="label">
-                  <span className="label-text text-lg font-semibold text-gray-700">
+                  <span className="label-text text-sm font-bold text-gray-700">
                     الإشعارات
                   </span>
                 </label>
 
                 <div className="flex items-center gap-6 mt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-gray-700 font-medium">
+                    <span className="text-gray-700 font-medium text-xs">
                       تذكير بالصيانة
                     </span>
                     <input
@@ -170,12 +170,12 @@ const Maintenance = ({ deviceID }) => {
                       type="checkbox"
                       checked={formData.notification === 1}
                       onChange={handleChange}
-                      className="toggle toggle-primary"
+                      className="toggle toggle-primary toggle-sm"
                     />
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-gray-700 font-medium">
+                    <span className="text-gray-700 font-medium text-xs">
                       تذكير المستخدم النهائي
                     </span>
                     <input
@@ -183,7 +183,7 @@ const Maintenance = ({ deviceID }) => {
                       type="checkbox"
                       checked={formData.end_user === 1}
                       onChange={handleChange}
-                      className="toggle toggle-primary"
+                      className="toggle toggle-primary toggle-sm"
                     />
                   </label>
                 </div>
@@ -201,7 +201,7 @@ const Maintenance = ({ deviceID }) => {
 
       {/* ✅ جدول الصيانة */}
       <section className="overflow-x-auto p-4">
-        <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm text-xs">
           <thead className="bg-mainColor/10 text-mainColor">
             <tr>
               <th className="py-3 px-4 text-right">#</th>

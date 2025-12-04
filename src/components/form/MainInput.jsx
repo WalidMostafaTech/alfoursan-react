@@ -18,7 +18,7 @@ const MainInput = ({
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
-  const commonInputClasses = `w-full text-lg bg-white outline-none border-none px-2 py-1.5 rounded-md ring-1 transition-all placeholder:text-gray-400 ${
+  const commonInputClasses = `w-full text-base bg-white outline-none border-none px-1 py-0.5 rounded-md ring-1 transition-all placeholder:text-gray-400 placeholder:text-sm ${
     isPassword && "pe-10"
   } ${
     error
@@ -29,7 +29,7 @@ const MainInput = ({
   const commonLabel = label && (
     <label
       htmlFor={id}
-      className="block w-fit font-semibold mb-2 capitalize"
+      className="block w-fit text-xs font-semibold mb-2 capitalize"
     >
       {label} :
     </label>
@@ -53,7 +53,7 @@ const MainInput = ({
           placeholder={placeholder}
           disabled={disabled}
           {...rest}
-          className={`${commonInputClasses} h-32 resize-none`}
+          className={`${commonInputClasses} h-22 resize-none`}
         />
         {commonError}
       </div>
@@ -73,7 +73,7 @@ const MainInput = ({
           onBlur={onBlur}
           disabled={disabled}
           {...rest}
-          className={`${commonInputClasses} select pe-10 h-10`}
+          className={`${commonInputClasses} select pe-10 h-7 text-sm`}
           // className={`select select-bordered bg-white w-full text-base ${
           //   error ? "border-red-600" : "border-gray-300"
           // }`}
