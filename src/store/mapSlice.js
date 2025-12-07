@@ -5,7 +5,7 @@ const initialState = {
   clusters: false,
   showDeviceName: false,
   mapType: localStorage.getItem("mapType") || "roadmap",
-  shareModal: false,
+  zoom: 6,
 };
 
 const mapSlice = createSlice({
@@ -40,6 +40,10 @@ const mapSlice = createSlice({
       state.clusters = action.payload;
     },
 
+    changeZoom: (state, action) => {
+      state.zoom = action.payload;
+    },
+
     toggleDeviceName: (state) => {
       state.showDeviceName = !state.showDeviceName;
     },
@@ -63,6 +67,7 @@ export const {
   setClusters,
   toggleDeviceName,
   setMapType,
+  changeZoom,
 } = mapSlice.actions;
 
 export default mapSlice.reducer;

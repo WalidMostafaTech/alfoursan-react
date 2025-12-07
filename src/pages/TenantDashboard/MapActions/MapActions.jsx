@@ -5,7 +5,7 @@ import MapTypes from "../../../components/common/MapTypes";
 import PolygonMenu from "../../../components/modals/PolygonMenu";
 import SupportBtn from "../../../components/common/SupportBtn";
 
-const MapActions = ({ setZoom, setViewState }) => {
+const MapActions = ({  setViewState }) => {
   const { provider: mapProvider } = useSelector((state) => state.map);
 
   return (
@@ -25,7 +25,6 @@ const MapActions = ({ setZoom, setViewState }) => {
         }}
       />
       <ZoomBtns
-        setZoom={setZoom}
         mapProvider={mapProvider}
         setViewState={setViewState}
       />

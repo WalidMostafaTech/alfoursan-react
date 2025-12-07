@@ -3,6 +3,9 @@
 
 @theme {
   --color-mainColor: #5f59c3;
+  --color-mainGreen: #1dbf73;
+  --color-mainYellow: #ffd700;
+  --color-mainRed: #ff0000;
 }
 
 body {
@@ -85,4 +88,43 @@ body {
       margin-inline-start: 1rem;
     }
   }
+}
+
+/* Base range reset */
+.dual-range {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+  pointer-events: none; /* Allows both sliders overlap */
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+/* TRACK (invisible, because we use custom gradient bar) */
+.dual-range::-webkit-slider-runnable-track {
+  height: 0;
+}
+
+/* THUMB STYLE */
+.dual-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: all; /* Allow interaction */
+  border: 3px solid white;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Colors */
+.thumb-green::-webkit-slider-thumb {
+  background: #1dbf73;
+}
+.thumb-yellow::-webkit-slider-thumb {
+  background: #ffd700;
+}
+.thumb-red::-webkit-slider-thumb {
+  background: #ff0000;
 }

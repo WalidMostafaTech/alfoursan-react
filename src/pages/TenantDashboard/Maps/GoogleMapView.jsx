@@ -16,9 +16,12 @@ const GoogleMapView = ({
 }) => {
   const mapRef = useRef(null);
   const drawingManagerRef = useRef(null);
-  const { clusters, mapType, showDeviceName } = useSelector(
-    (state) => state.map
-  );
+  const {
+    clusters,
+    mapType,
+    showDeviceName,
+    provider: mapProvider,
+  } = useSelector((state) => state.map);
 
   const dispatch = useDispatch();
 
@@ -27,23 +30,35 @@ const GoogleMapView = ({
   };
 
   // ✅ تثبيت بيانات السيارات باستخدام useMemo
+  // const memoizedCars = useMemo(
+  //   () => cars,
+  //   [
+  //     JSON.stringify(
+  //       cars.map((c) => ({
+  //         id: c.id,
+  //         lat: c.position?.lat,
+  //         lng: c.position?.lng,
+  //         direction: c.direction,
+  //         speed: c.speed,
+  //       }))
+  //     ),
+  //   ]
+  // );
+
   const memoizedCars = useMemo(
     () => cars,
     [
-      JSON.stringify(
-        cars.map((c) => ({
-          id: c.id,
-          lat: c.position?.lat,
-          lng: c.position?.lng,
-          direction: c.direction,
-          speed: c.speed,
-        }))
-      ),
+      cars
+        .map(
+          (c) =>
+            c.id + c.position?.lat + c.position?.lng + c.direction + c.speed
+        )
+        .join(","),
     ]
   );
 
   // ✅ إنشاء ماركر بعلامة Symbol
-  const createRotatedMarker = (car, map, showDeviceName) => {
+  const createRotatedMarker = (car, map) => {
     const { color } = getCarStatus(car);
     const rotation = car.direction || 0;
 
@@ -62,16 +77,6 @@ const GoogleMapView = ({
         labelOrigin: new window.google.maps.Point(156, 700),
       },
     };
-
-    // if (showDeviceName) {
-    //   markerOptions.label = {
-    //     text: car.name || "بدون اسم",
-    //     color: "#212121",
-    //     fontWeight: "bold",
-    //     fontSize: "12px",
-    //     className: "car-label",
-    //   };
-    // }
 
     const marker = new window.google.maps.Marker(markerOptions);
 
@@ -109,41 +114,11 @@ const GoogleMapView = ({
           anchor: new window.google.maps.Point(156, 256),
           labelOrigin: new window.google.maps.Point(156, 700),
         },
-        // label: showDeviceName
-        //   ? {
-        //       text: car.name || "بدون اسم",
-        //       color: "#212121",
-        //       fontWeight: "bold",
-        //       fontSize: "12px",
-        //       className: "car-label",
-        //     }
-        //   : null,
       });
       marker.addListener("click", () => handleSelectCar(car));
       window.carMarkers.set(car.id, marker);
     });
   }, [mapRef.current]);
-
-  // ✅ تحديث ظهور أو إخفاء أسماء الأجهزة بدون إعادة بناء الماركرات
-  useEffect(() => {
-    if (!window.carMarkers) return;
-    window.carMarkers.forEach((marker, id) => {
-      const car = memoizedCars.find((c) => c.id === id);
-      if (!car) return;
-
-      // if (showDeviceName) {
-      //   marker.setLabel({
-      //     text: car.name || "بدون اسم",
-      //     color: "#212121",
-      //     fontWeight: "bold",
-      //     fontSize: "12px",
-      //     className: "car-label",
-      //   });
-      // } else {
-      //   marker.setLabel(null);
-      // }
-    });
-  }, [showDeviceName, memoizedCars]);
 
   // ✅ إدارة الماركرات والتجميع (بناء/تحديث فقط عند تغير السيارات فعلياً)
   useEffect(() => {
@@ -158,18 +133,24 @@ const GoogleMapView = ({
     const existingIds = Array.from(markers.keys());
 
     memoizedCars.forEach((car) => {
-      const { color } = getCarStatus(car);
+      const marker = markers.get(car.id);
 
       const rotation = car.direction || 0;
+      const { color } = getCarStatus(car);
 
-      let marker = markers.get(car.id);
       if (!marker) {
-        marker = createRotatedMarker(car, map, showDeviceName);
-        markers.set(car.id, marker);
+        // إنشاء marker جديد
+        const newMarker = createRotatedMarker(car, map);
+        markers.set(car.id, newMarker);
       } else {
+        // تحديث الموقع والاتجاه فقط بدون setMap
         marker.setPosition(car.position);
         const icon = marker.getIcon();
-        marker.setIcon({ ...icon, fillColor: color, rotation });
+        if (icon.rotation !== rotation || icon.fillColor !== color) {
+          marker.setIcon({ ...icon, rotation, fillColor: color });
+        }
+
+        // تحديث label
         if (showDeviceName) {
           marker.setLabel({
             text: car.name || "بدون اسم",
@@ -182,8 +163,6 @@ const GoogleMapView = ({
           marker.setLabel(null);
         }
       }
-
-      if (!clusters && !marker.getMap()) marker.setMap(map);
     });
 
     existingIds.forEach((id) => {
@@ -203,6 +182,9 @@ const GoogleMapView = ({
         window.carClusterer = new MarkerClusterer({
           map,
           markers: Array.from(markers.values()),
+          minimumClusterSize: 3,
+          averageCenter: true,
+          maxZoom: 18,
         });
         window.clusterMarkers = new Set(markers.values());
       } else {
@@ -236,7 +218,7 @@ const GoogleMapView = ({
         if (!m.getMap()) m.setMap(map);
       });
     }
-  }, [memoizedCars, clusters, showDeviceName]);
+  }, [memoizedCars, clusters, showDeviceName, mapProvider]);
 
   // ✅ تحديث المواقع والاتجاه أثناء الحركة (فقط بدون إعادة بناء)
   useEffect(() => {
@@ -244,13 +226,16 @@ const GoogleMapView = ({
     memoizedCars.forEach((car) => {
       const marker = window.carMarkers.get(car.id);
       if (marker) {
-        marker.setPosition(car.position);
-        const rotation = car.direction || 0;
         const icon = marker.getIcon();
-        if (icon.rotation !== rotation) {
+        marker.setPosition(car.position);
+        if (
+          icon.rotation !== car.direction ||
+          icon.fillColor !== getCarStatus(car).color
+        ) {
           marker.setIcon({
             ...icon,
-            rotation: rotation,
+            rotation: car.direction,
+            fillColor: getCarStatus(car).color,
           });
         }
       }

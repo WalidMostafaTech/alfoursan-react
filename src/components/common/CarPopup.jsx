@@ -66,12 +66,17 @@ const CarPopup = ({ car }) => {
       </div>
 
       {/* العنوان */}
-      <div className="flex items-center gap-1">
+      <a
+        href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex gap-1 w-fit hover:underline"
+      >
         <FaMapMarkerAlt className="text-mainColor text-lg" />
         <p className="text-gray-600 font-medium flex-1 text-sm">
           {car.address}
         </p>
-      </div>
+      </a>
 
       {/* الأيقونات */}
       <div className="w-full flex justify-evenly items-center gap-2 text-xl">

@@ -24,8 +24,8 @@ const Command = ({ deviceID, refetch }) => {
     {
       type: "select",
       selectOptions: [
-        { value: "CTRDOOR,1#", label: "فتح الباب 🏠" },
-        { value: "CTRDOOR,0#", label: "اغلاق الباب 🏠" },
+        { value: "CTRDOOR,1#", label: "فتح الباب" },
+        { value: "CTRDOOR,0#", label: "اغلاق الباب" },
       ],
       content: null,
       value: null,
@@ -33,8 +33,8 @@ const Command = ({ deviceID, refetch }) => {
     {
       type: "select",
       selectOptions: [
-        { value: "RELAY,1#", label: "⛔ قطع الزيت والكهرباء" },
-        { value: "RELAY,0#", label: "✅ إعادة الزيت والكهرباء" },
+        { value: "RELAY,1#", label: "قطع الزيت والكهرباء" },
+        { value: "RELAY,0#", label: "إعادة الزيت والكهرباء" },
       ],
       content: null,
       value: null,

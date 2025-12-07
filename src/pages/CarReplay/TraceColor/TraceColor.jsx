@@ -3,15 +3,9 @@ import { FaAngleRight } from "react-icons/fa";
 import { CiEdit } from "react-icons/ci";
 import ChangeSpeedLimitModal from "../../../components/modals/ChangeSpeedLimitModal";
 
-const TraceColor = () => {
+const TraceColor = ({ speedLimits, setSpeedLimits }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [openModal, setOpenModal] = useState(false);
-
-  const [speedLimits, setSpeedLimits] = useState({
-    p1: 57, // الفاصل بين الأخضر والأصفر
-    p2: 121, // الفاصل بين الأصفر والأحمر
-    max: 180, // أقصى سرعة
-  });
 
   return (
     <>
@@ -23,7 +17,7 @@ const TraceColor = () => {
         <div className="bg-white h-full w-full rounded-2xl shadow-xl flex flex-col relative">
           <button
             onClick={() => setIsOpen((prev) => !prev)}
-            className="absolute top-4 left-full bg-white text-mainColor p-1 rounded-r-full shadow-md shadow-mainColor"
+            className="absolute top-4 left-full bg-white text-mainColor p-1 rounded-r-full shadow-md shadow-mainColor cursor-pointer"
           >
             <FaAngleRight
               size={25}
@@ -47,7 +41,7 @@ const TraceColor = () => {
             <div className="flex items-center gap-2 p-4 border-t border-gray-200">
               <div
                 className="w-6 h-6 rounded"
-                style={{ backgroundColor: "#1dbf73" }}
+                style={{ backgroundColor: "var(--color-mainGreen)" }}
               />
               <p>
                 {0} - {speedLimits.p1} km/h
@@ -56,7 +50,7 @@ const TraceColor = () => {
             <div className="flex items-center gap-2 p-4 border-t border-gray-200">
               <div
                 className="w-6 h-6 rounded"
-                style={{ backgroundColor: "#FFD700" }}
+                style={{ backgroundColor: "var(--color-mainYellow)" }}
               />
               <p>
                 {speedLimits.p1} - {speedLimits.p2} km/h
@@ -65,7 +59,7 @@ const TraceColor = () => {
             <div className="flex items-center gap-2 p-4 border-t border-gray-200">
               <div
                 className="w-6 h-6 rounded"
-                style={{ backgroundColor: "#FF0000" }}
+                style={{ backgroundColor: "var(--color-mainRed)" }}
               />
               <p>
                 {speedLimits.p2} - {speedLimits.max} km/h

@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import useCarSocket from "../../hooks/useCarSocket";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import MapActions from "./MapActions/MapActions";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { getDevices } from "../../services/monitorServices";
 import { toast } from "react-toastify";
 import DetailsModal from "../../components/modals/DetailsModal/DetailsModal";
@@ -16,6 +16,7 @@ import ShareModal from "../../components/modals/ShareModal";
 import GeoFenceModal from "../../components/modals/GeoFenceModal";
 import AssociateDevice from "../../components/modals/AssociateDevice";
 import SupportModal from "../../components/modals/SupportModal";
+import { changeZoom } from "../../store/mapSlice";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
@@ -57,14 +58,15 @@ const TenantDashboard = () => {
     associateDeviceModal,
     supportModal,
   } = useSelector((state) => state.modals);
-  const { provider: mapProvider } = useSelector((state) => state.map);
+  const { provider: mapProvider, zoom } = useSelector((state) => state.map);
 
   const [cars, setCars] = useState([]);
   const [isInit, setIsInit] = useState(false);
   const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
-  const [zoom, setZoom] = useState(6);
+  // const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  const dispatch = useDispatch();
 
   const filteredCars = cars.filter((car) => {
     if (activeFilter === "all") return true;
@@ -205,7 +207,8 @@ const TenantDashboard = () => {
 
     if (zoom) {
       setCenter(position);
-      setZoom(18);
+      dispatch(changeZoom(18));
+      // setZoom(18);
       if (mapProvider === "mapbox") {
         setViewState({
           longitude: lng,
@@ -222,7 +225,18 @@ const TenantDashboard = () => {
       });
     }
 
-    setSelectedCarId(car.id !== selectedCarId ? car.id : null);
+    if (car.id === selectedCarId) {
+      // دوس على نفس العربية → نلغي الاختيار
+      setSelectedCarId(null);
+      return;
+    }
+
+    // غير العربية → اعمل زوم
+    if (zoom) {
+      dispatch(changeZoom(18));
+      setCenter(position);
+    }
+    setSelectedCarId(car.id);
   };
 
   if (loadError) return <div>فشل تحميل الخريطة</div>;
@@ -240,7 +254,7 @@ const TenantDashboard = () => {
         setActiveFilter={setActiveFilter}
       />
 
-      <MapActions setZoom={setZoom} setViewState={setViewState} />
+      <MapActions setViewState={setViewState} />
 
       {mapProvider === "google" ? (
         <GoogleMapView

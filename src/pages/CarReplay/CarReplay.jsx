@@ -34,6 +34,12 @@ const CarReplay = () => {
 
   const [mapType, setMapType] = useState("roadmap");
 
+  const [speedLimits, setSpeedLimits] = useState({
+    p1: 100,
+    p2: 120,
+    max: 180,
+  });
+
   const today = new Date().toISOString().split("T")[0];
   const [dateRange, setDateRange] = useState({
     from: today,
@@ -184,23 +190,19 @@ const CarReplay = () => {
         {/* المسار الكامل */}
         {points.length > 0 && (
           <>
-            {/* <Polyline
-              path={fullPath}
-              options={{
-                strokeColor: "#a10a29",
-                strokeWeight: 5,
-                strokeOpacity: 0.6,
-              }}
-            /> */}
-
             {points.slice(1).map((point, index) => {
               const prev = points[index];
               const curr = point;
 
-              const speed = curr.speed;
-              let color = "#1dbf73"; // أخضر افتراضي
-              if (speed > 100 && speed <= 120) color = "#FFD700"; // أصفر
-              else if (speed > 120) color = "#FF0000"; // أحمر
+              let color = "#1dbf73"; // أخضر
+
+              const carSpeed = curr.speed;
+
+              if (carSpeed > speedLimits.p1 && carSpeed <= speedLimits.p2) {
+                color = "#FFD700"; // أصفر
+              } else if (carSpeed > speedLimits.p2) {
+                color = "#FF0000"; // أحمر
+              }
 
               return (
                 <Polyline
@@ -217,11 +219,6 @@ const CarReplay = () => {
                 />
               );
             })}
-
-            {/* <Polyline
-              path={traveledPath}
-              options={{ strokeColor: "#1dbf73", strokeWeight: 5 }}
-            /> */}
 
             {/* بداية */}
             <Marker
@@ -340,7 +337,7 @@ const CarReplay = () => {
         )}
       </GoogleMap>
 
-      <TraceColor />
+      <TraceColor speedLimits={speedLimits} setSpeedLimits={setSpeedLimits} />
 
       {/* فلتر التاريخ */}
       <ReplayFilter onDateChange={handleDateChange} />
