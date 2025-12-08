@@ -70,7 +70,7 @@ const CarPopup = ({ car }) => {
         href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex gap-1 w-fit hover:underline"
+        className="flex gap-1 w-fit hover:underline outline-none"
       >
         <FaMapMarkerAlt className="text-mainColor text-lg" />
         <p className="text-gray-600 font-medium flex-1 text-sm">

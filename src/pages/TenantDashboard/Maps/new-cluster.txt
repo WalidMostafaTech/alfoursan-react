@@ -109,99 +109,66 @@ const GoogleMapView = ({
   };
 
   // ✅ إعادة بناء الماركرات فقط عند تغيير provider أو IDs
-  // ✅ إعادة بناء الماركرات فقط عند تغيير provider أو IDs (بدون إظهار على الخريطة)
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
-    const map = mapRef.current;
 
-    if (!window.carMarkers) window.carMarkers = new Map();
-    const markers = window.carMarkers;
-    const currentIds = memoizedCars.map((c) => c.id);
-    const existingIds = Array.from(markers.keys());
+    if (window.carMarkers) {
+      Array.from(window.carMarkers.values()).forEach((m) => m.setMap(null));
+    }
 
-    // 1. إضافة أو تحديث الماركرات الموجودة
+    window.carMarkers = new Map();
+
     memoizedCars.forEach((car) => {
-      const marker = markers.get(car.id);
-      const rotation = car.direction || 0;
+      if (!car.position) return;
       const { color } = getCarStatus(car);
 
-      if (!marker) {
-        // إنشاء ماركر جديد (بدون ربطه بالخريطة الآن)
-        const newMarker = createRotatedMarker(car, null);
-        markers.set(car.id, newMarker);
-
-        // تأكد من ضبط الرؤية بناءً على حالة التجميع الحالية
-        if (clusters) newMarker.setVisible(false);
-        else newMarker.setMap(map); // إذا كان التجميع غير مفعل، اظهره الآن
-      } else {
-        // تحديث الخصائص (بدون setPosition لأنه يتم تحديثه في useEffect آخر)
-        const icon = marker.getIcon();
-        if (icon.rotation !== rotation || icon.fillColor !== color) {
-          marker.setIcon({ ...icon, rotation, fillColor: color });
-        }
-
-        if (showDeviceName) {
-          marker.setLabel({
-            text: car.name || "بدون اسم",
-            color: "#212121",
-            fontWeight: "bold",
-            fontSize: "12px",
-            className: "car-label",
-          });
-        } else {
-          marker.setLabel(null);
-        }
-
-        // أهم جزء: تحديث الـ Map والـ Visibility إذا كان التجميع غير مفعل
-        if (!clusters && !marker.getMap()) {
-          marker.setMap(map);
-          marker.setVisible(true);
-        }
-      }
+      const marker = new window.google.maps.Marker({
+        position: car.position,
+        map: clusters ? null : mapRef.current,
+        icon: {
+          path: carPath,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 0.7,
+          scale: 0.05,
+          rotation: car.direction || 0,
+          anchor: new window.google.maps.Point(156, 256),
+          labelOrigin: new window.google.maps.Point(156, 700),
+        },
+      });
+      marker.addListener("click", () => handleSelectCar(car));
+      window.carMarkers.set(car.id, marker);
     });
-
-    // 2. حذف الماركرات التي لم تعد موجودة
-    existingIds.forEach((id) => {
-      if (!currentIds.includes(id)) {
-        const m = markers.get(id);
-        if (m) {
-          m.setMap(null);
-          markers.delete(id);
-        }
-      }
-    });
-  }, [mapRef.current, memoizedCars, handleSelectCar, showDeviceName, clusters]);
-  // ✅ ملاحظة: أضفنا 'clusters' كـ dependency ليتفاعل هذا الـ useEffect مع إيقاف/تشغيل التجميع
+  }, [mapRef.current]);
 
   // ✅ تحديث Clusters عند تغيير الزوم أو تفعيل/إلغاء التجميع
   useEffect(() => {
     if (!mapRef.current || !window.google || !superclusterRef.current) return;
 
     const map = mapRef.current;
+
     if (!window.clusterMarkersArray) window.clusterMarkersArray = [];
-    if (!window.carMarkers) window.carMarkers = new Map(); // تأكد من وجودها
 
     if (!clusters) {
       // إخفاء كل cluster markers
       window.clusterMarkersArray.forEach((m) => m.setMap(null));
-      window.clusterMarkersArray = []; // إظهار كل ماركرات العربيات
+      window.clusterMarkersArray = [];
 
-      window.carMarkers.forEach((marker) => {
-        marker.setMap(map); // ربطها بالخريطة
-        marker.setVisible(true); // إظهار
-      });
-      return;
-    } // الكلاستر شغال // إخفاء كل الماركرات الفردية قبل حساب الكلاستر (ماعدا العربية المختارة)
-
-    window.carMarkers.forEach((marker) => marker.setVisible(false));
-
-    // ⭐ إضافة الكود التالي لتأكيد ظهور السيارة المختارة:
-    if (selectedCarId) {
-      const selectedMarker = window.carMarkers.get(selectedCarId);
-      if (selectedMarker) {
-        selectedMarker.setMap(map); // تأكد من ربطه بالخريطة
-        selectedMarker.setVisible(true); // تأكد من الإظهار
+      // إظهار كل ماركرات العربيات
+      if (window.carMarkers) {
+        window.carMarkers.forEach((marker) => {
+          marker.setMap(map);
+          marker.setVisible(true);
+        });
       }
+      return;
+    }
+
+    // الكلاستر شغال
+    // إخفاء كل الماركرات الفردية
+    if (window.carMarkers) {
+      window.carMarkers.forEach((marker) => marker.setVisible(false));
     }
 
     // مسح Cluster markers القديمة
@@ -227,7 +194,6 @@ const GoogleMapView = ({
 
       if (feature.properties.cluster) {
         // Cluster marker
-        // ... (كود إنشاء ماركر التجميع) ... (لا يوجد تعديل هنا)
         const marker = new window.google.maps.Marker({
           position,
           map,
@@ -260,28 +226,14 @@ const GoogleMapView = ({
       } else {
         // ماركر فردي → نظهره
         const car = feature.properties.car;
-        const marker = window.carMarkers.get(car.id);
+        const marker = window.carMarkers?.get(car.id);
         if (marker) {
           marker.setVisible(true);
           marker.setMap(map); // أهم خطوة عشان يظهر
         }
       }
     });
-  }, [zoom, clusters, mapRef.current]); // ✅ أضفنا mapRef.current كـ dependency
-
-  // ✅ NEW: تأكيد ظهور السيارة المختارة بمجرد اختيارها
-  useEffect(() => {
-    if (!selectedCarId || !window.carMarkers || !mapRef.current) return;
-
-    const selectedMarker = window.carMarkers.get(selectedCarId);
-    if (selectedMarker) {
-      // تأكيد إظهار ماركر السيارة المختارة وربطه بالخريطة
-      selectedMarker.setMap(mapRef.current);
-      selectedMarker.setVisible(true);
-      // (إذا كانت هناك حاجة لمركز الخريطة على السيارة المختارة، يمكن إضافتها هنا)
-    }
-    // عند إلغاء الاختيار، لا داعي لعمل شيء هنا، فمنطق التجميع سيعيد إخفائها إذا كانت مجمعة.
-  }, [selectedCarId, mapRef.current]);
+  }, [zoom, clusters]);
 
   // ✅ إدارة الماركرات والتحديثات
   useEffect(() => {

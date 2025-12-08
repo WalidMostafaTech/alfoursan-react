@@ -48,14 +48,6 @@ function getTimeDiffDetailed(lastSignelGPS) {
   return { days, hours, minutes, seconds, hoursSinceLastGPS };
 }
 
-// مثال استخدام
-const lastSignelGPS = "2025-11-05 10:15:20";
-const diff = getTimeDiffDetailed(lastSignelGPS);
-
-console.log(
-  `${diff.days} يوم ${diff.hours} ساعة ${diff.minutes} دقيقة ${diff.seconds} ثانية`
-);
-
 // 🚗 Main function to get car status (Saudi time)
 export const getCarStatus = (car) => {
   if (!car) return { status: "Unknown", color: "#6b7280" }; // رمادي فاتح
@@ -107,11 +99,6 @@ export const getCarStatus = (car) => {
       color: "#3b82f6", // أزرق
     };
   }
-
-  console.clear();
-  console.log("hoursSinceLastSignal", hoursSinceLastSignal);
-  console.log("speed", speed);
-  console.log("hoursSinceLastGPS", hoursSinceLastGPS);
 
   return { status: "Unknown", color: "#6b7280" };
 };

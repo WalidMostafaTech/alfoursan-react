@@ -1,16 +1,12 @@
 import { GoogleMap, InfoWindow } from "@react-google-maps/api";
 import CarPopup from "../../../components/common/CarPopup";
-import { useEffect, useRef, useMemo, useState } from "react";
-import Supercluster from "supercluster";
+import { useEffect, useRef, useMemo } from "react";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { useDispatch, useSelector } from "react-redux";
 import { openGeoFenceModal } from "../../../store/modalsSlice";
 import { carPath } from "../../../services/carPath";
 import { getCarStatus } from "../../../utils/getCarStatus";
-import {
-  changeZoom,
-  setClusters,
-  toggleClusters,
-} from "../../../store/mapSlice";
+import { changeZoom } from "../../../store/mapSlice";
 
 const GoogleMapView = ({
   cars,
@@ -21,9 +17,6 @@ const GoogleMapView = ({
 }) => {
   const mapRef = useRef(null);
   const drawingManagerRef = useRef(null);
-  const superclusterRef = useRef(null);
-  const [clusterMarkers, setClusterMarkers] = useState([]);
-
   const {
     clusters,
     mapType,
@@ -37,6 +30,22 @@ const GoogleMapView = ({
     mapRef.current = map;
   };
 
+  // ✅ تثبيت بيانات السيارات باستخدام useMemo
+  // const memoizedCars = useMemo(
+  //   () => cars,
+  //   [
+  //     JSON.stringify(
+  //       cars.map((c) => ({
+  //         id: c.id,
+  //         lat: c.position?.lat,
+  //         lng: c.position?.lng,
+  //         direction: c.direction,
+  //         speed: c.speed,
+  //       }))
+  //     ),
+  //   ]
+  // );
+
   const memoizedCars = useMemo(
     () => cars,
     [
@@ -48,39 +57,6 @@ const GoogleMapView = ({
         .join(","),
     ]
   );
-
-  // ✅ تحويل السيارات إلى GeoJSON features لـ Supercluster
-  const geojsonFeatures = useMemo(() => {
-    return memoizedCars
-      .filter((car) => car.position?.lat && car.position?.lng)
-      .map((car) => ({
-        type: "Feature",
-        properties: {
-          cluster: false,
-          carId: car.id,
-          car: car,
-        },
-        geometry: {
-          type: "Point",
-          coordinates: [car.position.lng, car.position.lat],
-        },
-      }));
-  }, [memoizedCars]);
-
-  // ✅ إنشاء/تحديث Supercluster
-  useEffect(() => {
-    if (!geojsonFeatures.length) return;
-
-    if (!superclusterRef.current) {
-      superclusterRef.current = new Supercluster({
-        radius: 60,
-        maxZoom: 18,
-        minPoints: 3,
-      });
-    }
-
-    superclusterRef.current.load(geojsonFeatures);
-  }, [geojsonFeatures]);
 
   // ✅ إنشاء ماركر بعلامة Symbol
   const createRotatedMarker = (car, map) => {
@@ -104,191 +80,54 @@ const GoogleMapView = ({
     };
 
     const marker = new window.google.maps.Marker(markerOptions);
+
     marker.addListener("click", () => handleSelectCar(car));
     return marker;
   };
 
   // ✅ إعادة بناء الماركرات فقط عند تغيير provider أو IDs
-  // ✅ إعادة بناء الماركرات فقط عند تغيير provider أو IDs (بدون إظهار على الخريطة)
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
-    const map = mapRef.current;
 
-    if (!window.carMarkers) window.carMarkers = new Map();
-    const markers = window.carMarkers;
-    const currentIds = memoizedCars.map((c) => c.id);
-    const existingIds = Array.from(markers.keys());
+    if (window.carMarkers) {
+      Array.from(window.carMarkers.values()).forEach((m) => m.setMap(null));
+    }
 
-    // 1. إضافة أو تحديث الماركرات الموجودة
+    window.carMarkers = new Map();
+    window.clusterMarkers = new Set();
+    window.carClusterer = null;
+
     memoizedCars.forEach((car) => {
-      const marker = markers.get(car.id);
-      const rotation = car.direction || 0;
+      if (!car.position) return;
       const { color } = getCarStatus(car);
 
-      if (!marker) {
-        // إنشاء ماركر جديد (بدون ربطه بالخريطة الآن)
-        const newMarker = createRotatedMarker(car, null);
-        markers.set(car.id, newMarker);
-
-        // تأكد من ضبط الرؤية بناءً على حالة التجميع الحالية
-        if (clusters) newMarker.setVisible(false);
-        else newMarker.setMap(map); // إذا كان التجميع غير مفعل، اظهره الآن
-      } else {
-        // تحديث الخصائص (بدون setPosition لأنه يتم تحديثه في useEffect آخر)
-        const icon = marker.getIcon();
-        if (icon.rotation !== rotation || icon.fillColor !== color) {
-          marker.setIcon({ ...icon, rotation, fillColor: color });
-        }
-
-        if (showDeviceName) {
-          marker.setLabel({
-            text: car.name || "بدون اسم",
-            color: "#212121",
-            fontWeight: "bold",
-            fontSize: "12px",
-            className: "car-label",
-          });
-        } else {
-          marker.setLabel(null);
-        }
-
-        // أهم جزء: تحديث الـ Map والـ Visibility إذا كان التجميع غير مفعل
-        if (!clusters && !marker.getMap()) {
-          marker.setMap(map);
-          marker.setVisible(true);
-        }
-      }
-    });
-
-    // 2. حذف الماركرات التي لم تعد موجودة
-    existingIds.forEach((id) => {
-      if (!currentIds.includes(id)) {
-        const m = markers.get(id);
-        if (m) {
-          m.setMap(null);
-          markers.delete(id);
-        }
-      }
-    });
-  }, [mapRef.current, memoizedCars, handleSelectCar, showDeviceName, clusters]);
-  // ✅ ملاحظة: أضفنا 'clusters' كـ dependency ليتفاعل هذا الـ useEffect مع إيقاف/تشغيل التجميع
-
-  // ✅ تحديث Clusters عند تغيير الزوم أو تفعيل/إلغاء التجميع
-  useEffect(() => {
-    if (!mapRef.current || !window.google || !superclusterRef.current) return;
-
-    const map = mapRef.current;
-    if (!window.clusterMarkersArray) window.clusterMarkersArray = [];
-    if (!window.carMarkers) window.carMarkers = new Map(); // تأكد من وجودها
-
-    if (!clusters) {
-      // إخفاء كل cluster markers
-      window.clusterMarkersArray.forEach((m) => m.setMap(null));
-      window.clusterMarkersArray = []; // إظهار كل ماركرات العربيات
-
-      window.carMarkers.forEach((marker) => {
-        marker.setMap(map); // ربطها بالخريطة
-        marker.setVisible(true); // إظهار
+      const marker = new window.google.maps.Marker({
+        position: car.position,
+        map: mapRef.current,
+        icon: {
+          path: carPath,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 0.7,
+          scale: 0.05,
+          rotation: car.direction || 0,
+          anchor: new window.google.maps.Point(156, 256),
+          labelOrigin: new window.google.maps.Point(156, 700),
+        },
       });
-      return;
-    } // الكلاستر شغال // إخفاء كل الماركرات الفردية قبل حساب الكلاستر (ماعدا العربية المختارة)
-
-    window.carMarkers.forEach((marker) => marker.setVisible(false));
-
-    // ⭐ إضافة الكود التالي لتأكيد ظهور السيارة المختارة:
-    if (selectedCarId) {
-      const selectedMarker = window.carMarkers.get(selectedCarId);
-      if (selectedMarker) {
-        selectedMarker.setMap(map); // تأكد من ربطه بالخريطة
-        selectedMarker.setVisible(true); // تأكد من الإظهار
-      }
-    }
-
-    // مسح Cluster markers القديمة
-    window.clusterMarkersArray.forEach((m) => m.setMap(null));
-    window.clusterMarkersArray = [];
-
-    const bounds = map.getBounds();
-    if (!bounds) return;
-
-    const bbox = [
-      bounds.getSouthWest().lng(),
-      bounds.getSouthWest().lat(),
-      bounds.getNorthEast().lng(),
-      bounds.getNorthEast().lat(),
-    ];
-
-    const currentZoom = map.getZoom();
-    const clustersData = superclusterRef.current.getClusters(bbox, currentZoom);
-
-    clustersData.forEach((feature) => {
-      const [lng, lat] = feature.geometry.coordinates;
-      const position = { lat, lng };
-
-      if (feature.properties.cluster) {
-        // Cluster marker
-        // ... (كود إنشاء ماركر التجميع) ... (لا يوجد تعديل هنا)
-        const marker = new window.google.maps.Marker({
-          position,
-          map,
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            fillColor: "#2196F3",
-            fillOpacity: 0.85,
-            strokeColor: "#fff",
-            strokeWeight: 2,
-            scale: 20,
-          },
-          label: {
-            text: String(feature.properties.point_count),
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: "14px",
-          },
-          zIndex: 1000,
-        });
-
-        marker.addListener("click", () => {
-          const expansionZoom = superclusterRef.current.getClusterExpansionZoom(
-            feature.properties.cluster_id
-          );
-          map.setZoom(expansionZoom);
-          map.panTo(position);
-        });
-
-        window.clusterMarkersArray.push(marker);
-      } else {
-        // ماركر فردي → نظهره
-        const car = feature.properties.car;
-        const marker = window.carMarkers.get(car.id);
-        if (marker) {
-          marker.setVisible(true);
-          marker.setMap(map); // أهم خطوة عشان يظهر
-        }
-      }
+      marker.addListener("click", () => handleSelectCar(car));
+      window.carMarkers.set(car.id, marker);
     });
-  }, [zoom, clusters, mapRef.current]); // ✅ أضفنا mapRef.current كـ dependency
+  }, [mapRef.current]);
 
-  // ✅ NEW: تأكيد ظهور السيارة المختارة بمجرد اختيارها
-  useEffect(() => {
-    if (!selectedCarId || !window.carMarkers || !mapRef.current) return;
-
-    const selectedMarker = window.carMarkers.get(selectedCarId);
-    if (selectedMarker) {
-      // تأكيد إظهار ماركر السيارة المختارة وربطه بالخريطة
-      selectedMarker.setMap(mapRef.current);
-      selectedMarker.setVisible(true);
-      // (إذا كانت هناك حاجة لمركز الخريطة على السيارة المختارة، يمكن إضافتها هنا)
-    }
-    // عند إلغاء الاختيار، لا داعي لعمل شيء هنا، فمنطق التجميع سيعيد إخفائها إذا كانت مجمعة.
-  }, [selectedCarId, mapRef.current]);
-
-  // ✅ إدارة الماركرات والتحديثات
+  // ✅ إدارة الماركرات والتجميع (بناء/تحديث فقط عند تغير السيارات فعلياً)
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
     const map = mapRef.current;
 
     if (!window.carMarkers) window.carMarkers = new Map();
+    if (!window.clusterMarkers) window.clusterMarkers = new Set();
 
     const markers = window.carMarkers;
     const currentIds = memoizedCars.map((c) => c.id);
@@ -296,19 +135,23 @@ const GoogleMapView = ({
 
     memoizedCars.forEach((car) => {
       const marker = markers.get(car.id);
+
       const rotation = car.direction || 0;
       const { color } = getCarStatus(car);
 
       if (!marker) {
-        const newMarker = createRotatedMarker(car, null); // إنشاء بدون map
+        // إنشاء marker جديد
+        const newMarker = createRotatedMarker(car, map);
         markers.set(car.id, newMarker);
       } else {
+        // تحديث الموقع والاتجاه فقط بدون setMap
         marker.setPosition(car.position);
         const icon = marker.getIcon();
         if (icon.rotation !== rotation || icon.fillColor !== color) {
           marker.setIcon({ ...icon, rotation, fillColor: color });
         }
 
+        // تحديث label
         if (showDeviceName) {
           marker.setLabel({
             text: car.name || "بدون اسم",
@@ -329,12 +172,56 @@ const GoogleMapView = ({
         if (m) {
           m.setMap(null);
           markers.delete(id);
+          window.clusterMarkers.delete(m);
         }
       }
     });
-  }, [memoizedCars, showDeviceName, mapProvider]);
 
-  // ✅ تحديث المواقع والاتجاه أثناء الحركة
+    // ✅ إدارة الكلاستر
+    if (clusters) {
+      if (!window.carClusterer) {
+        window.carClusterer = new MarkerClusterer({
+          map,
+          markers: Array.from(markers.values()),
+          minimumClusterSize: 3,
+          averageCenter: true,
+          maxZoom: 18,
+        });
+        window.clusterMarkers = new Set(markers.values());
+      } else {
+        const clusterer = window.carClusterer;
+        const allMarkers = Array.from(markers.values());
+
+        allMarkers.forEach((m) => {
+          if (!window.clusterMarkers.has(m)) {
+            clusterer.addMarker(m, false);
+            window.clusterMarkers.add(m);
+          }
+        });
+
+        Array.from(window.clusterMarkers).forEach((m) => {
+          if (!allMarkers.includes(m)) {
+            clusterer.removeMarker(m, false);
+            window.clusterMarkers.delete(m);
+          }
+        });
+
+        clusterer.render();
+      }
+    } else {
+      if (window.carClusterer) {
+        window.carClusterer.clearMarkers();
+        window.carClusterer = null;
+        window.clusterMarkers.clear();
+      }
+
+      Array.from(markers.values()).forEach((m) => {
+        if (!m.getMap()) m.setMap(map);
+      });
+    }
+  }, [memoizedCars, clusters, showDeviceName, mapProvider]);
+
+  // ✅ تحديث المواقع والاتجاه أثناء الحركة (فقط بدون إعادة بناء)
   useEffect(() => {
     if (!window.carMarkers) return;
     memoizedCars.forEach((car) => {

@@ -225,17 +225,6 @@ const TenantDashboard = () => {
       });
     }
 
-    if (car.id === selectedCarId) {
-      // دوس على نفس العربية → نلغي الاختيار
-      setSelectedCarId(null);
-      return;
-    }
-
-    // غير العربية → اعمل زوم
-    if (zoom) {
-      dispatch(changeZoom(18));
-      setCenter(position);
-    }
     setSelectedCarId(car.id);
   };
 
