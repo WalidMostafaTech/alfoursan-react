@@ -1,16 +1,21 @@
 import { useState } from "react";
 
-const ChangeSpeedLimitModal = ({ closeModal, speedLimits, setSpeedLimits }) => {
+const ChangeSpeedLimitModal = ({
+  closeModal,
+  speedLimits,
+  setSpeedLimits,
+  defaultSpeedLimit,
+}) => {
   const [mode, setMode] = useState("custom"); // default | custom
 
   const list = [
-    { color: "var(--color-mainGreen)", min: 0, max: speedLimits.p1 },
+    { color: "var(--color-mainGreen)", min: 0, max: defaultSpeedLimit.p1 },
     {
       color: "var(--color-mainYellow)",
-      min: speedLimits.p1,
-      max: speedLimits.p2,
+      min: defaultSpeedLimit.p1,
+      max: defaultSpeedLimit.p2,
     },
-    { color: "var(--color-mainRed)", min: speedLimits.p2, max: 180 },
+    { color: "var(--color-mainRed)", min: defaultSpeedLimit.p2, max: 180 },
   ];
 
   return (

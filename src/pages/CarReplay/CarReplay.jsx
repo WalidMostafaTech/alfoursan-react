@@ -34,10 +34,16 @@ const CarReplay = () => {
 
   const [mapType, setMapType] = useState("roadmap");
 
-  const [speedLimits, setSpeedLimits] = useState({
+  const defaultSpeedLimit = {
     p1: 100,
     p2: 120,
     max: 180,
+  };
+
+  const [speedLimits, setSpeedLimits] = useState({
+    p1: defaultSpeedLimit.p1,
+    p2: defaultSpeedLimit.p2,
+    max: defaultSpeedLimit.max,
   });
 
   const today = new Date().toISOString().split("T")[0];
@@ -337,7 +343,11 @@ const CarReplay = () => {
         )}
       </GoogleMap>
 
-      <TraceColor speedLimits={speedLimits} setSpeedLimits={setSpeedLimits} />
+      <TraceColor
+        speedLimits={speedLimits}
+        setSpeedLimits={setSpeedLimits}
+        defaultSpeedLimit={defaultSpeedLimit}
+      />
 
       {/* فلتر التاريخ */}
       <ReplayFilter onDateChange={handleDateChange} />

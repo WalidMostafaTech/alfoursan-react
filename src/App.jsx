@@ -6,7 +6,7 @@ function App() {
     <main>
       <Outlet />
 
-      <ToastContainer position="top-right" theme="colored" autoClose={3000} />
+      <ToastContainer position="top-right" theme="colored" autoClose={3000} limit={3} />
     </main>
   );
 }

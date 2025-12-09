@@ -3,7 +3,7 @@ import { FaAngleRight } from "react-icons/fa";
 import { CiEdit } from "react-icons/ci";
 import ChangeSpeedLimitModal from "../../../components/modals/ChangeSpeedLimitModal";
 
-const TraceColor = ({ speedLimits, setSpeedLimits }) => {
+const TraceColor = ({ speedLimits, setSpeedLimits, defaultSpeedLimit }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [openModal, setOpenModal] = useState(false);
 
@@ -74,6 +74,7 @@ const TraceColor = ({ speedLimits, setSpeedLimits }) => {
           closeModal={() => setOpenModal(false)}
           speedLimits={speedLimits}
           setSpeedLimits={setSpeedLimits}
+          defaultSpeedLimit={defaultSpeedLimit}
         />
       )}
     </>
