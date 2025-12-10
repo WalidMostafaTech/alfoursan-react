@@ -1,12 +1,17 @@
 import { Outlet } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   return (
     <main>
       <Outlet />
 
-      <ToastContainer position="top-right" theme="colored" autoClose={3000} limit={3} />
+      <ToastContainer
+        position="top-right"
+        theme="colored"
+        autoClose={3000}
+        limit={3}
+      />
     </main>
   );
 }

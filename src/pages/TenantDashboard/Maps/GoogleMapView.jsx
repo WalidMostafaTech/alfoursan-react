@@ -1,16 +1,12 @@
 import { GoogleMap, InfoWindow } from "@react-google-maps/api";
 import CarPopup from "../../../components/common/CarPopup";
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import Supercluster from "supercluster";
 import { useDispatch, useSelector } from "react-redux";
 import { openGeoFenceModal } from "../../../store/modalsSlice";
 import { carPath } from "../../../services/carPath";
 import { getCarStatus } from "../../../utils/getCarStatus";
-import {
-  changeZoom,
-  setClusters,
-  toggleClusters,
-} from "../../../store/mapSlice";
+import { changeZoom } from "../../../store/mapSlice";
 
 const GoogleMapView = ({
   cars,
@@ -22,7 +18,6 @@ const GoogleMapView = ({
   const mapRef = useRef(null);
   const drawingManagerRef = useRef(null);
   const superclusterRef = useRef(null);
-  const [clusterMarkers, setClusterMarkers] = useState([]);
 
   const {
     clusters,
@@ -286,7 +281,7 @@ const GoogleMapView = ({
   // ✅ إدارة الماركرات والتحديثات
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
-    const map = mapRef.current;
+    // const map = mapRef.current;
 
     if (!window.carMarkers) window.carMarkers = new Map();
 
