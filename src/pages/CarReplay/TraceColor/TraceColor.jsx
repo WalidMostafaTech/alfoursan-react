@@ -21,7 +21,7 @@ const TraceColor = ({ speedLimits, setSpeedLimits, defaultSpeedLimit }) => {
           >
             <FaAngleRight
               size={25}
-              className={`${isOpen ? "rotate-180" : ""}`}
+              className={`${isOpen ? "rotate-180" : ""} duration-200`}
             />
           </button>
 

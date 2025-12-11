@@ -74,7 +74,6 @@ const CarReplay = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const intervalRef = useRef(null);
-  // ✅ استخدم موقع افتراضي لو مفيش نقاط
   const defaultPosition = { lat: 23.8859, lng: 45.0792 };
 
   const [mapRef, setMapRef] = useState(null);
@@ -97,10 +96,8 @@ const CarReplay = () => {
 
     const bounds = mapRef.getBounds();
 
-    // لو bounds لسه مش جاهزة (أول ثانية بعد التحميل)
     if (!bounds) return;
 
-    // لو العربية خرجت بره الشاشة → حرّك الخريطة
     if (!bounds.contains(carLatLng)) {
       mapRef.panTo(carLatLng);
     }
@@ -130,7 +127,6 @@ const CarReplay = () => {
   };
 
   const carIcon = useMemo(() => {
-    // لو المكتبة لسه مش جاهزة، استخدم قيمة ثابتة
     const google = window.google;
     if (!isLoaded || !google) {
       return {
@@ -150,6 +146,80 @@ const CarReplay = () => {
     };
   }, [isLoaded]);
 
+  // ✅ تحسين: دمج الـ Polylines حسب اللون
+  const polylineSegments = useMemo(() => {
+    if (points.length === 0) return { green: [], yellow: [], red: [] };
+
+    const segments = {
+      green: [],
+      yellow: [],
+      red: [],
+    };
+
+    let currentColor = null;
+    let currentPath = [];
+
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      const speed = point.speed;
+
+      let color = "green";
+      if (speed > speedLimits.p1 && speed <= speedLimits.p2) {
+        color = "yellow";
+      } else if (speed > speedLimits.p2) {
+        color = "red";
+      }
+
+      const latLng = { lat: point.latitude, lng: point.longitude };
+
+      if (currentColor === null) {
+        currentColor = color;
+        currentPath = [latLng];
+      } else if (currentColor === color) {
+        currentPath.push(latLng);
+      } else {
+        // تغير اللون، احفظ المسار القديم وابدأ واحد جديد
+        if (currentPath.length > 0) {
+          segments[currentColor].push([...currentPath]);
+        }
+        currentColor = color;
+        currentPath = [currentPath[currentPath.length - 1], latLng];
+      }
+    }
+
+    // احفظ آخر مسار
+    if (currentPath.length > 0) {
+      segments[currentColor].push(currentPath);
+    }
+
+    return segments;
+  }, [points, speedLimits]);
+
+  // ✅ تحسين: حفظ نقاط الوقوف في useMemo
+  const parkingMarkers = useMemo(() => {
+    if (points.length === 0) return [];
+
+    return points
+      .map((point, index) => ({ ...point, originalIndex: index }))
+      .filter(
+        (point, index) =>
+          point.speed === 0 && index !== 0 && index !== points.length - 1
+      );
+  }, [points]);
+
+  // ✅ تحسين: حفظ نقاط البداية والنهاية
+  const startEndMarkers = useMemo(() => {
+    if (points.length === 0) return null;
+
+    return {
+      start: { lat: points[0].latitude, lng: points[0].longitude },
+      end: {
+        lat: points[points.length - 1].latitude,
+        lng: points[points.length - 1].longitude,
+      },
+    };
+  }, [points]);
+
   if (!isLoaded) return <LoadingPage />;
 
   const handleDateChange = (from, to) => {
@@ -160,6 +230,10 @@ const CarReplay = () => {
       toast.warn("⚠️ لا يمكن اختيار أكثر من 30 يومًا");
       return;
     }
+
+    setIsPlaying(false);
+    setCurrentIndex(0);
+
     setDateRange({ from, to });
     refetch();
   };
@@ -189,116 +263,122 @@ const CarReplay = () => {
       <GoogleMap
         mapContainerStyle={containerStyle}
         onLoad={(map) => setMapRef(map)}
-        center={initialCenter} // ثابت ولن يتغير
+        center={initialCenter}
         zoom={points.length > 0 ? 16 : 6}
         mapTypeId={mapType}
       >
-        {/* المسار الكامل */}
+        {/* ✅ المسار الكامل - محسّن */}
         {points.length > 0 && (
           <>
-            {points.slice(1).map((point, index) => {
-              const prev = points[index];
-              const curr = point;
+            {/* رسم المسارات الخضراء */}
+            {polylineSegments.green.map((path, index) => (
+              <Polyline
+                key={`green-${index}`}
+                path={path}
+                options={{
+                  strokeColor: "#1dbf73",
+                  strokeWeight: 5,
+                  strokeOpacity: 0.9,
+                }}
+              />
+            ))}
 
-              let color = "#1dbf73"; // أخضر
+            {/* رسم المسارات الصفراء */}
+            {polylineSegments.yellow.map((path, index) => (
+              <Polyline
+                key={`yellow-${index}`}
+                path={path}
+                options={{
+                  strokeColor: "#FFD700",
+                  strokeWeight: 5,
+                  strokeOpacity: 0.9,
+                }}
+              />
+            ))}
 
-              const carSpeed = curr.speed;
+            {/* رسم المسارات الحمراء */}
+            {polylineSegments.red.map((path, index) => (
+              <Polyline
+                key={`red-${index}`}
+                path={path}
+                options={{
+                  strokeColor: "#FF0000",
+                  strokeWeight: 5,
+                  strokeOpacity: 0.9,
+                }}
+              />
+            ))}
 
-              if (carSpeed > speedLimits.p1 && carSpeed <= speedLimits.p2) {
-                color = "#FFD700"; // أصفر
-              } else if (carSpeed > speedLimits.p2) {
-                color = "#FF0000"; // أحمر
-              }
-
-              return (
-                <Polyline
-                  key={index}
-                  path={[
-                    { lat: prev.latitude, lng: prev.longitude },
-                    { lat: curr.latitude, lng: curr.longitude },
-                  ]}
-                  options={{
-                    strokeColor: color,
-                    strokeWeight: 5,
-                    strokeOpacity: 0.9,
+            {/* ✅ نقطة البداية */}
+            {startEndMarkers && (
+              <>
+                <Marker
+                  position={startEndMarkers.start}
+                  label={{
+                    text: "B",
+                    color: "#1dbf73",
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                  }}
+                  icon={{
+                    path: window.google.maps.SymbolPath.CIRCLE,
+                    scale: 14,
+                    fillColor: "white",
+                    fillOpacity: 1,
+                    strokeWeight: 2,
+                    strokeColor: "#1dbf73",
                   }}
                 />
-              );
-            })}
 
-            {/* بداية */}
-            <Marker
-              position={{ lat: points[0].latitude, lng: points[0].longitude }}
-              label={{
-                text: "B",
-                color: "#1dbf73",
-                fontSize: "16px",
-                fontWeight: "bold",
-              }}
-              icon={{
-                path: window.google.maps.SymbolPath.CIRCLE,
-                scale: 14,
-                fillColor: "white",
-                fillOpacity: 1,
-                strokeWeight: 2,
-                strokeColor: "#1dbf73",
-              }}
-            />
-
-            {/* نهاية */}
-            <Marker
-              position={{
-                lat: points[points.length - 1].latitude,
-                lng: points[points.length - 1].longitude,
-              }}
-              label={{
-                text: "E",
-                color: "#ff4b4b",
-                fontSize: "16px",
-                fontWeight: "bold",
-              }}
-              icon={{
-                path: window.google.maps.SymbolPath.CIRCLE,
-                scale: 14,
-                fillColor: "white",
-                fillOpacity: 1,
-                strokeWeight: 2,
-                strokeColor: "#ff4b4b",
-              }}
-            />
-
-            {points.map(
-              (point, index) =>
-                point.speed === 0 &&
-                index !== 0 && // استثناء البداية
-                index !== points.length - 1 && ( // استثناء النهاية
-                  <Marker
-                    key={index}
-                    position={{
-                      lat: point.latitude,
-                      lng: point.longitude,
-                    }}
-                    label={{
-                      text: "P",
-                      color: "white",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                    icon={{
-                      path: window.google.maps.SymbolPath.CIRCLE,
-                      scale: 12,
-                      fillColor: "#0f0f84",
-                      fillOpacity: 1,
-                      strokeWeight: 1,
-                      strokeColor: "#fff",
-                    }}
-                  />
-                )
+                {/* ✅ نقطة النهاية */}
+                <Marker
+                  position={startEndMarkers.end}
+                  label={{
+                    text: "E",
+                    color: "#ff4b4b",
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                  }}
+                  icon={{
+                    path: window.google.maps.SymbolPath.CIRCLE,
+                    scale: 14,
+                    fillColor: "white",
+                    fillOpacity: 1,
+                    strokeWeight: 2,
+                    strokeColor: "#ff4b4b",
+                  }}
+                />
+              </>
             )}
+
+            {/* ✅ نقاط الوقوف - محسّنة */}
+            {parkingMarkers.map((point) => (
+              <Marker
+                key={point.originalIndex}
+                position={{
+                  lat: point.latitude,
+                  lng: point.longitude,
+                }}
+                label={{
+                  text: "P",
+                  color: "white",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                }}
+                icon={{
+                  path: window.google.maps.SymbolPath.CIRCLE,
+                  scale: 10,
+                  fillColor: "#0f0f84",
+                  fillOpacity: 1,
+                  strokeWeight: 1,
+                  strokeColor: "#fff",
+                }}
+              />
+            ))}
           </>
         )}
 
-        {/* العربية (حتى لو مفيش نقاط) */}
+        {/* العربية */}
         {carIcon && (
           <Marker
             position={{
@@ -310,11 +390,11 @@ const CarReplay = () => {
               rotation: currentPoint.direction,
               scaledSize: new window.google.maps.Size(40, 40),
             }}
-            onClick={() => setShowInfo(true)} // لما تضغط على العربية
+            onClick={() => setShowInfo(true)}
           >
             {showInfo && (
               <InfoWindow onCloseClick={() => setShowInfo(false)}>
-                <div className="p-2 w-[400px]">
+                <div className="p-2 pb-4 w-[400px]">
                   <h3 className="text-lg font-bold text-mainColor mb-4">
                     {meta?.name}
                   </h3>
@@ -351,14 +431,12 @@ const CarReplay = () => {
         defaultSpeedLimit={defaultSpeedLimit}
       />
 
-      {/* فلتر التاريخ */}
       <ReplayFilter onDateChange={handleDateChange} />
 
       <div className="absolute top-[15%] right-3 z-20 space-y-2 flex flex-col items-center">
         <MapTypes onChange={setMapType} />
       </div>
 
-      {/* الكنترولز */}
       {isLoading ? (
         <div className="absolute w-full max-w-4xl bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-full px-8 py-6 flex items-center justify-center">
           <Loader />
