@@ -126,6 +126,7 @@
 // export default useCarSocket;
 
 import { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
 /* ===== Alarm Toast UI ===== */
@@ -146,7 +147,21 @@ const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
 
 /* ===== Hook ===== */
 const useCarSocket = (cars, setCars, isInit) => {
+  const { notificationSound } = useSelector((state) => state.map);
+
   const alarmAudioRef = useRef(null);
+
+  const notificationSoundRef = useRef(notificationSound);
+
+  useEffect(() => {
+    notificationSoundRef.current = notificationSound;
+  }, [notificationSound]);
+
+  const carsRef = useRef(cars);
+
+  useEffect(() => {
+    carsRef.current = cars;
+  }, [cars]); 
 
   useEffect(() => {
     // تجهيز الصوت مرة واحدة
@@ -161,7 +176,7 @@ const useCarSocket = (cars, setCars, isInit) => {
     const ws = new WebSocket("wss://alfursantracking.com:2053");
 
     ws.onopen = () => {
-      cars.forEach((car) => {
+      carsRef.current.forEach((car) => {
         if (car.serial_number) {
           ws.send(
             JSON.stringify({
@@ -176,9 +191,10 @@ const useCarSocket = (cars, setCars, isInit) => {
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
-      /* ===== GPS UPDATE ===== */
+      /* ===== GPS ===== */
       if (data.type === "gps" && data.data?.imei) {
         const gps = data.data.gps;
+
         if (gps?.latitude && gps?.longitude) {
           setCars((prev) =>
             [
@@ -186,10 +202,7 @@ const useCarSocket = (cars, setCars, isInit) => {
                 car.serial_number === data.data.imei
                   ? {
                       ...car,
-                      position: {
-                        lat: +gps.latitude,
-                        lng: +gps.longitude,
-                      },
+                      position: { lat: +gps.latitude, lng: +gps.longitude },
                       speed: data.data.speed || 0,
                       status: data.data.statusDecoded?.accOn ? "on" : "off",
                       lastUpdate: Date.now(),
@@ -204,27 +217,22 @@ const useCarSocket = (cars, setCars, isInit) => {
       /* ===== ALARM ===== */
       if (data.type === "alarm" && data.data?.imei) {
         const imei = data.data.imei;
-        const car = cars.find((c) => c.serial_number === imei);
+        const car = carsRef.current.find((c) => c.serial_number === imei);
 
-        // ✅ تشغيل الصوت
-        if (alarmAudioRef.current) {
+        // 🔥 شغّل الصوت فقط لو ref.current = true
+        if (notificationSoundRef.current && alarmAudioRef.current) {
           alarmAudioRef.current.currentTime = 0;
-          alarmAudioRef.current
-            .play()
-            .catch(() => console.warn("🔇 Autoplay blocked"));
+          alarmAudioRef.current.play().catch(() => {});
         }
 
         toast(
           <AlarmToast
-            carName={car?.name || car?.car_number || "غير معروف"}
+            carName={car?.name || "غير معروف"}
             speed={data.data.speed || 0}
             alarm={data.data.alarmTextAr || "غير معروف"}
             IMEI={imei}
           />,
-          {
-            position: "bottom-right",
-            autoClose: 5000,
-          }
+          { position: "bottom-right", autoClose: 5000 }
         );
       }
 

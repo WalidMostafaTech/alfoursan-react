@@ -6,6 +6,8 @@ const initialState = {
   showDeviceName: false,
   mapType: localStorage.getItem("mapType") || "roadmap",
   zoom: 6,
+  notificationSound:
+    localStorage.getItem("notificationSound") === "false" ? false : true,
 };
 
 const mapSlice = createSlice({
@@ -48,6 +50,14 @@ const mapSlice = createSlice({
     toggleDeviceName: (state) => {
       state.showDeviceName = !state.showDeviceName;
     },
+
+    toggleNotificationSound: (state) => {
+      state.notificationSound = !state.notificationSound;
+      localStorage.setItem(
+        "notificationSound",
+        state.notificationSound ? "true" : "false"
+      );
+    },
   },
 });
 
@@ -69,6 +79,7 @@ export const {
   toggleDeviceName,
   setMapType,
   changeZoom,
+  toggleNotificationSound,
 } = mapSlice.actions;
 
 export default mapSlice.reducer;

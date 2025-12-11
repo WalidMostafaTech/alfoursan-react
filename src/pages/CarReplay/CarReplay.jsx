@@ -231,17 +231,17 @@ const CarReplay = () => {
               position={{ lat: points[0].latitude, lng: points[0].longitude }}
               label={{
                 text: "B",
-                color: "white",
+                color: "#1dbf73",
                 fontSize: "16px",
                 fontWeight: "bold",
               }}
               icon={{
                 path: window.google.maps.SymbolPath.CIRCLE,
                 scale: 14,
-                fillColor: "#1dbf73",
+                fillColor: "white",
                 fillOpacity: 1,
                 strokeWeight: 2,
-                strokeColor: "#fff",
+                strokeColor: "#1dbf73",
               }}
             />
 
@@ -253,23 +253,25 @@ const CarReplay = () => {
               }}
               label={{
                 text: "E",
-                color: "white",
+                color: "#ff4b4b",
                 fontSize: "16px",
                 fontWeight: "bold",
               }}
               icon={{
                 path: window.google.maps.SymbolPath.CIRCLE,
                 scale: 14,
-                fillColor: "#ff4b4b",
+                fillColor: "white",
                 fillOpacity: 1,
                 strokeWeight: 2,
-                strokeColor: "#fff",
+                strokeColor: "#ff4b4b",
               }}
             />
 
             {points.map(
               (point, index) =>
-                point.speed === 0 && (
+                point.speed === 0 &&
+                index !== 0 && // استثناء البداية
+                index !== points.length - 1 && ( // استثناء النهاية
                   <Marker
                     key={index}
                     position={{
