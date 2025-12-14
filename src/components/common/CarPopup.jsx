@@ -57,6 +57,11 @@ const CarPopup = ({ car }) => {
 
       {/* بيانات */}
       <div className="grid grid-cols-2 gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-400"> الدوران</span>
+          <p className="text-gray-600 text-sm font-medium">{car.label}</p>
+        </div>
+
         {carDetails.map((detail, index) => (
           <div key={index} className="flex items-center gap-2">
             <span className="text-sm text-gray-400"> {detail.icon}</span>

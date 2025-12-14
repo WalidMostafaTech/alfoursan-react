@@ -161,7 +161,7 @@ const useCarSocket = (cars, setCars, isInit) => {
 
   useEffect(() => {
     carsRef.current = cars;
-  }, [cars]); 
+  }, [cars]);
 
   useEffect(() => {
     // تجهيز الصوت مرة واحدة
@@ -192,25 +192,57 @@ const useCarSocket = (cars, setCars, isInit) => {
       const data = JSON.parse(event.data);
 
       /* ===== GPS ===== */
+      // if (data.type === "gps" && data.data?.imei) {
+      //   const gps = data.data.gps;
+
+      //   if (gps?.latitude && gps?.longitude) {
+      //     setCars((prev) =>
+      //       [
+      //         ...prev.map((car) =>
+      //           car.serial_number === data.data.imei
+      //             ? {
+      //                 ...car,
+      //                 position: { lat: +gps.latitude, lng: +gps.longitude },
+      //                 speed: data.data.speed || 0,
+      //                 status: data.data.statusDecoded?.accOn ? "on" : "off",
+      //                 lastUpdate: Date.now(),
+      //               }
+      //             : car
+      //         ),
+      //       ].sort((a, b) => (b.speed > 0) - (a.speed > 0))
+      //     );
+      //   }
+      // }
+
       if (data.type === "gps" && data.data?.imei) {
         const gps = data.data.gps;
+        if (gps?.longitude && gps?.latitude) {
+          setCars((prev) => {
+            const updated = prev.map((car) =>
+              car.serial_number === data.data.imei
+                ? {
+                    ...car,
+                    position: {
+                      lat: parseFloat(gps.latitude),
+                      lng: parseFloat(gps.longitude),
+                    },
+                    speed: data.data.speed || 0,
+                    direction: data.data.direction,
+                    status: data.data.statusDecoded?.accOn ? "on" : "off",
+                    lastUpdate: Date.now(),
+                    lastSignel: data.data.date,
+                    lastSignelGPS: data.data.date,
+                  }
+                : car
+            );
 
-        if (gps?.latitude && gps?.longitude) {
-          setCars((prev) =>
-            [
-              ...prev.map((car) =>
-                car.serial_number === data.data.imei
-                  ? {
-                      ...car,
-                      position: { lat: +gps.latitude, lng: +gps.longitude },
-                      speed: data.data.speed || 0,
-                      status: data.data.statusDecoded?.accOn ? "on" : "off",
-                      lastUpdate: Date.now(),
-                    }
-                  : car
-              ),
-            ].sort((a, b) => (b.speed > 0) - (a.speed > 0))
-          );
+            // إعادة ترتيب العربيات بحيث اللي سرعتها > 0 تبقى فوق
+            return [...updated].sort((a, b) => {
+              const aMoving = a.speed > 0 ? 1 : 0;
+              const bMoving = b.speed > 0 ? 1 : 0;
+              return bMoving - aMoving; // العربيات المتحركة الأول
+            });
+          });
         }
       }
 

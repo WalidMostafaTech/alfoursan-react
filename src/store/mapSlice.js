@@ -18,6 +18,7 @@ const mapSlice = createSlice({
     switchMap: (state, action) => {
       state.provider = action.payload;
       localStorage.setItem("mapProvider", action.payload);
+      state.zoom = 6;
 
       // لو اخترت mapbox نخلي النوع roadmap
       if (action.payload === "mapbox") {
@@ -30,7 +31,6 @@ const mapSlice = createSlice({
     setMapType: (state, action) => {
       state.mapType = action.payload;
       localStorage.setItem("mapType", action.payload);
-      state.zoom = 6;
 
       // أي نوع غير roadmap يخلي الخريطة جوجل
       if (action.payload !== "roadmap") {
