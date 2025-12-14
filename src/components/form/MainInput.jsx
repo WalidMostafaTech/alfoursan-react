@@ -74,13 +74,7 @@ const MainInput = ({
           disabled={disabled}
           {...rest}
           className={`${commonInputClasses} select pe-10 h-7 text-sm`}
-          // className={`select select-bordered bg-white w-full text-base ${
-          //   error ? "border-red-600" : "border-gray-300"
-          // }`}
         >
-          {/* <option disabled value="">
-            {placeholder || "اختر قيمة"}
-          </option> */}
           {options.map((option, idx) => (
             <option key={`${option.value}-${idx}`} value={option.value}>
               {option.label}

@@ -35,12 +35,18 @@ export const destroyFences = async (ids) => {
   return data?.data;
 };
 
-export const getFenceDevices = async (id, status = "all") => {
+export const getFenceDevices = async (id, status = "all", q = "", page = 1) => {
   const { data } = await api.get(`/fences/${id}/devices`, {
-    params: { status },
+    params: {
+      status,
+      q,
+      page,
+    },
   });
-  return data;
+
+  return data?.data;
 };
+
 export const addDeviceToFence = async (id, device_ids) => {
   const { data } = await api.post(`/fences/${id}/devices/sync`, {
     device_ids,

@@ -13,6 +13,9 @@ const Search = ({ cars, handleSelectCar }) => {
     return cars.filter(
       (car) =>
         car.name?.toLowerCase().includes(searchKey.toLowerCase()) ||
+        car.iccid?.toLowerCase().includes(searchKey.toLowerCase()) ||
+        car.serial_number?.toLowerCase().includes(searchKey.toLowerCase()) ||
+        car.carnum?.toLowerCase().includes(searchKey.toLowerCase()) ||
         car.sim_number?.toLowerCase().includes(searchKey.toLowerCase())
     );
   }, [cars, searchKey]);
@@ -76,7 +79,7 @@ const Search = ({ cars, handleSelectCar }) => {
               className="p-2 hover:bg-mainColor/10 cursor-pointer flex justify-between items-center gap-2 text-xs"
             >
               <span className="text-gray-700 font-medium">{car.name}</span>
-              <span className="text-gray-500">{car.sim_number}</span>
+              {/* <span className="text-gray-500">{car.sim_number}</span> */}
             </div>
           ))}
         </div>

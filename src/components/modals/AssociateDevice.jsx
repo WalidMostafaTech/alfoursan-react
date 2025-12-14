@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { closeAssociateDeviceModal } from "../../store/modalsSlice";
 import { IoSearchOutline, IoCloseOutline } from "react-icons/io5";
@@ -21,26 +21,38 @@ const AssociateDevice = () => {
   const [status, setStatus] = useState("all");
   const [searchStatus, setSearchStatus] = useState("all");
 
-  // const [currentPage, setCurrentPage] = useState(1);
   const [selectedDevices, setSelectedDevices] = useState([]);
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      setSearchStatus(searchQuery); // هعمل trigger للـ useQuery
+      setPage(1); // رجع الصفحة لـ 1 كل مرة فيه بحث جديد
+    }, 500); // بعد 500ms من آخر كتابة
+
+    return () => clearTimeout(delay); // تنظيف الـ timeout لو المستخدم كتب تاني
+  }, [searchQuery]);
 
   const {
     data: fenceDevices = {},
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["fenceDevices", associateDeviceModal.id, searchStatus],
-    queryFn: () => getFenceDevices(associateDeviceModal.id, searchStatus),
-    enabled: !!associateDeviceModal.id, // يشتغل بس لما الـ id يبقى موجود
+    queryKey: ["fenceDevices", associateDeviceModal.id, searchStatus, page],
+    queryFn: () =>
+      getFenceDevices(associateDeviceModal.id, status, searchStatus, page),
+    enabled: !!associateDeviceModal.id,
   });
 
-  const devices = fenceDevices?.data?.items;
+  const devices = fenceDevices?.items || [];
+  const pagination = fenceDevices?.pagination || {};
 
   const { mutate: addDevices, isPending: isAdding } = useMutation({
     mutationFn: () =>
       addDeviceToFence(associateDeviceModal.id, selectedDevices),
     onSuccess: () => {
-      toast.success("تم ربط الأجهزة بنجاح ✅");
+      toast.success("تم ربط الأجهزة بنجاح");
       refetch();
       setSelectedDevices([]);
     },
@@ -54,7 +66,7 @@ const AssociateDevice = () => {
     mutationFn: () =>
       removeDeviceFromFence(associateDeviceModal.id, selectedDevices),
     onSuccess: () => {
-      toast.success("تم حذف الأجهزة بنجاح ✅");
+      toast.success("تم حذف الأجهزة بنجاح");
       refetch();
       setSelectedDevices([]);
     },
@@ -67,7 +79,7 @@ const AssociateDevice = () => {
   const handleAttachDevice = async (deviceId) => {
     try {
       await addDeviceToFence(associateDeviceModal.id, [deviceId]);
-      toast.success("تم ربط الجهاز بنجاح ✅");
+      toast.success("تم ربط الجهاز بنجاح");
       refetch();
     } catch (error) {
       console.error("Error attaching device:", error);
@@ -95,6 +107,36 @@ const AssociateDevice = () => {
     }
   };
 
+  const getPages = () => {
+    if (!pagination?.last_page) return [];
+
+    const current = page; // ✅ بدل pagination.current_page
+    const last = pagination.last_page;
+    const pages = [];
+
+    if (last <= 7) {
+      for (let i = 1; i <= last; i++) pages.push(i);
+      return pages;
+    }
+
+    const start = Math.max(2, current - 2);
+    const end = Math.min(last - 1, current + 2);
+
+    pages.push(1);
+
+    if (start > 2) pages.push("left-dots");
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (end < last - 1) pages.push("right-dots");
+
+    pages.push(last);
+
+    return pages;
+  };
+
   return (
     <dialog open className="modal items-start detailsModal">
       <div className="modal-box max-w-5xl p-0 mt-10" dir="rtl">
@@ -103,7 +145,7 @@ const AssociateDevice = () => {
           <h3 className="text-lg font-semibold">ربط الأجهزة</h3>
           <button
             onClick={closeModal}
-            className="text-2xl text-gray-400 hover:text-gray-600"
+            className="btn btn-sm btn-circle btn-ghost"
           >
             <IoCloseOutline size={28} />
           </button>
@@ -129,9 +171,10 @@ const AssociateDevice = () => {
 
               <div className="w-40">
                 <MainInput
-                  type="select"
-                  options={[{ label: "IMEI", value: "IMEI" }]}
-                  disabled
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="IMEI"
                 />
               </div>
             </div>
@@ -163,7 +206,9 @@ const AssociateDevice = () => {
         </div>
 
         {isLoading ? (
-          <Loader />
+          <div className="w-full h-[400px] flex items-center justify-center">
+            <Loader />
+          </div>
         ) : (
           <>
             {/* Action Buttons */}
@@ -185,12 +230,6 @@ const AssociateDevice = () => {
                   {isRemoving ? "جارٍ الحذف..." : "حذف مجموعة"}
                 </button>
               </div>
-
-              {/* <div className="text-gray-600">
-                الأجهزة: <span className="font-semibold">1203</span> مرتبط
-                بالفعل: <span className="font-semibold">0</span> غير مرتبط:{""}
-                <span className="font-semibold">1203</span>
-              </div> */}
             </div>
 
             {/* Table */}
@@ -215,78 +254,105 @@ const AssociateDevice = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {devices.map((device) => (
-                    <tr key={device.id} className="hover">
-                      <td>
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm checkbox-primary"
-                          checked={selectedDevices.includes(device.id)}
-                          onChange={() => handleSelectDevice(device.id)}
-                        />
-                      </td>
-                      <td className="text-mainColor font-bold">
-                        {device.name || "-"}
-                      </td>
-                      <td>{device.serial_number || "-"}</td>
-                      <td>{device.model || "-"}</td>
-                      <td>
-                        <span className="badge badge-sm badge-ghost">
-                          {device.status || "-"}
-                        </span>
-                      </td>
-                      <td>{device.membership || "-"}</td>
-                      <td>
-                        <button
-                          className="text-mainColor font-bold hover:underline cursor-pointer"
-                          onClick={() => handleAttachDevice(device.id)}
-                        >
-                          ربط
-                        </button>
+                  {devices.length > 0 ? (
+                    devices.map((device) => (
+                      <tr key={device.id} className="hover">
+                        <td>
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-sm checkbox-primary"
+                            checked={selectedDevices.includes(device.id)}
+                            onChange={() => handleSelectDevice(device.id)}
+                          />
+                        </td>
+                        <td className="text-mainColor font-bold">
+                          {device.name || "-"}
+                        </td>
+                        <td>{device.serial_number || "-"}</td>
+                        <td>{device.model || "-"}</td>
+                        <td>
+                          <span className="badge badge-sm badge-ghost">
+                            {device.status || "-"}
+                          </span>
+                        </td>
+                        <td>{device.membership || "-"}</td>
+                        <td>
+                          <button
+                            className="text-mainColor font-bold hover:underline cursor-pointer"
+                            onClick={() => handleAttachDevice(device.id)}
+                          >
+                            ربط
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="7"
+                        className="text-center text-lg font-medium bg-mainColor/20"
+                      >
+                        لا يوجد اجهزة
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
 
             {/* Pagination */}
-            {/* <div className="px-6 py-4 border-t border-gray-300 flex items-center justify-between">
-              <div className="text-gray-600">
-                الإجمالي 1203
-                <select className="select select-sm select-bordered mx-2 w-24">
-                  <option>10/صفحة</option>
-                  <option>20/صفحة</option>
-                  <option>50/صفحة</option>
-                </select>
-              </div>
-
+            <div
+              className="px-6 py-4 border-t border-gray-300 flex items-center justify-center gap-4"
+              dir="ltr"
+            >
               <div className="flex items-center gap-1">
-                <button className="btn btn-sm btn-ghost">
-                  <MdNavigateNext size={20} />
-                </button>
-                <button className="btn btn-sm btn-primary">1</button>
-                <button className="btn btn-sm btn-ghost">2</button>
-                <button className="btn btn-sm btn-ghost">3</button>
-                <button className="btn btn-sm btn-ghost">4</button>
-                <button className="btn btn-sm btn-ghost">5</button>
-                <button className="btn btn-sm btn-ghost">6</button>
-                <span className="px-2">...</span>
-                <button className="btn btn-sm btn-ghost">121</button>
-                <button className="btn btn-sm btn-ghost">
+                {/* Prev */}
+                <button
+                  className="btn btn-sm btn-ghost"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
                   <MdNavigateBefore size={20} />
                 </button>
 
-                <div className="flex items-center gap-2 mr-4">
-                  <span className="">الذهاب إلى</span>
-                  <input
-                    type="number"
-                    className="input input-sm input-bordered w-16"
-                    defaultValue="1"
-                  />
-                </div>
+                {/* Page Numbers */}
+                {getPages().map((p) =>
+                  typeof p === "string" ? (
+                    <span key={p} className="px-2 text-sm">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`btn btn-sm ${
+                        p === page ? "btn-primary" : "btn-ghost"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
+                {/* Next */}
+                <button
+                  className="btn btn-sm btn-ghost"
+                  disabled={page === pagination.last_page}
+                  onClick={() =>
+                    setPage((p) => Math.min(pagination.last_page, p + 1))
+                  }
+                >
+                  <MdNavigateNext size={20} />
+                </button>
               </div>
-            </div> */}
+
+              <div className="text-black">
+                الكل :{" "}
+                <span className="font-bold text-mainColor">
+                  {pagination?.total}
+                </span>
+              </div>
+            </div>
           </>
         )}
       </div>
