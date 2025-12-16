@@ -1,7 +1,8 @@
 import Map, { Marker, Popup } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import CarPopup from "../../../components/common/CarPopup";
-import DeviceNamePopup from "../../../components/common/DeviceNamePopup";
+import { useSelector } from "react-redux";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 const MapboxMapView = ({
   cars,
@@ -11,72 +12,114 @@ const MapboxMapView = ({
   selectedCarId,
   handleSelectCar,
 }) => {
+  const { showDeviceName } = useSelector((state) => state.map);
+  const rafRef = useRef(null);
+  const lastMoveTsRef = useRef(0);
+
+  const onMove = useCallback(
+    (evt) => {
+      const next = evt.viewState;
+      const now = Date.now();
+      // خفّف updates أثناء السحب لتقليل rerenders (يساعد جدًا مع عدد markers كبير)
+      if (now - lastMoveTsRef.current < 50) return;
+      lastMoveTsRef.current = now;
+
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => setViewState(next));
+    },
+    [setViewState]
+  );
+
+  const onMoveEnd = useCallback(
+    (evt) => {
+      setViewState(evt.viewState);
+    },
+    [setViewState]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  const validCars = useMemo(() => {
+    return (cars || []).filter(
+      (car) =>
+        car?.position &&
+        !isNaN(car.position.lat) &&
+        !isNaN(car.position.lng)
+    );
+  }, [cars]);
+
   return (
     <Map
       mapboxAccessToken={MAPBOX_TOKEN}
       {...viewState}
-      onMove={(evt) => setViewState(evt.viewState)}
+      onMove={onMove}
+      onMoveEnd={onMoveEnd}
       style={{ width: "100%", height: "100%" }}
       mapStyle="mapbox://styles/mapbox/streets-v11"
       onClick={() => handleSelectCar(null)}
     >
-      {cars
-        ?.filter(
-          (car) =>
-            car?.position &&
-            !isNaN(car.position.lat) &&
-            !isNaN(car.position.lng)
-        )
-        .map((car) => (
-          <Marker
-            key={car.id}
-            longitude={car.position.lng}
-            latitude={car.position.lat}
-            anchor="center"
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              handleSelectCar(car);
+      {validCars.map((car) => (
+        <Marker
+          key={car.id}
+          longitude={car.position.lng}
+          latitude={car.position.lat}
+          anchor="center"
+          onClick={(e) => {
+            e.originalEvent.stopPropagation();
+            handleSelectCar(car);
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              transform: "translateY(-10px)",
+              cursor: "pointer",
             }}
           >
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                transform: "translateY(-10px)", // يحركها لفوق شوية عشان ما تغطيش البواب
-                cursor: "pointer",
+                transform: `rotate(${car.direction}deg)`,
+                width: 40,
+                height: 40,
               }}
             >
-              {/* صورة العربية */}
-              <div
-                style={{
-                  transform: `rotate(${car.direction}deg)`,
-                  width: 40,
-                  height: 40,
-                }}
-              >
-                <img
-                  src={
-                    car.speed > 5
-                      ? "/car-green.png"
-                      : car.speed === 0
-                      ? "/car-red.png"
-                      : "/car-blue.png"
-                  }
-                  alt={car.name}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-
-              <DeviceNamePopup car={car} />
+              <img
+                src={
+                  car.speed > 1
+                    ? "/car-green.png"
+                    : car.speed === 0
+                    ? "/car-red.png"
+                    : "/car-blue.png"
+                }
+                alt={car.name}
+                className="w-full h-full object-contain"
+              />
             </div>
-          </Marker>
-        ))}
+
+            {showDeviceName && (
+              <div
+                className="bg-white text-black text-sm py-1 px-2 rounded-lg shadow-lg w-max 
+                absolute top-[calc(100%+5px)] left-1/2 translate-x-[-50%] whitespace-nowrap"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {car.name || "بدون اسم"}
+                <span className="absolute bg-white w-2 h-2 rotate-45 -top-1 left-1/2 translate-x-[-50%]" />
+              </div>
+            )}
+          </div>
+        </Marker>
+      ))}
 
       {/* Popup لما تختار عربية */}
       {selectedCarId &&
         (() => {
-          const car = cars?.find(
+          const car = validCars?.find(
             (c) =>
               c.id === selectedCarId &&
               c?.position &&
@@ -90,7 +133,7 @@ const MapboxMapView = ({
               latitude={car.position.lat}
               maxWidth="none"
               closeOnClick={false}
-              onClose={() => handleSelectCar(car)}
+              onClose={() => handleSelectCar(null)}
               style={{
                 padding: 0,
                 backgroundColor: "transparent",

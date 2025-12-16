@@ -32,7 +32,7 @@ const SideMenu = ({
 
       {/* 🔹 السايدبار */}
       <aside
-        className={`fixed top-0 h-screen w-full max-w-[350px] left-0 p-3 z-50 transition-all duration-500 ease-in-out ${
+        className={`fixed top-0 h-screen w-full max-w-[400px] left-0 p-3 z-50 transition-all duration-500 ease-in-out ${
           isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
         }`}
       >

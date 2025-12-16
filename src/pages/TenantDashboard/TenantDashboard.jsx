@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLoadScript } from "@react-google-maps/api";
 import "mapbox-gl/dist/mapbox-gl.css";
 import SideMenu from "./SideMenu/SideMenu";
@@ -67,19 +67,31 @@ const TenantDashboard = () => {
   const [selectedCarId, setSelectedCarId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const dispatch = useDispatch();
+  const lastGeocodeAtRef = useRef(new Map());
 
-  const filteredCars = cars.filter((car) => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "online") return !car.isOffline;
-    if (activeFilter === "offline") return car.isOffline;
-    return true;
-  });
+  const filteredCars = useMemo(() => {
+    return cars.filter((car) => {
+      if (activeFilter === "all") return true;
+      if (activeFilter === "online") return !car.isOffline;
+      if (activeFilter === "offline") return car.isOffline;
+      if (activeFilter === "moving") {
+        return !car.isOffline && Number(car.speed) > 0;
+      }
+      return true;
+    });
+  }, [cars, activeFilter]);
 
   const [viewState, setViewState] = useState({
     longitude: center.lng,
     latitude: center.lat,
     zoom: zoom,
   });
+
+  // ✅ مزامنة zoom القادم من Redux مع Mapbox viewState
+  useEffect(() => {
+    if (mapProvider !== "mapbox") return;
+    setViewState((v) => (v.zoom === zoom ? v : { ...v, zoom }));
+  }, [mapProvider, zoom]);
 
   // ✅ تحميل سكريبت Google Maps مرة واحدة فقط
   const { isLoaded, loadError } = useLoadScript({
@@ -147,36 +159,37 @@ const TenantDashboard = () => {
   };
 
   // 🔌 WebSocket hook لتحديث العربيات
-  useCarSocket(
-    cars,
-    setCars,
-    isInit,
-    getGoogleAddress,
-    getMapboxAddress,
-    mapProvider,
-    selectedCarId
-  );
+  useCarSocket(cars, setCars, isInit);
 
   // 🧭 تحديث العنوان عند تحرك العربية
+  const selectedCar = useMemo(
+    () => cars.find((c) => c.id === selectedCarId) || null,
+    [cars, selectedCarId]
+  );
+
   useEffect(() => {
-    if (!selectedCarId) return;
-    const car = cars.find((c) => c.id === selectedCarId);
-    if (!car) return;
-    const { lat, lng } = car.position;
+    if (!selectedCarId || !selectedCar?.position) return;
+    const { lat, lng } = selectedCar.position;
 
     if (
-      !car.lastAddressPos ||
+      !selectedCar.lastAddressPos ||
       haversineDistance(
-        car.lastAddressPos.lat,
-        car.lastAddressPos.lng,
+        selectedCar.lastAddressPos.lat,
+        selectedCar.lastAddressPos.lng,
         lat,
         lng
       ) > 0.05
     ) {
+      // ✅ تهدئة طلبات العنوان (reverse geocoding) عشان ما تأثرش على سلاسة الصفحة
+      const now = Date.now();
+      const last = lastGeocodeAtRef.current.get(selectedCarId) || 0;
+      if (now - last < 5000) return;
+      lastGeocodeAtRef.current.set(selectedCarId, now);
+
       const updateAddress = (addr) => {
         setCars((prev) =>
           prev.map((c) =>
-            c.id === car.id
+            c.id === selectedCarId
               ? { ...c, address: addr, lastAddressPos: { lat, lng } }
               : c
           )
@@ -185,48 +198,50 @@ const TenantDashboard = () => {
       if (mapProvider === "google") getGoogleAddress(lat, lng, updateAddress);
       else getMapboxAddress(lat, lng, updateAddress);
     }
-  }, [cars, mapProvider, selectedCarId]);
+  }, [
+    mapProvider,
+    selectedCarId,
+    selectedCar?.position?.lat,
+    selectedCar?.position?.lng,
+    selectedCar?.lastAddressPos?.lat,
+    selectedCar?.lastAddressPos?.lng,
+  ]);
 
   // 🚗 اختيار عربية من القائمة
-  const handleSelectCar = (car, zoom = false) => {
-    if (!car) return setSelectedCarId(null);
+  const handleSelectCar = useCallback(
+    (car, shouldZoom = false) => {
+      if (!car) return setSelectedCarId(null);
 
-    const { position } = car;
-    const { lat, lng } = position || {};
+      const { position } = car;
+      const { lat, lng } = position || {};
 
-    if (
-      !position ||
-      typeof lat !== "number" ||
-      typeof lng !== "number" ||
-      isNaN(lat) ||
-      isNaN(lng)
-    ) {
-      toast.warning(" لا يمكن تحديد موقع هذه السيارة حاليًا");
-      return setSelectedCarId(null);
-    }
-
-    if (zoom) {
-      setCenter(position);
-      dispatch(changeZoom(18));
-      // setZoom(18);
-      if (mapProvider === "mapbox") {
-        setViewState({
-          longitude: lng,
-          latitude: lat,
-          zoom: 18,
-        });
+      if (
+        !position ||
+        typeof lat !== "number" ||
+        typeof lng !== "number" ||
+        isNaN(lat) ||
+        isNaN(lng)
+      ) {
+        toast.warning(" لا يمكن تحديد موقع هذه السيارة حاليًا");
+        return setSelectedCarId(null);
       }
-    }
 
-    if (mapProvider === "google") {
-      setViewState({
-        longitude: lng,
-        latitude: lat,
-      });
-    }
+      if (shouldZoom) {
+        setCenter(position);
+        dispatch(changeZoom(18));
+        if (mapProvider === "mapbox") {
+          setViewState({
+            longitude: lng,
+            latitude: lat,
+            zoom: 18,
+          });
+        }
+      }
 
-    setSelectedCarId(car.id);
-  };
+      setSelectedCarId(car.id);
+    },
+    [dispatch, mapProvider]
+  );
 
   if (loadError) return <div>فشل تحميل الخريطة</div>;
   if (!isLoaded && mapProvider === "google") return <LoadingPage />;

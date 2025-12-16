@@ -1,9 +1,29 @@
+import { useMemo } from "react";
+
 const Filters = ({ cars, activeFilter, setActiveFilter }) => {
-  const filterTypes = [
-    { label: "all", value: cars?.length || 0 },
-    { label: "online", value: cars?.filter((c) => !c.isOffline).length || 0 },
-    { label: "offline", value: cars?.filter((c) => c.isOffline).length || 0 },
-  ];
+  const filterTypes = useMemo(() => {
+    const total = cars?.length || 0;
+    let online = 0;
+    let offline = 0;
+    let moving = 0;
+
+    (cars || []).forEach((c) => {
+      if (c.isOffline) {
+        offline += 1;
+        return;
+      }
+
+      online += 1;
+      if (Number(c.speed) > 0) moving += 1;
+    });
+
+    return [
+      { label: "all", value: total },
+      { label: "online", value: online },
+      { label: "offline", value: offline },
+      { label: "moving", value: moving },
+    ];
+  }, [cars]);
 
   return (
     <div className="bg-mainColor/10 p-2 rounded-xl flex gap-2">

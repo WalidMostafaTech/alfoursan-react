@@ -152,6 +152,9 @@ const useCarSocket = (cars, setCars, isInit) => {
   const alarmAudioRef = useRef(null);
 
   const notificationSoundRef = useRef(notificationSound);
+  const wsRef = useRef(null);
+  const subscribedImeisRef = useRef(new Set());
+  const indexByImeiRef = useRef(new Map());
 
   useEffect(() => {
     notificationSoundRef.current = notificationSound;
@@ -161,6 +164,11 @@ const useCarSocket = (cars, setCars, isInit) => {
 
   useEffect(() => {
     carsRef.current = cars;
+    const next = new Map();
+    (cars || []).forEach((car, idx) => {
+      if (car?.serial_number) next.set(car.serial_number, idx);
+    });
+    indexByImeiRef.current = next;
   }, [cars]);
 
   useEffect(() => {
@@ -174,17 +182,16 @@ const useCarSocket = (cars, setCars, isInit) => {
     if (!cars || cars.length === 0) return;
 
     const ws = new WebSocket("wss://alfursantracking.com:2053");
+    wsRef.current = ws;
+    subscribedImeisRef.current = new Set();
 
     ws.onopen = () => {
       carsRef.current.forEach((car) => {
-        if (car.serial_number) {
-          ws.send(
-            JSON.stringify({
-              type: "subscribe",
-              imei: car.serial_number,
-            })
-          );
-        }
+        const imei = car.serial_number;
+        if (!imei) return;
+        if (subscribedImeisRef.current.has(imei)) return;
+        subscribedImeisRef.current.add(imei);
+        ws.send(JSON.stringify({ type: "subscribe", imei }));
       });
     };
 
@@ -218,30 +225,48 @@ const useCarSocket = (cars, setCars, isInit) => {
         const gps = data.data.gps;
         if (gps?.longitude && gps?.latitude) {
           setCars((prev) => {
-            const updated = prev.map((car) =>
-              car.serial_number === data.data.imei
-                ? {
-                    ...car,
-                    position: {
-                      lat: parseFloat(gps.latitude),
-                      lng: parseFloat(gps.longitude),
-                    },
-                    speed: data.data.speed || 0,
-                    direction: data.data.direction,
-                    status: data.data.statusDecoded?.accOn ? "on" : "off",
-                    lastUpdate: Date.now(),
-                    lastSignel: data.data.date,
-                    lastSignelGPS: data.data.date,
-                  }
-                : car
-            );
+            const idx = indexByImeiRef.current.get(data.data.imei);
+            if (idx === undefined) {
+              // fallback لو الماب مش محدث لأي سبب
+              return prev.map((car) =>
+                car.serial_number === data.data.imei
+                  ? {
+                      ...car,
+                      position: {
+                        lat: parseFloat(gps.latitude),
+                        lng: parseFloat(gps.longitude),
+                      },
+                      speed: data.data.speed || 0,
+                      direction: data.data.direction,
+                      status: data.data.statusDecoded?.accOn ? "on" : "off",
+                      lastUpdate: Date.now(),
+                      lastSignel: data.data.date,
+                      lastSignelGPS: data.data.date,
+                    }
+                  : car
+              );
+            }
 
-            // إعادة ترتيب العربيات بحيث اللي سرعتها > 0 تبقى فوق
-            return [...updated].sort((a, b) => {
-              const aMoving = a.speed > 0 ? 1 : 0;
-              const bMoving = b.speed > 0 ? 1 : 0;
-              return bMoving - aMoving; // العربيات المتحركة الأول
-            });
+            const existing = prev[idx];
+            if (!existing) return prev;
+
+            const nextCar = {
+              ...existing,
+              position: {
+                lat: parseFloat(gps.latitude),
+                lng: parseFloat(gps.longitude),
+              },
+              speed: data.data.speed || 0,
+              direction: data.data.direction,
+              status: data.data.statusDecoded?.accOn ? "on" : "off",
+              lastUpdate: Date.now(),
+              lastSignel: data.data.date,
+              lastSignelGPS: data.data.date,
+            };
+
+            const next = prev.slice();
+            next[idx] = nextCar;
+            return next;
           });
         }
       }
@@ -270,18 +295,50 @@ const useCarSocket = (cars, setCars, isInit) => {
 
       /* ===== HEARTBEAT ===== */
       if (data.type === "heartbeat" && data.data?.imei) {
-        setCars((prev) =>
-          prev.map((car) =>
-            car.serial_number === data.data.imei
-              ? { ...car, voltage: data.data.heartbeat.externalVoltage }
-              : car
-          )
-        );
+        setCars((prev) => {
+          const idx = indexByImeiRef.current.get(data.data.imei);
+          if (idx === undefined) {
+            return prev.map((car) =>
+              car.serial_number === data.data.imei
+                ? { ...car, voltage: data.data.heartbeat.externalVoltage }
+                : car
+            );
+          }
+          const existing = prev[idx];
+          if (!existing) return prev;
+          const next = prev.slice();
+          next[idx] = {
+            ...existing,
+            voltage: data.data.heartbeat.externalVoltage,
+          };
+          return next;
+        });
       }
     };
 
-    return () => ws.close();
+    return () => {
+      try {
+        ws.close();
+      } finally {
+        if (wsRef.current === ws) wsRef.current = null;
+        subscribedImeisRef.current = new Set();
+      }
+    };
   }, [isInit]);
+
+  // لو الأجهزة اتغيرت بعد فتح الـ socket (مثلاً بعد full=1)، اشترك في IMEIs الجديدة بدون reconnect
+  useEffect(() => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    carsRef.current.forEach((car) => {
+      const imei = car.serial_number;
+      if (!imei) return;
+      if (subscribedImeisRef.current.has(imei)) return;
+      subscribedImeisRef.current.add(imei);
+      ws.send(JSON.stringify({ type: "subscribe", imei }));
+    });
+  }, [cars]);
 
   return null;
 };
