@@ -35,10 +35,10 @@ const GoogleMapView = ({
 
   const getCarBaseIconUrl = useCallback((car) => {
     return car.speed > 2
-      ? "/car-green.png"
+      ? "/car-green.svg"
       : car.speed === 0
-      ? "/car-blue.png"
-      : "/car-red.png"
+      ? "/car-blue.svg"
+      : "/car-red.svg"
       ;
   }, []);
 
@@ -154,7 +154,7 @@ const GoogleMapView = ({
       icon: {
         // placeholder سريع لحد ما الـ data-url يجهز
         url: baseIconUrl,
-        scaledSize: new window.google.maps.Size(40, 40),
+        // scaledSize: new window.google.maps.Size(40,40),
         anchor: new window.google.maps.Point(20, 20),
         // خلي الـ label (اسم السيارة) أسفل الأيقونة
         labelOrigin: new window.google.maps.Point(20, 52),
@@ -176,7 +176,7 @@ const GoogleMapView = ({
       if (currentUrl !== url) {
         marker.setIcon({
           url,
-          scaledSize: new window.google.maps.Size(40, 40),
+          // scaledSize: new window.google.maps.Size(40,40),
           anchor: new window.google.maps.Point(20, 20),
           labelOrigin: new window.google.maps.Point(20, 52),
         });
@@ -234,7 +234,7 @@ const GoogleMapView = ({
           if (currentUrl !== url) {
             existing.setIcon({
               url,
-              scaledSize: new window.google.maps.Size(40, 40),
+              // scaledSize: new window.google.maps.Size(40,40),
               anchor: new window.google.maps.Point(20, 20),
               labelOrigin: new window.google.maps.Point(20, 52),
             });

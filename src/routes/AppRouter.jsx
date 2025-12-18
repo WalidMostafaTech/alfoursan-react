@@ -10,6 +10,12 @@ const TenantDashboard = React.lazy(() =>
 const CarReplay = React.lazy(() =>
   import("../pages/CarReplay/CarReplay")
 );
+const DeviceTracking = React.lazy(() =>
+  import("../pages/DeviceTracking/DeviceTracking")
+);
+const OutsideTracking = React.lazy(() =>
+  import("../pages/OutsideTracking/OutsideTracking")
+);
 
 const router = createBrowserRouter([
   {
@@ -19,6 +25,8 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "tenant-dashboard/monitoring", element: <TenantDashboard /> },
       { path: "car-replay/:serial_number", element: <CarReplay /> },
+      { path: "tenant-dashboard/tenant/devices/tracking/:id", element: <DeviceTracking /> },
+      { path: "outSide/tracking/:id", element: <OutsideTracking /> },
     ],
   },
 ]);

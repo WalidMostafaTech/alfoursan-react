@@ -2,7 +2,7 @@ const Membership = ({ deviceSettings }) => {
   const subscription = deviceSettings?.subscription;
 
   return (
-    <section className="overflow-x-auto p-4">
+    <section className="overflow-x-auto p-2 md:p-3">
       <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <thead className="bg-mainColor/10 text-mainColor">
           <tr className="text-xs">

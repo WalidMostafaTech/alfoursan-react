@@ -607,7 +607,7 @@ const CarReplay = () => {
             }}
             icon={{
               url: carIconUrl,
-              scaledSize: new window.google.maps.Size(40, 40),
+              // scaledSize: new window.google.maps.Size(40, 40),
               anchor: new window.google.maps.Point(20, 20),
             }}
             onClick={() => setShowInfo(true)}

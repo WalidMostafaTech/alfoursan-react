@@ -5,7 +5,7 @@ const ServiceVersion = ({ deviceSettings }) => {
 
   return (
     <section>
-      <form className="space-y-6">
+      <form className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MainInput
             id="version"
@@ -27,7 +27,7 @@ const ServiceVersion = ({ deviceSettings }) => {
           />
         </div>
 
-        <div className="divider my-14">خدمة بطاقة SIM</div>
+        <div className="divider my-6">خدمة بطاقة SIM</div>
 
         {/* رقم السيارة واستهلاك الوقود */}
 

@@ -92,10 +92,10 @@ const MapboxMapView = ({
               <img
                 src={
                   car.speed > 1
-                    ? "/car-green.png"
+                    ? "/car-green.svg"
                     : car.speed === 0
-                    ? "/car-red.png"
-                    : "/car-blue.png"
+                    ? "/car-red.svg"
+                    : "/car-blue.svg"
                 }
                 alt={car.name}
                 className="w-full h-full object-contain"
@@ -139,7 +139,10 @@ const MapboxMapView = ({
                 backgroundColor: "transparent",
               }}
             >
+              <div className="w-full h-full pt-6 bg-white rounded-xl shadow-lg
+              ">
               <CarPopup car={car} />
+              </div>
             </Popup>
           );
         })()}

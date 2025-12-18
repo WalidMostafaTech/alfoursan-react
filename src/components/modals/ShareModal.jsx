@@ -66,6 +66,7 @@ const ShareModal = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: createShareLink,
     onSuccess: (data) => {
+
       console.log("daadadad", data);
 
       setShareLink(data?.url);
@@ -84,12 +85,10 @@ const ShareModal = () => {
       imei,
       duration: values.duration,
       unit: values.unit,
+      commands: values.selectedCommands,
     };
 
     // ✅ بناء الـ commands بالشكل المطلوب
-    values.selectedCommands.forEach((cmd, index) => {
-      payload[`commands[${index}]`] = cmd;
-    });
 
     mutate(payload);
   };

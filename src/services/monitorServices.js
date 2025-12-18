@@ -78,3 +78,19 @@ export const getReplay = async ({ serial_number, from_time, to_time }) => {
   });
   return data;
 };
+
+// ✅ تتبع جهاز واحد (صفحة التتبع الجديدة)
+export const getTrackingDevice = async (deviceId) => {
+  const { data } = await api.get(`/tenant-dashboard/tenant/devices/tracking-getDevice`, {
+    params: { deviceId },
+  });
+  return data;
+};
+
+// ✅ Outside share tracking (same route but JSON)
+export const getOutsideTracking = async (id) => {
+  const { data } = await api.get(window.location.href, {
+    params: { is_json: 1 },
+  });
+  return data;
+};

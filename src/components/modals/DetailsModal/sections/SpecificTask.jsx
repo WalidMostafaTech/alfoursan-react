@@ -123,7 +123,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
   };
 
   return (
-    <section dir="rtl" className="space-y-6">
+    <section dir="rtl" className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <MainInput
           id="deviceName"
@@ -135,7 +135,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
           {/* ✅ نوع التنفيذ */}
           <div className="form-control w-full max-w-xs" dir="rtl">
             <label className="label">
@@ -144,7 +144,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
               </span>
             </label>
 
-            <div className="flex items-center gap-6 mt-2">
+            <div className="flex items-center gap-4 mt-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -171,7 +171,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
 
           {/* ✅ تفعيل المهمة */}
           <div>
-            <label className="flex items-center gap-2 mt-6">
+            <label className="flex items-center gap-2 mt-4">
               <span className="text-gray-700 font-medium text-sm">تفعيل المهمة :</span>
               <input
                 type="checkbox"

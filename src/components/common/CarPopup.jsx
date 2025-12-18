@@ -1,4 +1,4 @@
-import { FaMapMarkerAlt, FaSatelliteDish } from "react-icons/fa";
+import { FaMapMarkerAlt, FaSatelliteDish, FaUser } from "react-icons/fa";
 import {
   FiBarChart2,
   FiMenu,
@@ -19,10 +19,10 @@ import {
   openPolygonMenu,
   openShareModal,
 } from "../../store/modalsSlice";
-import { PiPolygon } from "react-icons/pi";
+import { PiPhoneCall, PiPolygon } from "react-icons/pi";
 import { Link } from "react-router-dom";
 
-const CarPopup = ({ car }) => {
+const CarPopup = ({ car, showActions = true }) => {
   const { status } = getCarStatus(car);
 
   const formatDate = (isoString) => {
@@ -37,31 +37,49 @@ const CarPopup = ({ car }) => {
     });
   };
 
+  // ملاحظة: تجنب console.log داخل Popup لأن تحديثات العربيات كثيفة وقد تبطئ المتصفح
+
   const carDetails = [
     { label: formatDate(car.lastSignel), icon: <FaSatelliteDish /> },
     { label: "Wired", icon: <FiWifi /> },
+    
     { label: formatDate(car.lastSignelGPS), icon: <ImLocation2 /> },
-    { label: `${car.speed} km/h`, icon: <IoSpeedometerSharp /> },
+    // { label: `${car.speed} km/h`, icon: <IoSpeedometerSharp /> },
     { label: status, icon: <MdOutlineCarCrash /> },
+
+
     { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
+    { label: car.iccid, icon: `iccid` },
+
+    { label: car.contact_person, icon: <FaUser /> },
+    { label: car.contact_phone, icon: <PiPhoneCall /> },
+
+    // إضافة اسم السائق و رقم الاي دي 
+
+
   ];
 
   const dispatch = useDispatch();
 
   return (
-    <div className="bg-white p-3 rounded-xl shadow-lg space-y-4 w-[400px]">
+    <div className="
+    bg-white p-3 rounded-xl shadow-lg space-y-3 w-[400px] max-w-[95vw]" dir="rtl">
       {/* عنوان العربية */}
-      <h4 className="font-bold text-sm flex items-center gap-4">
-        {car.name} <span className="text-mainColor">{status}</span>
+      <h4 className="font-bold text-sm flex items-center justify-between gap-2">
+        <span className="line-clamp-1">{car.name}</span>
+        <span className="text-mainColor text-xs font-semibold whitespace-nowrap">
+          {status}
+        </span>
       </h4>
 
       {/* بيانات */}
       <div className="grid grid-cols-2 gap-2">
-
         {carDetails.map((detail, index) => (
-          <div key={index} className="flex items-center gap-2">
+          <div key={index} className="flex items-center gap-1.5">
             <span className="text-sm text-gray-400"> {detail.icon}</span>
-            <p className="text-gray-600 text-sm font-medium">{detail.label}</p>
+            <p className="text-gray-600 text-xs font-medium line-clamp-1">
+              {detail.label || "—"}
+            </p>
           </div>
         ))}
       </div>
@@ -70,82 +88,112 @@ const CarPopup = ({ car }) => {
       <a
         href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
         target="_blank"
-        rel="noopener noreferrer"
-        className="flex gap-1 w-fit hover:underline outline-none"
+        rel="noreferrer"
+        className="flex gap-1 w-full hover:underline outline-none"
       >
-        <FaMapMarkerAlt className="text-mainColor text-lg" />
-        <p className="text-gray-600 font-medium flex-1 text-sm">
+        <FaMapMarkerAlt className="text-mainColor text-base mt-0.5" />
+        <p className="text-gray-600 font-medium flex-1 text-xs line-clamp-2">
           {car.address}
         </p>
       </a>
 
-      {/* الأيقونات */}
-      <div className="w-full flex justify-evenly items-center gap-2 text-xl">
-        <span
-          title="Details"
-          className="cursor-pointer hover:text-mainColor text-base"
-          onClick={() =>
-            dispatch(openDetailsModal({ section: "", id: car.id }))
-          }
-        >
-          <FiMenu />
-        </span>
-        <a
-          title="Tracking"
-          href={car.tracking_url}
-          target="_blank"
-          className="cursor-pointer hover:text-mainColor text-base"
-        >
-          <FiNavigation />
-        </a>
-        <Link
-          title="Playback"
-          target="_blank"
-          to={`/car-replay/${car.serial_number}`}
-          className="cursor-pointer hover:text-mainColor text-base"
-        >
-          <FiPlayCircle />
-        </Link>
-        <span
-          title="Command"
-          className="cursor-pointer hover:text-mainColor text-base"
-          onClick={() =>
-            dispatch(openDetailsModal({ section: "command", id: car.id }))
-          }
-        >
-          <HiOutlineCommandLine />
-        </span>
-        <span
-          title="Fence"
-          onClick={() => dispatch(openPolygonMenu())}
-          className="cursor-pointer hover:text-mainColor text-base"
-        >
-          <PiPolygon />
-        </span>
-        <a
-          title="Street View"
-          href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
-          target="_blank"
-          className="cursor-pointer hover:text-mainColor text-base"
-        >
-          <FiUser />
-        </a>
-        <a
-          title="Reports"
-          href={car.report_url}
-          target="_blank"
-          className="cursor-pointer hover:text-mainColor text-base"
-        >
-          <FiBarChart2 />
-        </a>
-        <span
-          title="Share"
-          className="cursor-pointer hover:text-mainColor text-base"
-          onClick={() => dispatch(openShareModal(car.serial_number))}
-        >
-          <FiShare2 />
-        </span>
-      </div>
+      {showActions && (
+        <div className="w-full flex flex-wrap justify-between items-center gap-1 text-lg">
+          <span className="tooltip tooltip-top" data-tip="التفاصيل">
+            <button
+              type="button"
+              aria-label="التفاصيل"
+              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              onClick={() => dispatch(openDetailsModal({ section: "", id: car.id }))}
+            >
+              <FiMenu />
+            </button>
+          </span>
+
+          <span className="tooltip tooltip-top" data-tip="تتبع">
+            <a
+              aria-label="Tracking"
+              href={car.tracking_url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+            >
+              <FiNavigation />
+            </a>
+          </span>
+
+          <span className="tooltip tooltip-top" data-tip="Playback">
+            <Link
+              aria-label="Playback"
+              target="_blank"
+              to={`/car-replay/${car.serial_number}`}
+              rel="noreferrer"
+              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+            >
+              <FiPlayCircle />
+            </Link>
+          </span>
+
+          <span className="tooltip tooltip-top" data-tip="أوامر">
+            <button
+              type="button"
+              aria-label="أوامر"
+              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              onClick={() =>
+                dispatch(openDetailsModal({ section: "command", id: car.id }))
+              }
+            >
+              <HiOutlineCommandLine />
+            </button>
+          </span>
+
+          <span className="tooltip tooltip-top" data-tip="Fence">
+            <button
+              type="button"
+              aria-label="Fence"
+              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              onClick={() => dispatch(openPolygonMenu())}
+            >
+              <PiPolygon />
+            </button>
+          </span>
+
+          <span className="tooltip tooltip-top" data-tip="Street View">
+            <a
+              aria-label="Street View"
+              href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+            >
+              <FiUser />
+            </a>
+          </span>
+
+          <span className="tooltip tooltip-top" data-tip="تقارير">
+            <a
+              aria-label="Reports"
+              href={car.report_url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+            >
+              <FiBarChart2 />
+            </a>
+          </span>
+
+          <span className="tooltip tooltip-top" data-tip="مشاركة">
+            <button
+              type="button"
+              aria-label="مشاركة"
+              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              onClick={() => dispatch(openShareModal(car.serial_number))}
+            >
+              <FiShare2 />
+            </button>
+          </span>
+        </div>
+      )}
     </div>
   );
 };

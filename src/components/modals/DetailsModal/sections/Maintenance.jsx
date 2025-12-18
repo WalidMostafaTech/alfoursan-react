@@ -114,9 +114,9 @@ const Maintenance = ({ deviceID }) => {
         <div className="collapse-content">
           <form
             onSubmit={handleSubmit}
-            className="border border-gray-300 p-4 rounded-lg space-y-4"
+            className="border border-gray-300 p-3 rounded-lg space-y-3"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <MainInput
                 id="deviceName"
                 label="اسم الجهاز"
@@ -160,7 +160,7 @@ const Maintenance = ({ deviceID }) => {
                   </span>
                 </label>
 
-                <div className="flex items-center gap-6 mt-2">
+                <div className="flex items-center gap-4 mt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <span className="text-gray-700 font-medium text-xs">
                       تذكير بالصيانة
@@ -200,16 +200,16 @@ const Maintenance = ({ deviceID }) => {
       </div>
 
       {/* ✅ جدول الصيانة */}
-      <section className="overflow-x-auto p-4">
+      <section className="overflow-x-auto p-2 md:p-3">
         <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm text-xs">
           <thead className="bg-mainColor/10 text-mainColor">
             <tr>
-              <th className="py-3 px-4 text-right">#</th>
-              <th className="py-3 px-4 text-right">النوع</th>
-              <th className="py-3 px-4 text-right">وقت المخطط لها</th>
-              <th className="py-3 px-4 text-right">الأميال المخطط لها</th>
-              <th className="py-3 px-4 text-right">الحالة</th>
-              <th className="py-3 px-4 text-right">الإجراءات</th>
+              <th className="py-2 px-2 text-right">#</th>
+              <th className="py-2 px-2 text-right">النوع</th>
+              <th className="py-2 px-2 text-right">وقت المخطط لها</th>
+              <th className="py-2 px-2 text-right">الأميال المخطط لها</th>
+              <th className="py-2 px-2 text-right">الحالة</th>
+              <th className="py-2 px-2 text-right">الإجراءات</th>
             </tr>
           </thead>
 
@@ -220,14 +220,14 @@ const Maintenance = ({ deviceID }) => {
                   key={item.id || index}
                   className="hover:bg-gray-50 transition-colors duration-200"
                 >
-                  <td className="py-3 px-4">{index + 1}</td>
-                  <td className="py-3 px-4">{item.type || "-"}</td>
-                  <td className="py-3 px-4 text-gray-700">
+                  <td className="py-2 px-2">{index + 1}</td>
+                  <td className="py-2 px-2">{item.type || "-"}</td>
+                  <td className="py-2 px-2 text-gray-700">
                     {item.planning_time || "-"}
                   </td>
-                  <td className="py-3 px-4">{item.planned_miles || "-"}</td>
+                  <td className="py-2 px-2">{item.planned_miles || "-"}</td>
                   <td
-                    className={`py-3 px-4 font-medium ${
+                    className={`py-2 px-2 font-medium ${
                       item.status === "completed"
                         ? "text-green-600"
                         : item.status === "pending"

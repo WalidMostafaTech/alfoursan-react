@@ -41,18 +41,18 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
   };
 
   return (
-    <section className="overflow-x-auto p-4">
+    <section className="overflow-x-auto p-2 md:p-3">
       <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm text-xs">
         <thead className="bg-mainColor/10 text-mainColor">
           <tr>
-            <th className="py-3 px-4 text-left">No.</th>
-            <th className="py-3 px-4 text-left">Command name</th>
-            <th className="py-3 px-4 text-left">Command content</th>
-            <th className="py-3 px-4 text-left">Status</th>
-            <th className="py-3 px-4 text-left">Send time</th>
-            <th className="py-3 px-4 text-left">Reply Content</th>
-            <th className="py-3 px-4 text-left">Response Time</th>
-            <th className="py-3 px-4 text-left">Operate</th>
+            <th className="py-2 px-2 text-left">No.</th>
+            <th className="py-2 px-2 text-left">Command name</th>
+            <th className="py-2 px-2 text-left">Command content</th>
+            <th className="py-2 px-2 text-left">Status</th>
+            <th className="py-2 px-2 text-left">Send time</th>
+            <th className="py-2 px-2 text-left">Reply Content</th>
+            <th className="py-2 px-2 text-left">Response Time</th>
+            <th className="py-2 px-2 text-left">Operate</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
@@ -61,15 +61,15 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
               key={cmd.id || index}
               className="hover:bg-gray-50 transition-colors duration-200"
             >
-              <td className="py-3 px-4">{cmd.imei || ""}</td>
-              <td className="py-3 px-4 font-medium text-gray-700">
+              <td className="py-2 px-2">{cmd.imei || ""}</td>
+              <td className="py-2 px-2 font-medium text-gray-700">
                 {cmd.command_name || ""}
               </td>
-              <td className="py-3 px-4 text-gray-600">
+              <td className="py-2 px-2 text-gray-600">
                 {cmd.command_content || ""}
               </td>
               <td
-                className={`py-3 px-4 font-semibold ${
+                className={`py-2 px-2 font-semibold ${
                   cmd.status === "Success"
                     ? "text-green-600"
                     : cmd.status === "Failed"
@@ -79,16 +79,16 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
               >
                 {cmd.status || ""}
               </td>
-              <td className="py-3 px-4 text-gray-600">
+              <td className="py-2 px-2 text-gray-600">
                 {formatDateTime(cmd.send_time)}
               </td>
-              <td className="py-3 px-4 text-gray-600">
+              <td className="py-2 px-2 text-gray-600">
                 {cmd.replay_content || ""}
               </td>
-              <td className="py-3 px-4 text-gray-600">
+              <td className="py-2 px-2 text-gray-600">
                 {cmd.response_time || ""}
               </td>
-              <td className="py-3 px-4">
+              <td className="py-2 px-2">
                 <button
                   onClick={() => handleDelete(cmd.id)}
                   disabled={isPending}

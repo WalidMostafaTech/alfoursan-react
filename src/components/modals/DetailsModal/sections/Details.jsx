@@ -9,7 +9,7 @@ import { updateDialogCar } from "../../../../services/monitorServices";
 
 const Details = ({ deviceSettings, refetch }) => {
   const [formData, setFormData] = useState({
-    car_number: "",
+    carnum: "",
     fuel_consumption_per_100km: "",
     contact_phone: "",
     contact_person: "",
@@ -20,25 +20,25 @@ const Details = ({ deviceSettings, refetch }) => {
   const [currentIcon, setCurrentIcon] = useState(0);
 
   const icons = [
-    { src: "/car-green.png", value: "car" },
-    { src: "/car-red.png", value: "bus" },
+    { src: "/car-green.svg", value: "car" },
+    { src: "/car-red.svg", value: "bus" },
   ];
 
   const device = deviceSettings?.device;
 
   // ✅ تحميل بيانات السيارة داخل الفورم
   useEffect(() => {
-    if (device?.car) {
+    if (device) {
       setFormData({
-        car_number: device.car.car_number || "",
-        fuel_consumption_per_100km: device.car.fuel_consumption_per_100km || "",
-        contact_phone: device.car.contact_phone || "",
-        contact_person: device.car.contact_person || "",
-        notes: device.car.notes || "",
+        carnum: device.carnum || "",
+        fuel_consumption_per_100km: device.fuel_consumption_per_100km || "",
+        contact_phone: device.contact_phone || "",
+        contact_person: device.contact_person || "",
+        notes: device.notes || "",
       });
 
       // الصورة الحالية من السيرفر
-      setPreview(device.car.image_full_path || "");
+      setPreview(device.image_full_path || "");
     }
   }, [device]);
 
@@ -77,10 +77,10 @@ const Details = ({ deviceSettings, refetch }) => {
   // ✅ عند الضغط على "تحديث البيانات"
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!device?.car?.id) return;
+    if (!device?.id) return;
 
     const dataToSend = new FormData();
-    dataToSend.append("car_number", formData.car_number);
+    dataToSend.append("carnum", formData.carnum);
     dataToSend.append(
       "fuel_consumption_per_100km",
       formData.fuel_consumption_per_100km
@@ -92,18 +92,19 @@ const Details = ({ deviceSettings, refetch }) => {
 
     if (image) dataToSend.append("image", image);
 
-    updateCar({ id: device.car.id, formData: dataToSend });
+    console.log("dataToSend" , dataToSend);
+    updateCar({ id: device.id, formData: dataToSend });
   };
 
   return (
     <section>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* ✅ بيانات الجهاز */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <MainInput
             id="deviceName"
             label="اسم الجهاز"
-            value={device.car?.name || ""}
+            value={device.name || ""}
             disabled
           />
           <MainInput
@@ -150,16 +151,16 @@ const Details = ({ deviceSettings, refetch }) => {
           />
         </div>
 
-        <div className="divider my-4">المركبة</div>
+        <div className="divider my-3">المركبة</div>
 
         {/* ✅ نموذج التحديث */}
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <MainInput
-              id="car_number"
-              name="car_number"
+              id="carnum"
+              name="carnum"
               label="رقم السيارة"
-              value={formData.car_number}
+              value={formData.carnum}
               onChange={handleChange}
             />
 
@@ -189,7 +190,7 @@ const Details = ({ deviceSettings, refetch }) => {
 
             {/* ✅ رفع الصورة العادي */}
             <div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <MainInput
                   id="image"
                   type="file"
@@ -201,12 +202,12 @@ const Details = ({ deviceSettings, refetch }) => {
                     <img
                       src={preview}
                       alt="Car Preview"
-                      className="w-26 h-26 rounded-lg object-cover border"
+                      className="w-24 h-24 rounded-lg object-cover border"
                     />
                     <button
                       type="button"
                       onClick={handleRemoveImage}
-                      className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full shadow-md"
+                      className="absolute -top-1 -right-1 bg-red-600 text-white p-1 rounded-full shadow-md"
                     >
                       <FiX className="text-sm" />
                     </button>
@@ -224,7 +225,7 @@ const Details = ({ deviceSettings, refetch }) => {
                     key={index}
                     src={icon.src}
                     alt={icon.value}
-                    className={`cursor-pointer rounded w-10 p-1 ${
+                    className={`cursor-pointer rounded w-9 p-1 ${
                       currentIcon === index ? "bg-mainColor" : "bg-gray-200"
                     }`}
                     onClick={() => setCurrentIcon(index)}
@@ -243,7 +244,9 @@ const Details = ({ deviceSettings, refetch }) => {
             />
           </div>
 
-          <FormBtn title={"تحديث البيانات"} disabled={isPending} />
+          <FormBtn title={"تحديث البيانات"} disabled={isPending}
+          
+          />
         </form>
       </div>
     </section>

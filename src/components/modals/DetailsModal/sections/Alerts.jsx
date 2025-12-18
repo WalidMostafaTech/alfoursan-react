@@ -67,7 +67,7 @@ const Alerts = ({ deviceSettings, refetch }) => {
   return (
     <section dir="rtl">
       {/* ✅ السويتشات */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-4">
         {alertsList.map((item, index) => (
           <label key={index} className="flex items-center gap-2">
             <input
