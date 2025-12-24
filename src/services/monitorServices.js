@@ -89,8 +89,8 @@ export const getTrackingDevice = async (deviceId) => {
 
 // ✅ Outside share tracking (same route but JSON)
 export const getOutsideTracking = async (id) => {
-  const { data } = await api.get(window.location.href, {
-    // const { data } = await api.get("http://test.alfursantracking.localhost/outSide/tracking/" + id, {
+  // const { data } = await api.get(window.location.href, {
+    const { data } = await api.get("http://test.alfursantracking.localhost/outSide/tracking/" + id, {
     params: { is_json: 1 },
   });
   return data;

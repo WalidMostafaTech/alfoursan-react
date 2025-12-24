@@ -9,6 +9,9 @@ import { updateDialogCar } from "../../../../services/monitorServices";
 
 const Details = ({ deviceSettings, refetch }) => {
   const [formData, setFormData] = useState({
+    name: "",
+    sim_number: "",
+    iccid: "",
     carnum: "",
     fuel_consumption_per_100km: "",
     contact_phone: "",
@@ -30,6 +33,9 @@ const Details = ({ deviceSettings, refetch }) => {
   useEffect(() => {
     if (device) {
       setFormData({
+        name: device.name || "",
+        sim_number: device.sim_number || "",
+        iccid: device.iccid || "",
         carnum: device.carnum || "",
         fuel_consumption_per_100km: device.fuel_consumption_per_100km || "",
         contact_phone: device.contact_phone || "",
@@ -37,7 +43,6 @@ const Details = ({ deviceSettings, refetch }) => {
         notes: device.notes || "",
       });
 
-      // الصورة الحالية من السيرفر
       setPreview(device.image_full_path || "");
     }
   }, [device]);
@@ -80,6 +85,11 @@ const Details = ({ deviceSettings, refetch }) => {
     if (!device?.id) return;
 
     const dataToSend = new FormData();
+
+    dataToSend.append("name", formData.name);
+    dataToSend.append("sim_number", formData.sim_number);
+    dataToSend.append("iccid", formData.iccid);
+
     dataToSend.append("carnum", formData.carnum);
     dataToSend.append(
       "fuel_consumption_per_100km",
@@ -92,7 +102,6 @@ const Details = ({ deviceSettings, refetch }) => {
 
     if (image) dataToSend.append("image", image);
 
-    console.log("dataToSend" , dataToSend);
     updateCar({ id: device.id, formData: dataToSend });
   };
 
@@ -102,10 +111,10 @@ const Details = ({ deviceSettings, refetch }) => {
         {/* ✅ بيانات الجهاز */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <MainInput
-            id="deviceName"
+            id="name"
             label="اسم الجهاز"
-            value={device.name || ""}
-            disabled
+            value={formData.name}
+            onChange={handleChange}
           />
           <MainInput
             id="importTime"
@@ -138,16 +147,16 @@ const Details = ({ deviceSettings, refetch }) => {
             disabled
           />
           <MainInput
-            id="simCardNumber"
+            id="sim_number"
             label="SIM card number"
-            value={device.sim_number || ""}
-            disabled
+            value={formData.sim_number}
+            onChange={handleChange}
           />
           <MainInput
             id="iccid"
             label="iccid"
-            value={device.iccid || ""}
-            disabled
+            value={formData.iccid}
+            onChange={handleChange}
           />
         </div>
 
@@ -218,7 +227,9 @@ const Details = ({ deviceSettings, refetch }) => {
 
             {/* ✅ اختيار الأيقونة */}
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-900">أيقونة السيارة</p>
+              <p className="mb-2 text-sm font-medium text-gray-900">
+                أيقونة السيارة
+              </p>
               <div className="flex flex-wrap items-center gap-2">
                 {icons.map((icon, index) => (
                   <img
@@ -244,9 +255,7 @@ const Details = ({ deviceSettings, refetch }) => {
             />
           </div>
 
-          <FormBtn title={"تحديث البيانات"} disabled={isPending}
-          
-          />
+          <FormBtn title={"تحديث البيانات"} disabled={isPending} />
         </form>
       </div>
     </section>
