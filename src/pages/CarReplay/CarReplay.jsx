@@ -335,9 +335,9 @@ const CarReplay = () => {
 
   const getCarBaseIconUrl = useCallback((speedValue) => {
     // نفس المنطق المستخدم سابقًا للأيقونات
-    if (speedValue > 5) return "/car-green.png";
-    if (speedValue === 0) return "/car-red.png";
-    return "/car-blue.png";
+    if (speedValue > 5) return "/car-green.svg";
+    if (speedValue === 0) return "/car-red.svg";
+    return "/car-blue.svg";
   }, []);
 
   const ensureRotatedPngDataUrl = useCallback((baseIconUrl, rotationDeg) => {

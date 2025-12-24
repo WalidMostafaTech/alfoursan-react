@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GoogleMap, InfoWindow, Marker, useLoadScript } from "@react-google-maps/api";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -12,9 +12,9 @@ const containerStyle = { width: "100%", height: "100vh" };
 
 const getCarBaseIconUrl = (speedValue) => {
   const s = Number(speedValue) || 0;
-  if (s > 5) return "/car-green.svg";
-  if (s === 0) return "/car-red.svg";
-  return "/car-blue.svg";
+  if (s > 1) return "/car-green.svg";
+  if (s === 0) return "/car-blue.svg";
+  return "/car-red.svg";
 };
 
 const formatTimeLeft = (ms) => {
@@ -37,6 +37,8 @@ const OutsideTracking = () => {
 
   const rotatedIconCacheRef = useRef(new Map());
   const [carIconUrl, setCarIconUrl] = useState(null);
+  const lastGeocodeAtRef = useRef(0);
+  const lastAddressPosRef = useRef(null);
   const [mapRef, setMapRef] = useState(null);
   const [initialCenter, setInitialCenter] = useState({ lat: 23.8859, lng: 45.0792 });
   const [showInfo, setShowInfo] = useState(false);
@@ -236,6 +238,46 @@ const OutsideTracking = () => {
       setCarIconUrl(url);
     });
   }, [car, isLoaded]);
+
+  // جلب العنوان (تهدئة + فقط عند تحرك ملحوظ)
+  useEffect(() => {
+    if (!isLoaded || !window.google || !position) return;
+
+    const lastPos = lastAddressPosRef.current;
+    const distKm = lastPos
+      ? (() => {
+          const R = 6371;
+          const toRad = (x) => (x * Math.PI) / 180;
+          const dLat = toRad(position.lat - lastPos.lat);
+          const dLng = toRad(position.lng - lastPos.lng);
+          const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lastPos.lat)) *
+              Math.cos(toRad(position.lat)) *
+              Math.sin(dLng / 2) ** 2;
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        })()
+      : Infinity;
+
+    const now = Date.now();
+    if (now - lastGeocodeAtRef.current < 5000) return;
+    if (distKm < 0.05) return; // ~50m
+
+    lastGeocodeAtRef.current = now;
+    lastAddressPosRef.current = { lat: position.lat, lng: position.lng };
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: position }, (results, geocodeStatus) => {
+      if (geocodeStatus === "OK" && results?.[0]?.formatted_address) {
+        setCars((prev) =>
+          prev.length
+            ? [{ ...prev[0], address: results[0].formatted_address }]
+            : prev
+        );
+      }
+    });
+  }, [isLoaded, position?.lat, position?.lng]);
 
   const allowedCommands = data?.share?.commands || [];
 
