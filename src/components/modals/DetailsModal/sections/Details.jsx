@@ -50,8 +50,23 @@ const Details = ({ deviceSettings, refetch }) => {
   // ✅ Mutation لتحديث بيانات السيارة
   const { mutate: updateCar, isPending } = useMutation({
     mutationFn: ({ id, formData }) => updateDialogCar(id, formData),
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success("تم تحديث بيانات السيارة بنجاح ✅");
+
+      // ✅ حدث بيانات السيارة مباشرة داخل TenantDashboard باستخدام استجابة API
+      // res shape: { device_id, imei, device }
+      try {
+        if (res?.device?.id) {
+          window.dispatchEvent(
+            new CustomEvent("device-updated", {
+              detail: { device: res.device, device_id: res.device_id, imei: res.imei },
+            })
+          );
+        }
+      } catch {
+        // ignore
+      }
+
       refetch();
     },
     onError: (error) => {

@@ -7,15 +7,12 @@ import CarPopup from "../../components/common/CarPopup";
 import useCarSocket from "../../hooks/useCarSocket";
 import { getOutsideTracking, sendCommand } from "../../services/monitorServices";
 import { toast } from "react-toastify";
+import { carPath } from "../../services/carPath";
+import { getCarStatus } from "../../utils/getCarStatus";
 
 const containerStyle = { width: "100%", height: "100vh" };
 
-const getCarBaseIconUrl = (speedValue) => {
-  const s = Number(speedValue) || 0;
-  if (s > 1) return "/car-green.svg";
-  if (s === 0) return "/car-blue.svg";
-  return "/car-red.svg";
-};
+const getCarColor = (car) => getCarStatus(car).color;
 
 const formatTimeLeft = (ms) => {
   if (ms <= 0) return "انتهت الصلاحية";
@@ -35,8 +32,6 @@ const OutsideTracking = () => {
     language: "ar",
   });
 
-  const rotatedIconCacheRef = useRef(new Map());
-  const [carIconUrl, setCarIconUrl] = useState(null);
   const lastGeocodeAtRef = useRef(0);
   const lastAddressPosRef = useRef(null);
   const [mapRef, setMapRef] = useState(null);
@@ -192,52 +187,6 @@ const OutsideTracking = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position?.lat, position?.lng]);
 
-  // rotated icon
-  useEffect(() => {
-    if (!isLoaded || !window.google || !car) return;
-    const baseIconUrl = getCarBaseIconUrl(car.speed);
-    const rotationDeg = Number(car.direction) || 0;
-    const normalizedRotation = ((rotationDeg % 360) + 360) % 360;
-    const roundedRotation = Math.round(normalizedRotation);
-    const key = `${baseIconUrl}|${roundedRotation}`;
-
-    const cached = rotatedIconCacheRef.current.get(key);
-    if (typeof cached === "string") {
-      setCarIconUrl(cached);
-      return;
-    }
-    if (cached && typeof cached.then === "function") return;
-
-    const promise = new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const size = 40;
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return resolve(baseIconUrl);
-        ctx.translate(size / 2, size / 2);
-        ctx.rotate((roundedRotation * Math.PI) / 180);
-        ctx.translate(-size / 2, -size / 2);
-        ctx.drawImage(img, 0, 0, size, size);
-        try {
-          resolve(canvas.toDataURL("image/png"));
-        } catch {
-          resolve(baseIconUrl);
-        }
-      };
-      img.onerror = () => resolve(baseIconUrl);
-      img.src = baseIconUrl;
-    });
-
-    rotatedIconCacheRef.current.set(key, promise);
-    promise.then((url) => {
-      rotatedIconCacheRef.current.set(key, url);
-      setCarIconUrl(url);
-    });
-  }, [car, isLoaded]);
 
   // جلب العنوان (تهدئة + فقط عند تحرك ملحوظ)
   useEffect(() => {
@@ -340,12 +289,17 @@ const OutsideTracking = () => {
           position={renderPos || position}
           onClick={() => setShowInfo(true)}
           icon={
-            carIconUrl
+            car
               ? {
-                  url: carIconUrl,
-                  // scaledSize: new window.google.maps.Size(40, 40),
-                  anchor: new window.google.maps.Point(20, 20),
-                  labelOrigin: new window.google.maps.Point(20, 52),
+                  path: carPath,
+                  fillColor: getCarColor(car),
+                  fillOpacity: 1,
+                  strokeColor: "#000",
+                  strokeWeight: 0.7,
+                  scale: 0.05,
+                  rotation: car.direction || 0,
+                  anchor: new window.google.maps.Point(156, 256),
+                  labelOrigin: new window.google.maps.Point(156, 700),
                 }
               : undefined
           }

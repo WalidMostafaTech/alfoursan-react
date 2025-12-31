@@ -62,12 +62,72 @@ const TenantDashboard = () => {
 
   const [cars, setCars] = useState([]);
   const [isInit, setIsInit] = useState(false);
-  const [center, setCenter] = useState({ lat: 23.8859, lng: 45.0792 });
+  const [center, setCenter] = useState({ lat: 23.8859, lng: 41.0792 });
   // const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const dispatch = useDispatch();
   const lastGeocodeAtRef = useRef(new Map());
+
+  const mapDeviceToCar = useCallback((d) => {
+    const lat = parseFloat(d.latitude);
+    const lng = parseFloat(d.longitude);
+    const hasPos = Number.isFinite(lat) && Number.isFinite(lng);
+
+    return {
+      ...d,
+      position: hasPos ? { lat, lng } : d.position,
+      address: d.address || "جارٍ التحديد...",
+      // lastUpdate: لو جاية من socket نخليها، ولو جاية من API بس نديها قيمة
+      lastUpdate: d.lastUpdate || Date.now(),
+    };
+  }, []);
+
+  const mergeCarsPreferLive = useCallback((prevCars, incomingCars) => {
+    const prevById = new Map();
+    const prevByImei = new Map();
+    (prevCars || []).forEach((c) => {
+      if (c?.id != null) prevById.set(c.id, c);
+      if (c?.serial_number) prevByImei.set(c.serial_number, c);
+    });
+
+    const incomingById = new Map();
+    (incomingCars || []).forEach((c) => {
+      if (c?.id == null) return;
+      incomingById.set(c.id, c); // dedupe by id
+    });
+
+    const now = Date.now();
+    const merged = [];
+    incomingById.forEach((incoming) => {
+      const prev = prevById.get(incoming.id) || prevByImei.get(incoming.serial_number);
+      if (!prev) {
+        merged.push(incoming);
+        return;
+      }
+
+      // ✅ لا تقتل موقع/سرعة socket الحديثة عند وصول API (خصوصًا full=1)
+      const prevIsLive = prev.lastUpdate && now - prev.lastUpdate < 60_000;
+
+      merged.push({
+        ...incoming,
+        ...prev,
+        // بيانات الجهاز من API لازم تكسب (اسم/هاتف/صورة/روابط...)
+        ...incoming,
+        // لكن بيانات التتبع الحديثة من socket ما تتغيرش
+        position: prevIsLive && prev.position ? prev.position : incoming.position,
+        speed: prevIsLive && prev.speed != null ? prev.speed : incoming.speed,
+        direction: prevIsLive && prev.direction != null ? prev.direction : incoming.direction,
+        status: prevIsLive && prev.status != null ? prev.status : incoming.status,
+        lastUpdate: prev.lastUpdate || incoming.lastUpdate,
+        lastSignel: prev.lastSignel || incoming.lastSignel,
+        lastSignelGPS: prev.lastSignelGPS || incoming.lastSignelGPS,
+        lastGpsAtMs: prev.lastGpsAtMs || incoming.lastGpsAtMs,
+      });
+    });
+
+    return merged;
+  }, []);
 
   const filteredCars = useMemo(() => {
     return cars.filter((car) => {
@@ -84,7 +144,7 @@ const TenantDashboard = () => {
   const [viewState, setViewState] = useState({
     longitude: center.lng,
     latitude: center.lat,
-    zoom: zoom,
+    zoom: 7,
   });
 
   // ✅ مزامنة zoom القادم من Redux مع Mapbox viewState
@@ -92,6 +152,9 @@ const TenantDashboard = () => {
     if (mapProvider !== "mapbox") return;
     setViewState((v) => (v.zoom === zoom ? v : { ...v, zoom }));
   }, [mapProvider, zoom]);
+
+
+
 
   // ✅ تحميل سكريبت Google Maps مرة واحدة فقط
   const { isLoaded, loadError } = useLoadScript({
@@ -103,36 +166,42 @@ const TenantDashboard = () => {
   // 🧩 عند تحميل الأجهزة
   useEffect(() => {
     if (devices) {
-      const mappedCars = devices?.devices.map((d) => ({
-        ...d,
-        position: {
-          lat: parseFloat(d.latitude),
-          lng: parseFloat(d.longitude),
-        },
-        address: d.address || "جارٍ التحديد...",
-        lastUpdate: Date.now(),
-      }));
-      setCars(mappedCars);
+      const mappedCars = (devices?.devices || []).map(mapDeviceToCar);
+      setCars((prev) => mergeCarsPreferLive(prev, mappedCars));
       setIsInit(true);
 
       // 🔁 بعدها اضرب API تانية بـ full=1 (بدون لودينج)
       refetchFullDevices().then((res) => {
         const fullDevices = res.data?.devices;
         if (fullDevices) {
-          const updatedCars = fullDevices.map((d) => ({
-            ...d,
-            position: {
-              lat: parseFloat(d.latitude),
-              lng: parseFloat(d.longitude),
-            },
-            address: d.address || "جارٍ التحديد...",
-            lastUpdate: Date.now(),
-          }));
-          setCars(updatedCars);
+          const updatedCars = fullDevices.map(mapDeviceToCar);
+          setCars((prev) => mergeCarsPreferLive(prev, updatedCars));
         }
       });
     }
-  }, [devices, refetchFullDevices]);
+  }, [devices, refetchFullDevices, mapDeviceToCar, mergeCarsPreferLive]);
+
+  // ✅ تحديث بيانات المركبة بعد updateDialogCar (من المودال) باستخدام استجابة API
+  useEffect(() => {
+    const handler = (e) => {
+      const device = e?.detail?.device || null;
+      if (!device?.id) return;
+
+      setCars((prev) =>
+        (prev || []).map((c) => {
+          if (c?.id !== device.id) return c;
+          // لا تغيّر position/speed/direction الحالية (socket) — فقط حدّث بيانات الجهاز
+          return {
+            ...c,
+            ...device,
+          };
+        })
+      );
+    };
+
+    window.addEventListener("device-updated", handler);
+    return () => window.removeEventListener("device-updated", handler);
+  }, []);
 
   // 🔍 دوال العنوان (Google / Mapbox)
   const getGoogleAddress = (lat, lng, cb) => {

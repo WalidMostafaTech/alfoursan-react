@@ -5,6 +5,8 @@ import Supercluster from "supercluster";
 import { useDispatch, useSelector } from "react-redux";
 import { openGeoFenceModal } from "../../../store/modalsSlice";
 import { changeZoom } from "../../../store/mapSlice";
+import { carPath } from "../../../services/carPath";
+import { getCarStatus } from "../../../utils/getCarStatus";
 
 const GoogleMapView = ({
   cars,
@@ -18,8 +20,9 @@ const GoogleMapView = ({
   const superclusterRef = useRef(null);
   const carMarkersRef = useRef(new Map());
   const clusterMarkersRef = useRef([]);
-  const rotatedIconCacheRef = useRef(new Map());
   const markerLabelMetaRef = useRef(new Map());
+  const pendingMarkerUpdatesRef = useRef(new Map());
+  const markerRafRef = useRef(0);
 
   const {
     clusters,
@@ -33,82 +36,18 @@ const GoogleMapView = ({
     setMap(loadedMap);
   }, []);
 
-  const getCarBaseIconUrl = useCallback((car) => {
-    return car.speed > 2
-      ? "/car-green.svg"
-      : car.speed === 0
-      ? "/car-blue.svg"
-      : "/car-red.svg"
-      ;
-  }, []);
-
-  // Google Marker لا يدعم دوران PNG مباشرة (وغالبًا SVG <image href> بيفشل وبيظهر transparent.png)
-  // فبنولّد PNG مُدارة على canvas ونرجع data-url.
-  const getRotatedIconKey = useCallback((baseIconUrl, rotationDeg) => {
-    const normalizedRotation = ((rotationDeg % 360) + 360) % 360;
-    const roundedRotation = Math.round(normalizedRotation);
-    return `${baseIconUrl}|${roundedRotation}`;
-  }, []);
-
-  const ensureRotatedPngDataUrl = useCallback((baseIconUrl, rotationDeg) => {
-    const normalizedRotation = ((rotationDeg % 360) + 360) % 360;
-    const roundedRotation = Math.round(normalizedRotation);
-    const key = `${baseIconUrl}|${roundedRotation}`;
-
-    const cached = rotatedIconCacheRef.current.get(key);
-    if (typeof cached === "string") {
-      return Promise.resolve(cached);
-    }
-    if (cached && typeof cached.then === "function") {
-      return cached;
-    }
-
-    const promise = new Promise((resolve) => {
-      const img = new Image();
-      // نفس الـ origin غالبًا (public/)، لكن نخليها safe لو CDN لاحقًا
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const size = 40;
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(baseIconUrl);
-          return;
-        }
-
-        ctx.translate(size / 2, size / 2);
-        ctx.rotate((roundedRotation * Math.PI) / 180);
-        ctx.translate(-size / 2, -size / 2);
-        ctx.drawImage(img, 0, 0, size, size);
-
-        try {
-          const dataUrl = canvas.toDataURL("image/png");
-          resolve(dataUrl);
-        } catch {
-          // في حالة canvas tainted لأي سبب
-          resolve(baseIconUrl);
-        }
-      };
-      img.onerror = () => resolve(baseIconUrl);
-      img.src = baseIconUrl;
-    });
-
-    rotatedIconCacheRef.current.set(key, promise);
-    promise.then((dataUrl) => {
-      rotatedIconCacheRef.current.set(key, dataUrl);
-    });
-
-    return promise;
-  }, []);
+  const getCarColor = useCallback((car) => getCarStatus(car).color, []);
 
   const validCars = useMemo(() => {
-    return (cars || []).filter((car) => {
+    const byId = new Map();
+    (cars || []).forEach((car) => {
       const lat = car?.position?.lat;
       const lng = car?.position?.lng;
-      return typeof lat === "number" && typeof lng === "number" && !isNaN(lat) && !isNaN(lng);
+      const ok = typeof lat === "number" && typeof lng === "number" && !isNaN(lat) && !isNaN(lng);
+      if (!ok || car?.id == null) return;
+      byId.set(car.id, car); // dedupe by id (يمنع أي تكرار بالـ API/Socket)
     });
+    return Array.from(byId.values());
   }, [cars]);
 
   // ✅ تحويل السيارات إلى GeoJSON features لـ Supercluster
@@ -142,59 +81,63 @@ const GoogleMapView = ({
     superclusterRef.current.load(geojsonFeatures);
   }, [geojsonFeatures]);
 
-  // ✅ إنشاء ماركر بعلامة Symbol
+  // ✅ إنشاء ماركر باستخدام SVG path (يدعم الدوران مباشرة)
   const createRotatedMarker = useCallback((car, targetMap) => {
-    const baseIconUrl = getCarBaseIconUrl(car);
+    const color = getCarColor(car);
     const rotation = car.direction || 0;
-    const key = getRotatedIconKey(baseIconUrl, rotation);
 
     const markerOptions = {
       position: car.position,
       map: targetMap,
       icon: {
-        // placeholder سريع لحد ما الـ data-url يجهز
-        url: baseIconUrl,
-        // scaledSize: new window.google.maps.Size(40,40),
-        anchor: new window.google.maps.Point(20, 20),
-        // خلي الـ label (اسم السيارة) أسفل الأيقونة
-        labelOrigin: new window.google.maps.Point(20, 52),
+        path: carPath,
+        fillColor: color,
+        fillOpacity: 1,
+        strokeColor: "#000",
+        strokeWeight: 0.7,
+        scale: 0.05,
+        rotation: rotation,
+        anchor: new window.google.maps.Point(156, 256),
+        labelOrigin: new window.google.maps.Point(156, 700),
       },
     };
 
     const marker = new window.google.maps.Marker(markerOptions);
     marker.addListener("click", () => handleSelectCar(car));
 
-    ensureRotatedPngDataUrl(baseIconUrl, rotation).then((url) => {
-      // ممكن يكون الماركر اتشال قبل ما الصورة تجهز
-      if (!carMarkersRef.current.get(car.id)) return;
-      const icon = marker.getIcon();
-      const currentUrl =
-        typeof icon === "string" ? icon : icon && "url" in icon ? icon.url : null;
-      // حدث فقط لو لسه على نفس الحالة (نفس key)
-      const currentKey = getRotatedIconKey(getCarBaseIconUrl(car), car.direction || 0);
-      if (currentKey !== key) return;
-      if (currentUrl !== url) {
-        marker.setIcon({
-          url,
-          // scaledSize: new window.google.maps.Size(40,40),
-          anchor: new window.google.maps.Point(20, 20),
-          labelOrigin: new window.google.maps.Point(20, 52),
-        });
-      }
-    });
-
     return marker;
-  }, [
-    ensureRotatedPngDataUrl,
-    getCarBaseIconUrl,
-    getRotatedIconKey,
-    handleSelectCar,
-  ]);
+  }, [getCarColor, handleSelectCar]);
 
   const clearClusterMarkers = useCallback(() => {
     clusterMarkersRef.current.forEach((m) => m.setMap(null));
     clusterMarkersRef.current = [];
   }, []);
+
+  // ✅ Cleanup قوي عند unmount (يمنع double markers في React StrictMode/dev)
+  useEffect(() => {
+    return () => {
+      try {
+        if (markerRafRef.current) cancelAnimationFrame(markerRafRef.current);
+      } catch {
+        // ignore
+      }
+      markerRafRef.current = 0;
+      pendingMarkerUpdatesRef.current.clear();
+
+      try {
+        clearClusterMarkers();
+      } catch {
+        // ignore
+      }
+
+      try {
+        carMarkersRef.current.forEach((m) => m.setMap(null));
+        carMarkersRef.current.clear();
+      } catch {
+        // ignore
+      }
+    };
+  }, [clearClusterMarkers]);
 
   // ✅ إنشاء/تحديث/حذف ماركرات العربيات (مرة واحدة كمصدر للحقيقة)
   useEffect(() => {
@@ -205,45 +148,54 @@ const GoogleMapView = ({
 
     validCars.forEach((car) => {
       const existing = markers.get(car.id);
-      const baseIconUrl = getCarBaseIconUrl(car);
+      const color = getCarColor(car);
       const rotation = car.direction || 0;
-      const key = getRotatedIconKey(baseIconUrl, rotation);
 
       if (!existing) {
         const m = createRotatedMarker(car, map);
         markers.set(car.id, m);
       } else {
-        existing.setPosition(car.position);
-        // حدّث الأيقونة async (لو اتهزت السرعة/الاتجاه)
-        ensureRotatedPngDataUrl(baseIconUrl, rotation).then((url) => {
-          const icon = existing.getIcon();
-          const currentUrl =
-            typeof icon === "string"
-              ? icon
-              : icon && "url" in icon
-              ? icon.url
-              : null;
-
-          // اتأكد إننا لسه على نفس key
-          const latestKey = getRotatedIconKey(
-            getCarBaseIconUrl(car),
-            car.direction || 0
-          );
-          if (latestKey !== key) return;
-
-          if (currentUrl !== url) {
-            existing.setIcon({
-              url,
-              // scaledSize: new window.google.maps.Size(40,40),
-              anchor: new window.google.maps.Point(20, 20),
-              labelOrigin: new window.google.maps.Point(20, 52),
+        // ✅ اجمع تحديثات الـ position في RAF واحد لتقليل الوميض/الـ repaint
+        pendingMarkerUpdatesRef.current.set(car.id, car.position);
+        if (!markerRafRef.current) {
+          markerRafRef.current = requestAnimationFrame(() => {
+            markerRafRef.current = 0;
+            const pending = pendingMarkerUpdatesRef.current;
+            pendingMarkerUpdatesRef.current = new Map();
+            pending.forEach((pos, id) => {
+              const m = markers.get(id);
+              if (!m) return;
+              const cur = m.getPosition();
+              const same =
+                cur &&
+                typeof cur.lat === "function" &&
+                typeof cur.lng === "function" &&
+                cur.lat() === pos.lat &&
+                cur.lng() === pos.lng;
+              if (!same) m.setPosition(pos);
             });
-          }
-        });
-      }
+          });
+        }
 
-      const marker = markers.get(car.id);
-      if (!marker) return;
+        // تحديث الأيقونة مباشرة (اللون والاتجاه)
+        const icon = existing.getIcon();
+        const currentColor = icon && "fillColor" in icon ? icon.fillColor : null;
+        const currentRotation = icon && "rotation" in icon ? icon.rotation : null;
+
+        if (currentColor !== color || currentRotation !== rotation) {
+          existing.setIcon({
+            path: carPath,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: "#000",
+            strokeWeight: 0.7,
+            scale: 0.05,
+            rotation: rotation,
+            anchor: new window.google.maps.Point(156, 256),
+            labelOrigin: new window.google.maps.Point(156, 700),
+          });
+        }
+      }
     });
 
     // إزالة الماركرات اللي اختفت
@@ -253,14 +205,7 @@ const GoogleMapView = ({
       if (m) m.setMap(null);
       markers.delete(id);
     });
-  }, [
-    map,
-    validCars,
-    createRotatedMarker,
-    getCarBaseIconUrl,
-    getRotatedIconKey,
-    ensureRotatedPngDataUrl,
-  ]);
+  }, [map, validCars, createRotatedMarker, getCarColor]);
 
   // ✅ إدارة أسماء الأجهزة (labels) بشكل خفيف جدًا:
   // - لا نستدعي setLabel إلا عند تغيير الاسم أو عند toggle showDeviceName

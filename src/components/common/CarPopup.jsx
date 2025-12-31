@@ -1,4 +1,4 @@
-import { FaMapMarkerAlt, FaSatelliteDish, FaUser } from "react-icons/fa";
+import { FaMapMarkerAlt, FaPlane, FaPlaneSlash, FaSatelliteDish, FaUser } from "react-icons/fa";
 import {
   FiBarChart2,
   FiMenu,
@@ -23,7 +23,17 @@ import { PiPhoneCall, PiPolygon } from "react-icons/pi";
 import { Link } from "react-router-dom";
 
 const CarPopup = ({ car, showActions = true }) => {
-  const { status } = getCarStatus(car);
+  const { status, color } = getCarStatus(car);
+
+  const isFlightMode = (() => {
+
+    return car.status ==  "off";
+    const v = car?.voltageLevel;
+    if (v == null || v === "") return true;
+    const n = typeof v === "number" ? v : Number.parseFloat(String(v));
+    if (!Number.isFinite(n)) return true;
+    return n <= 0;
+  })();
 
   const formatDate = (isoString) => {
     if (!isoString) return "—";
@@ -48,7 +58,12 @@ const CarPopup = ({ car, showActions = true }) => {
     { label: status, icon: <MdOutlineCarCrash /> },
 
 
-    { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
+    isFlightMode
+      ? {
+          label: "Flight mode",
+          icon: <FaPlane style={{ color: "#ef4444" }} />,
+        }
+      : { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
     { label: car.iccid, icon: `iccid` },
 
     { label: car.contact_person, icon: <FaUser /> },
@@ -67,7 +82,15 @@ const CarPopup = ({ car, showActions = true }) => {
       {/* عنوان العربية */}
       <h4 className="font-bold text-sm flex items-center justify-between gap-2">
         <span className="line-clamp-1">{car.name}</span>
-        <span className="text-mainColor text-xs font-semibold whitespace-nowrap">
+        <span
+          className="text-xs font-semibold whitespace-nowrap"
+          style={{ color }}
+        >
+          {isFlightMode && (
+            <span className="inline-flex items-center me-1" title="Flight mode">
+              <FaPlaneSlash style={{ color: "#ef4444" }} />
+            </span>
+          )}
           {status}
         </span>
       </h4>

@@ -21,6 +21,7 @@ import Loader from "../../components/Loading/Loader";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import MapTypes from "../../components/common/MapTypes";
 import TraceColor from "./TraceColor/TraceColor";
+import { carPath } from "../../services/carPath";
 
 const containerStyle = {
   width: "100%",
@@ -184,6 +185,19 @@ const getBoundsDiag = (points) => {
   return Math.sqrt(dx * dx + dy * dy);
 };
 
+// ✅ haversine distance in meters (lightweight, for spike filtering)
+const haversineMeters = (lat1, lng1, lat2, lng2) => {
+  const R = 6371000;
+  const toRad = (x) => (x * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
 const simplifySegmentsToMaxPoints = (rawSegments, points, maxTotalPoints) => {
   const currentTotal = countSegmentPoints(rawSegments);
   if (currentTotal <= maxTotalPoints) return rawSegments;
@@ -255,8 +269,75 @@ const CarReplay = () => {
         to_time: dateRange.to,
       }),
   });
-  const points = replayData?.data || [];
+  const pointsRaw = replayData?.data || [];
   const meta = replayData?.meta;
+
+  // ✅ إزالة القفزات غير المنطقية (GPS spikes) + تنظيف البيانات
+  const points = useMemo(() => {
+    if (!pointsRaw?.length) return [];
+
+    const MAX_SPEED_KMH = 250; // سقف منطقي للفصل بين النقاط
+    const MIN_DT_SEC = 5; // أقل زمن نعتمد عليه لحساب سرعة بين نقطتين
+    const MAX_JUMP_METERS_NO_TIME = 10000; // لو مفيش وقت: تجاهل قفزة > 10km
+
+    const out = [];
+    let prev = null;
+
+    const parseMs = (v) => {
+      const ms = Date.parse(v);
+      return Number.isFinite(ms) ? ms : null;
+    };
+
+    for (let i = 0; i < pointsRaw.length; i++) {
+      const p = pointsRaw[i];
+      const lat = Number(p?.latitude);
+      const lng = Number(p?.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+      // (0,0) غالبًا نقطة خاطئة
+      if (Math.abs(lat) < 0.0001 && Math.abs(lng) < 0.0001) continue;
+
+      const normalized = { ...p, latitude: lat, longitude: lng };
+
+      if (!prev) {
+        out.push(normalized);
+        prev = normalized;
+        continue;
+      }
+
+      const distM = haversineMeters(prev.latitude, prev.longitude, lat, lng);
+      const t0 = prev?.date ? parseMs(prev.date) : null;
+      const t1 = p?.date ? parseMs(p.date) : null;
+      const dtSec = t0 != null && t1 != null ? (t1 - t0) / 1000 : null;
+
+      // لو نفس النقطة تقريبًا: احفظها (مهمة للثبات/الوقوف)
+      if (distM < 2) {
+        out.push(normalized);
+        prev = normalized;
+        continue;
+      }
+
+      // Spike detection
+      if (dtSec != null && dtSec > 0) {
+        if (dtSec < MIN_DT_SEC && distM > 1000) {
+          // قفزة كبيرة في زمن صغير جدًا
+          continue;
+        }
+        const impliedSpeed = (distM / dtSec) * 3.6;
+        if (impliedSpeed > MAX_SPEED_KMH && distM > 2000) {
+          continue;
+        }
+      } else {
+        // no valid timestamps
+        if (distM > MAX_JUMP_METERS_NO_TIME) continue;
+      }
+
+      out.push(normalized);
+      prev = normalized;
+    }
+
+    return out;
+  }, [pointsRaw]);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: "AIzaSyBuFc-F9K_-1QkQnLoTIecBlNz6LfCS1wg",
@@ -270,8 +351,12 @@ const CarReplay = () => {
 
   const [mapRef, setMapRef] = useState(null);
   const [initialCenter, setInitialCenter] = useState(defaultPosition);
-  const rotatedIconCacheRef = useRef(new Map());
   const lastPanToRef = useRef(0);
+
+  // ✅ حركة ناعمة بين النقاط
+  const [renderPosition, setRenderPosition] = useState(null);
+  const [renderDirection, setRenderDirection] = useState(0);
+  const animRef = useRef({ raf: 0, start: null, end: null, t0: 0, dur: 0 });
 
   // تحديد نقطة البداية أول مرة فقط
   useEffect(() => {
@@ -279,6 +364,16 @@ const CarReplay = () => {
       setInitialCenter({ lat: points[0].latitude, lng: points[0].longitude });
     }
   }, [points]);
+
+  // ✅ لو تم تنظيف نقاط كثيرة، حافظ على index داخل الحدود
+  useEffect(() => {
+    if (points.length === 0) {
+      if (currentIndex !== 0) setCurrentIndex(0);
+      return;
+    }
+    if (currentIndex > points.length - 1) setCurrentIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [points.length]);
 
   const currentPoint = points[currentIndex] || {
     latitude: 23.8859,
@@ -288,12 +383,96 @@ const CarReplay = () => {
     distance: 0,
   };
 
+  const nextPoint = points[currentIndex + 1] || null;
+  const targetPosition = {
+    lat: currentPoint.latitude,
+    lng: currentPoint.longitude,
+  };
+  const targetDirection = Number(currentPoint.direction) || 0;
+
+  // ✅ حركة ناعمة بين النقاط (interpolation)
   useEffect(() => {
-    if (!mapRef || points.length === 0) return;
+    if (points.length === 0) {
+      setRenderPosition(null);
+      return;
+    }
+
+    if (!renderPosition) {
+      setRenderPosition(targetPosition);
+      setRenderDirection(targetDirection);
+      return;
+    }
+
+    const start = renderPosition;
+    const end = targetPosition;
+    const startDir = renderDirection;
+    const endDir = targetDirection;
+
+    // لو نفس النقطة: لا حاجة لـ animation
+    if (start.lat === end.lat && start.lng === end.lng && startDir === endDir) {
+      return;
+    }
+
+    // حساب المسافة والمدة
+    const distM = haversineMeters(start.lat, start.lng, end.lat, end.lng);
+    // مدة الـ animation حسب المسافة (clamp بين 200ms و 800ms)
+    const dur = Math.max(200, Math.min(800, distM * 2));
+
+    if (animRef.current.raf) cancelAnimationFrame(animRef.current.raf);
+
+    animRef.current = {
+      raf: 0,
+      start,
+      end,
+      startDir,
+      endDir,
+      t0: performance.now(),
+      dur,
+    };
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const lerpAngle = (a, b, t) => {
+      const diff = ((b - a + 540) % 360) - 180;
+      return a + diff * t;
+    };
+
+    const tick = (now) => {
+      const { start, end, startDir, endDir, t0, dur } = animRef.current;
+      const t = Math.min(1, (now - t0) / dur);
+
+      const nextPos = {
+        lat: lerp(start.lat, end.lat, t),
+        lng: lerp(start.lng, end.lng, t),
+      };
+      const nextDir = lerpAngle(startDir, endDir, t);
+
+      setRenderPosition(nextPos);
+      setRenderDirection(nextDir);
+
+      if (t < 1) {
+        animRef.current.raf = requestAnimationFrame(tick);
+      } else {
+        animRef.current.raf = 0;
+      }
+    };
+
+    animRef.current.raf = requestAnimationFrame(tick);
+
+    return () => {
+      if (animRef.current.raf) {
+        cancelAnimationFrame(animRef.current.raf);
+        animRef.current.raf = 0;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, points.length]);
+
+  useEffect(() => {
+    if (!mapRef || !renderPosition) return;
 
     const carLatLng = new window.google.maps.LatLng(
-      currentPoint.latitude,
-      currentPoint.longitude
+      renderPosition.lat,
+      renderPosition.lng
     );
 
     const bounds = mapRef.getBounds();
@@ -308,7 +487,7 @@ const CarReplay = () => {
         mapRef.panTo(carLatLng);
       }
     }
-  }, [currentIndex, mapRef, points.length, currentPoint.latitude, currentPoint.longitude]);
+  }, [mapRef, renderPosition]);
 
   useEffect(() => {
     if (isPlaying && points.length > 0) {
@@ -333,69 +512,10 @@ const CarReplay = () => {
     setIsPlaying((prev) => !prev);
   };
 
-  const getCarBaseIconUrl = useCallback((speedValue) => {
-    // نفس المنطق المستخدم سابقًا للأيقونات
-    if (speedValue > 5) return "/car-green.svg";
-    if (speedValue === 0) return "/car-red.svg";
-    return "/car-blue.svg";
+  const getReplayCarColor = useCallback((speedValue) => {
+    const s = Number(speedValue) || 0;
+    return s > 1 ? "#22c55e" : "#3b82f6";
   }, []);
-
-  const ensureRotatedPngDataUrl = useCallback((baseIconUrl, rotationDeg) => {
-    const normalizedRotation = ((rotationDeg % 360) + 360) % 360;
-    const roundedRotation = Math.round(normalizedRotation);
-    const key = `${baseIconUrl}|${roundedRotation}`;
-
-    const cached = rotatedIconCacheRef.current.get(key);
-    if (typeof cached === "string") return Promise.resolve(cached);
-    if (cached && typeof cached.then === "function") return cached;
-
-    const promise = new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const size = 40;
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(baseIconUrl);
-          return;
-        }
-        ctx.translate(size / 2, size / 2);
-        ctx.rotate((roundedRotation * Math.PI) / 180);
-        ctx.translate(-size / 2, -size / 2);
-        ctx.drawImage(img, 0, 0, size, size);
-        try {
-          resolve(canvas.toDataURL("image/png"));
-        } catch {
-          resolve(baseIconUrl);
-        }
-      };
-      img.onerror = () => resolve(baseIconUrl);
-      img.src = baseIconUrl;
-    });
-
-    rotatedIconCacheRef.current.set(key, promise);
-    promise.then((dataUrl) => rotatedIconCacheRef.current.set(key, dataUrl));
-    return promise;
-  }, []);
-
-  const [carIconUrl, setCarIconUrl] = useState(null);
-
-  useEffect(() => {
-    if (!isLoaded || !window.google) return;
-    const s = Number(currentPoint.speed) || 0;
-    const base = getCarBaseIconUrl(s);
-    const dir = Number(currentPoint.direction) || 0;
-    ensureRotatedPngDataUrl(base, dir).then((url) => setCarIconUrl(url));
-  }, [
-    isLoaded,
-    currentPoint.speed,
-    currentPoint.direction,
-    getCarBaseIconUrl,
-    ensureRotatedPngDataUrl,
-  ]);
 
   const MAX_POLYLINE_POINTS = 5000;
   const MAX_PARKING_MARKERS = 200;
@@ -599,16 +719,18 @@ const CarReplay = () => {
         )}
 
         {/* العربية */}
-        {carIconUrl && (
+        {points.length > 0 && renderPosition && (
           <Marker
-            position={{
-              lat: currentPoint.latitude,
-              lng: currentPoint.longitude,
-            }}
+            position={renderPosition}
             icon={{
-              url: carIconUrl,
-              // scaledSize: new window.google.maps.Size(40, 40),
-              anchor: new window.google.maps.Point(20, 20),
+              path: carPath,
+              fillColor: getReplayCarColor(currentPoint.speed),
+              fillOpacity: 1,
+              strokeColor: "#000",
+              strokeWeight: 0.7,
+              scale: 0.05,
+              rotation: renderDirection,
+              anchor: new window.google.maps.Point(156, 256),
             }}
             onClick={() => setShowInfo(true)}
           >

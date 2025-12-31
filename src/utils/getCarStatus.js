@@ -54,7 +54,8 @@ export const getCarStatus = (car) => {
 
   const { lastSignel, lastSignelGPS, speed } = car;
 
-  if (!lastSignel) return { status: "Inactive", color: "#6b7280" }; // أحمر
+  // ✅ Inactive: لم يتم استلام إشارة نهائيًا
+  if (!lastSignel) return { status: "Inactive", color: "#6b7280" };
   /*
   const nowSaudi = new Date(
     new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" })
@@ -70,33 +71,42 @@ export const getCarStatus = (car) => {
   // const hoursSinceLastSignal = (nowSaudi - lastSignalTime) / (1000 * 60 * 60);
   // const hoursSinceLastGPS = (nowSaudi - lastGPS) / (1000 * 60 * 60);
 
-  const diffSignal = getTimeDiffDetailed(lastSignel);
-  const diffGPS = getTimeDiffDetailed(lastSignelGPS);
+  // ✅ أداء: لو عندنا lastGpsAtMs (من السوكت) نستخدمه بدل parsing string
+  const nowRiyadh = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" })
+  );
 
-  const hoursSinceLastSignal = diffSignal.hoursSinceLastGPS;
-  const hoursSinceLastGPS = diffGPS.hoursSinceLastGPS;
+  const hoursSinceLastSignal = (() => {
+    if (car.lastGpsAtMs && Number.isFinite(car.lastGpsAtMs)) {
+      return (Date.now() - car.lastGpsAtMs) / (1000 * 60 * 60);
+    }
+    const diff = getTimeDiffDetailed(lastSignel);
+    return diff.hoursSinceLastGPS;
+  })();
 
   // ⏹ Offline
-  if (hoursSinceLastSignal > 4) {
+  if (hoursSinceLastSignal >= 4) {
     return {
-      status: `Offline (${getTimeDiffString(lastSignel)})  `,
-      color: "#ef4444", // رمادي
+      status: `Offline (${getTimeDiffString(lastSignel)})`,
+      color: "#ef4444",
     };
   }
 
   // 🟢 Moving
-  if (speed > 0) {
+  const s = Number(speed) || 0;
+  if (s > 1) {
     return {
-      status: `Moving (${speed} km/h)`,
-      color: "#22c55e", // أخضر
+      status: `Moving (${s} km/h)`,
+      color: "#22c55e",
     };
   }
 
   // 🔵 Static
-  if (speed === 0 || !speed || speed === "undefined") {
+  if (s <= 1) {
+    const sinceSource = lastSignelGPS || lastSignel;
     return {
-      status: `Static (${getTimeDiffString(lastSignelGPS)})   `,
-      color: "#3b82f6", // أزرق
+      status: sinceSource ? `Static ( ${getTimeDiffString(sinceSource)})` : "Static",
+      color: "#3b82f6",
     };
   }
 

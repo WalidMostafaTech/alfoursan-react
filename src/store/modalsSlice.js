@@ -7,6 +7,7 @@ const initialState = {
   geoFenceModal: { show: false, fenceData: {}, mission: "" },
   associateDeviceModal: { show: false, id: null },
   supportModal: { show: false },
+  commandResponse: { response: null, imei: null, timestamp: null },
 };
 
 const modalsSlice = createSlice({
@@ -61,6 +62,15 @@ const modalsSlice = createSlice({
     toggleSupportModal: (state) => {
       state.supportModal = { show: !state.supportModal.show };
     },
+
+    // ✅ Command response
+    setCommandResponse: (state, action) => {
+      const { response, imei } = action.payload || {};
+      state.commandResponse = { response, imei, timestamp: Date.now() };
+    },
+    clearCommandResponse: (state) => {
+      state.commandResponse = { response: null, imei: null, timestamp: null };
+    },
   },
 });
 
@@ -76,6 +86,8 @@ export const {
   openAssociateDeviceModal,
   closeAssociateDeviceModal,
   toggleSupportModal,
+  setCommandResponse,
+  clearCommandResponse,
 } = modalsSlice.actions;
 
 export default modalsSlice.reducer;

@@ -5,7 +5,7 @@ const initialState = {
   clusters: false,
   showDeviceName: false,
   mapType: localStorage.getItem("mapType") || "roadmap",
-  zoom: 6,
+  zoom: 7,
   notificationSound:
     localStorage.getItem("notificationSound") === "false" ? false : true,
 };
@@ -18,7 +18,7 @@ const mapSlice = createSlice({
     switchMap: (state, action) => {
       state.provider = action.payload;
       localStorage.setItem("mapProvider", action.payload);
-      state.zoom = 6;
+      state.zoom = 7;
 
       // لو اخترت mapbox نخلي النوع roadmap
       if (action.payload === "mapbox") {

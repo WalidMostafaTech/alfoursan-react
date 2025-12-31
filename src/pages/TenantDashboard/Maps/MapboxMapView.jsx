@@ -92,10 +92,10 @@ const MapboxMapView = ({
               <img
                 src={
                   car.speed > 1
-                    ? "/car-green.svg"
+                    ? "/car-green.svg?v=1"
                     : car.speed === 0
-                    ? "/car-red.svg"
-                    : "/car-blue.svg"
+                    ? "/car-red.svg?v=1"
+                    : "/car-blue.svg?v=1"
                 }
                 alt={car.name}
                 className="w-full h-full object-contain"
