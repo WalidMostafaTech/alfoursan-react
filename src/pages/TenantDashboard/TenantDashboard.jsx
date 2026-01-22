@@ -78,6 +78,8 @@ const TenantDashboard = () => {
       ...d,
       position: hasPos ? { lat, lng } : d.position,
       address: d.address || "جارٍ التحديد...",
+      // ✅ تحكم في معدل تحديث العنوان (يُستخدم لعرض countdown في الـ UI)
+      addressMinIntervalMs: 30_000,
       // lastUpdate: لو جاية من socket نخليها، ولو جاية من API بس نديها قيمة
       lastUpdate: d.lastUpdate || Date.now(),
     };
@@ -227,8 +229,11 @@ const TenantDashboard = () => {
     }
   };
 
-  // 🔌 WebSocket hook لتحديث العربيات
-  useCarSocket(cars, setCars, isInit);
+  // 🔌 WebSocket hook لتحديث العربيات (اتصال ثابت بدون socketRefresh)
+  useCarSocket(cars, setCars, isInit, {
+    debug: true,
+    tag: "TenantDashboard",
+  });
 
   // 🧭 تحديث العنوان عند تحرك العربية
   const selectedCar = useMemo(
@@ -239,6 +244,10 @@ const TenantDashboard = () => {
   useEffect(() => {
     if (!selectedCarId || !selectedCar?.position) return;
     const { lat, lng } = selectedCar.position;
+    const MIN_GEOCODE_INTERVAL_MS =
+      typeof selectedCar.addressMinIntervalMs === "number"
+        ? selectedCar.addressMinIntervalMs
+        : 30_000; // ✅ لا تطلب عنوان أقل من كل 30 ثانية (لتقليل التكلفة)
 
     if (
       !selectedCar.lastAddressPos ||
@@ -252,14 +261,28 @@ const TenantDashboard = () => {
       // ✅ تهدئة طلبات العنوان (reverse geocoding) عشان ما تأثرش على سلاسة الصفحة
       const now = Date.now();
       const last = lastGeocodeAtRef.current.get(selectedCarId) || 0;
-      if (now - last < 5000) return;
+      if (now - last < MIN_GEOCODE_INTERVAL_MS) return;
       lastGeocodeAtRef.current.set(selectedCarId, now);
+      // ✅ نخزن وقت آخر طلب (لـ countdown) بدون انتظار نتيجة الـ geocode
+      setCars((prev) =>
+        (prev || []).map((c) =>
+          c?.id === selectedCarId
+            ? c?.lastGeocodeAtMs === now && c?.addressMinIntervalMs === MIN_GEOCODE_INTERVAL_MS
+              ? c
+              : { ...c, lastGeocodeAtMs: now, addressMinIntervalMs: MIN_GEOCODE_INTERVAL_MS }
+            : c
+        )
+      );
 
       const updateAddress = (addr) => {
         setCars((prev) =>
           prev.map((c) =>
             c.id === selectedCarId
-              ? { ...c, address: addr, lastAddressPos: { lat, lng } }
+              ? c.address === addr &&
+                c.lastAddressPos?.lat === lat &&
+                c.lastAddressPos?.lng === lng
+                ? c
+                : { ...c, address: addr, lastAddressPos: { lat, lng } }
               : c
           )
         );

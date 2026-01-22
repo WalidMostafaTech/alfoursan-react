@@ -21,13 +21,32 @@ import {
 } from "../../store/modalsSlice";
 import { PiPhoneCall, PiPolygon } from "react-icons/pi";
 import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 
 const CarPopup = ({ car, showActions = true }) => {
   const { status, color } = getCarStatus(car);
+  const [now, setNow] = useState(() => Date.now());
+
+  // ✅ countdown بسيط لتحديث العنوان (فقط داخل الـ Popup المفتوح)
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const addressCountdown = useMemo(() => {
+    const minMs = typeof car?.addressMinIntervalMs === "number" ? car.addressMinIntervalMs : null;
+    if (minMs == null) return null; // لا نظهره إلا لو الصفحة مفعّلة الـ throttle
+    const last = typeof car?.lastGeocodeAtMs === "number" ? car.lastGeocodeAtMs : 0;
+    const remainingMs = Math.max(0, minMs - (now - last));
+    const totalSec = Math.ceil(remainingMs / 1000);
+    const mm = String(Math.floor(totalSec / 60)).padStart(2, "0");
+    const ss = String(totalSec % 60).padStart(2, "0");
+    return { mm, ss };
+  }, [car?.addressMinIntervalMs, car?.lastGeocodeAtMs, now]);
 
   const isFlightMode = (() => {
+    return car?.status && car.status ==  "off";
 
-    return car.status ==  "off";
     const v = car?.voltageLevel;
     if (v == null || v === "") return true;
     const n = typeof v === "number" ? v : Number.parseFloat(String(v));
@@ -116,7 +135,12 @@ const CarPopup = ({ car, showActions = true }) => {
       >
         <FaMapMarkerAlt className="text-mainColor text-base mt-0.5" />
         <p className="text-gray-600 font-medium flex-1 text-xs line-clamp-2">
-          {car.address}
+          {car.address}{" "}
+          {/* {addressCountdown && (
+            <span className="text-[10px] text-gray-400 whitespace-nowrap">
+              (تحديث بعد {addressCountdown.mm}:{addressCountdown.ss})
+            </span>
+          )} */}
         </p>
       </a>
 

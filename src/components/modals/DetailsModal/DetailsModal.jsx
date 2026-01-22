@@ -111,7 +111,7 @@ const DetailsModal = () => {
                 <Alerts deviceSettings={deviceSettings} refetch={refetch} />
               )}
 
-              {activeTab === "maintenance" && <Maintenance deviceID={id} />}
+              {activeTab === "maintenance" && <Maintenance deviceID={id} deviceSettings={deviceSettings} />}
               {activeTab === "specificTask" && (
                 <SpecificTask
                   deviceSettings={deviceSettings}

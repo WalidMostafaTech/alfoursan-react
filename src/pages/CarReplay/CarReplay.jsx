@@ -10,6 +10,7 @@ import { GiPathDistance } from "react-icons/gi";
 import { IoMdSpeedometer } from "react-icons/io";
 import { IoCalendarSharp } from "react-icons/io5";
 import { IoMdLocate } from "react-icons/io";
+import { FaCrosshairs } from "react-icons/fa";
 
 import ReplayControls from "./ReplayControls/ReplayControls";
 import ReplayFilter from "./ReplayFilter/ReplayFilter";
@@ -168,8 +169,8 @@ const getBoundsDiag = (points) => {
   let maxLng = -Infinity;
 
   for (let i = 0; i < points.length; i++) {
-    const lat = Number(points[i]?.latitude);
-    const lng = Number(points[i]?.longitude);
+    const lat = Number(points[i]?.latitude ?? points[i]?.lat);
+    const lng = Number(points[i]?.longitude ?? points[i]?.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
     if (lat < minLat) minLat = lat;
     if (lat > maxLat) maxLat = lat;
@@ -196,6 +197,107 @@ const haversineMeters = (lat1, lng1, lat2, lng2) => {
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+};
+
+const bearingDeg = (lat1, lng1, lat2, lng2) => {
+  const toRad = (x) => (x * Math.PI) / 180;
+  const toDeg = (x) => (x * 180) / Math.PI;
+  const φ1 = toRad(lat1);
+  const φ2 = toRad(lat2);
+  const Δλ = toRad(lng2 - lng1);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x =
+    Math.cos(φ1) * Math.sin(φ2) -
+    Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  const θ = Math.atan2(y, x);
+  return (toDeg(θ) + 360) % 360;
+};
+
+const lerpAngle = (a, b, t) => {
+  const diff = ((b - a + 540) % 360) - 180;
+  return a + diff * t;
+};
+
+// RDP simplification but return "keep mask" to preserve original point objects
+const simplifyKeepMaskRdp = (pathLatLng, epsilon) => {
+  if (!pathLatLng || pathLatLng.length <= 2) {
+    const keep = new Uint8Array(pathLatLng?.length || 0);
+    if (keep.length) {
+      keep[0] = 1;
+      keep[keep.length - 1] = 1;
+    }
+    return keep;
+  }
+
+  const epsSq = epsilon * epsilon;
+  const keep = new Uint8Array(pathLatLng.length);
+  keep[0] = 1;
+  keep[pathLatLng.length - 1] = 1;
+
+  const stack = [[0, pathLatLng.length - 1]];
+  while (stack.length) {
+    const [start, end] = stack.pop();
+    let maxDistSq = 0;
+    let idx = -1;
+    const a = pathLatLng[start];
+    const b = pathLatLng[end];
+
+    for (let i = start + 1; i < end; i++) {
+      const dSq = pointToSegmentDistanceSq(pathLatLng[i], a, b);
+      if (dSq > maxDistSq) {
+        maxDistSq = dSq;
+        idx = i;
+      }
+    }
+
+    if (idx !== -1 && maxDistSq > epsSq) {
+      keep[idx] = 1;
+      stack.push([start, idx], [idx, end]);
+    }
+  }
+
+  return keep;
+};
+
+const countKept = (keepMask) => {
+  let n = 0;
+  for (let i = 0; i < keepMask.length; i++) if (keepMask[i]) n++;
+  return n;
+};
+
+const simplifyPointsToMax = (points, maxPoints) => {
+  if (!points || points.length <= maxPoints) return points || [];
+  const path = points.map((p) => ({ lat: Number(p.latitude), lng: Number(p.longitude) }));
+  const diag = getBoundsDiag(path);
+  if (!Number.isFinite(diag) || diag <= 0) return points;
+
+  let low = 0;
+  let high = diag;
+  let bestMask = simplifyKeepMaskRdp(path, 0);
+  let bestCount = countKept(bestMask);
+
+  // binary search epsilon to reach <= maxPoints
+  for (let i = 0; i < 12; i++) {
+    const mid = (low + high) / 2;
+    const mask = simplifyKeepMaskRdp(path, mid);
+    const c = countKept(mask);
+    if (c > maxPoints) {
+      low = mid;
+    } else {
+      bestMask = mask;
+      bestCount = c;
+      high = mid;
+    }
+  }
+
+  // fallback safety
+  if (bestCount <= 2) return [points[0], points[points.length - 1]].filter(Boolean);
+
+  const out = [];
+  for (let i = 0; i < points.length; i++) {
+    if (bestMask[i]) out.push(points[i]);
+  }
+  return out;
 };
 
 const simplifySegmentsToMaxPoints = (rawSegments, points, maxTotalPoints) => {
@@ -279,6 +381,7 @@ const CarReplay = () => {
     const MAX_SPEED_KMH = 250; // سقف منطقي للفصل بين النقاط
     const MIN_DT_SEC = 5; // أقل زمن نعتمد عليه لحساب سرعة بين نقطتين
     const MAX_JUMP_METERS_NO_TIME = 10000; // لو مفيش وقت: تجاهل قفزة > 10km
+    const MAX_JUMP_METERS = 20000; // حماية إضافية لو timestamps كبيرة لكن القفزة غير منطقية
 
     const out = [];
     let prev = null;
@@ -319,6 +422,8 @@ const CarReplay = () => {
 
       // Spike detection
       if (dtSec != null && dtSec > 0) {
+        // قفزة ضخمة بغض النظر عن الزمن
+        if (distM > MAX_JUMP_METERS) continue;
         if (dtSec < MIN_DT_SEC && distM > 1000) {
           // قفزة كبيرة في زمن صغير جدًا
           continue;
@@ -343,39 +448,106 @@ const CarReplay = () => {
     googleMapsApiKey: "AIzaSyBuFc-F9K_-1QkQnLoTIecBlNz6LfCS1wg",
   });
 
+  const MAX_REPLAY_POINTS = 9000;
+  // ✅ نقطة واحدة "مصدر" للحركة + للرسم (لتجنب اختلاف المسار عند تبسيط polyline فقط)
+  const replayPoints = useMemo(
+    () => simplifyPointsToMax(points, MAX_REPLAY_POINTS),
+    [points]
+  );
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const intervalRef = useRef(null);
+  const [followCar, setFollowCar] = useState(true);
   const defaultPosition = { lat: 23.8859, lng: 45.0792 };
 
   const [mapRef, setMapRef] = useState(null);
+  const mapRefRef = useRef(null);
   const [initialCenter, setInitialCenter] = useState(defaultPosition);
   const lastPanToRef = useRef(0);
+  const lastUserMapInteractionAtRef = useRef(0);
 
-  // ✅ حركة ناعمة بين النقاط
+  // ✅ حركة ناعمة (time-based) بين النقاط
   const [renderPosition, setRenderPosition] = useState(null);
   const [renderDirection, setRenderDirection] = useState(0);
-  const animRef = useRef({ raf: 0, start: null, end: null, t0: 0, dur: 0 });
+  const rafRef = useRef(0);
+  const lastFrameMsRef = useRef(0);
+  const indexRef = useRef(0);
+  const progressRef = useRef(0);
+  const speedRef = useRef(speed);
+  const followRef = useRef(followCar);
+  const renderDirRef = useRef(0);
+
+  useEffect(() => {
+    mapRefRef.current = mapRef;
+  }, [mapRef]);
+
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
+
+  useEffect(() => {
+    followRef.current = followCar;
+  }, [followCar]);
+
+  const segmentDurationsMs = useMemo(() => {
+    if (!replayPoints || replayPoints.length < 2) return [];
+
+    const parseMs = (v) => {
+      const ms = Date.parse(v);
+      return Number.isFinite(ms) ? ms : null;
+    };
+
+    const out = new Array(replayPoints.length - 1);
+    for (let i = 0; i < replayPoints.length - 1; i++) {
+      const a = replayPoints[i];
+      const b = replayPoints[i + 1];
+      const distM = haversineMeters(a.latitude, a.longitude, b.latitude, b.longitude);
+
+      const t0 = a?.date ? parseMs(a.date) : null;
+      const t1 = b?.date ? parseMs(b.date) : null;
+      const dtDevice = t0 != null && t1 != null ? t1 - t0 : null;
+
+      // ✅ مدة متوقعة للحركة من المسافة والسرعة (أكثر واقعية عند وجود gaps كبيرة في البيانات)
+      const vKmh = Math.max(Number(a?.speed) || Number(b?.speed) || 20, 5);
+      const vMs = vKmh / 3.6;
+      const travelMs = (distM / Math.max(vMs, 0.1)) * 1000;
+
+      let dt = travelMs;
+      if (dtDevice != null && Number.isFinite(dtDevice) && dtDevice > 0) {
+        // لو dt من الجهاز منطقي وقريب من مدة الحركة، استخدمه
+        // لكن لو dt كبير جدًا مقارنة بالحركة (مثلاً الجهاز كان ساكت/فجوة)، استخدم مدة الحركة بدل ما العربية “تزحف” أو “تقفز”
+        const GAP_FACTOR = 4; // إذا الزمن أكبر من 4x زمن الحركة نعتبره gap
+        dt = dtDevice > travelMs * GAP_FACTOR ? travelMs : dtDevice;
+      }
+
+      // ✅ clamp خفيف فقط لتجنب 0ms/قيم غير منطقية، بدون سقف صغير يعمل "teleport"
+      out[i] = Math.max(120, Math.min(10 * 60 * 1000, dt));
+    }
+    return out;
+  }, [replayPoints]);
 
   // تحديد نقطة البداية أول مرة فقط
   useEffect(() => {
-    if (points.length > 0) {
-      setInitialCenter({ lat: points[0].latitude, lng: points[0].longitude });
+    if (replayPoints.length > 0) {
+      setInitialCenter({
+        lat: replayPoints[0].latitude,
+        lng: replayPoints[0].longitude,
+      });
     }
-  }, [points]);
+  }, [replayPoints]);
 
   // ✅ لو تم تنظيف نقاط كثيرة، حافظ على index داخل الحدود
   useEffect(() => {
-    if (points.length === 0) {
+    if (replayPoints.length === 0) {
       if (currentIndex !== 0) setCurrentIndex(0);
       return;
     }
-    if (currentIndex > points.length - 1) setCurrentIndex(0);
+    if (currentIndex > replayPoints.length - 1) setCurrentIndex(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points.length]);
+  }, [replayPoints.length]);
 
-  const currentPoint = points[currentIndex] || {
+  const currentPoint = replayPoints[currentIndex] || {
     latitude: 23.8859,
     longitude: 45.0792,
     direction: 0,
@@ -383,133 +555,181 @@ const CarReplay = () => {
     distance: 0,
   };
 
-  const nextPoint = points[currentIndex + 1] || null;
-  const targetPosition = {
-    lat: currentPoint.latitude,
-    lng: currentPoint.longitude,
-  };
-  const targetDirection = Number(currentPoint.direction) || 0;
-
-  // ✅ حركة ناعمة بين النقاط (interpolation)
+  // init render state when data changes
   useEffect(() => {
-    if (points.length === 0) {
+    if (replayPoints.length === 0) {
       setRenderPosition(null);
       return;
     }
+    const idx = 0;
+    indexRef.current = idx;
+    progressRef.current = 0;
+    setCurrentIndex(idx);
+    setRenderPosition({ lat: replayPoints[0].latitude, lng: replayPoints[0].longitude });
 
-    if (!renderPosition) {
-      setRenderPosition(targetPosition);
-      setRenderDirection(targetDirection);
-      return;
-    }
+    const b = replayPoints[1]
+      ? bearingDeg(
+          replayPoints[0].latitude,
+          replayPoints[0].longitude,
+          replayPoints[1].latitude,
+          replayPoints[1].longitude
+        )
+      : 0;
+    renderDirRef.current = b;
+    setRenderDirection(b);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replayPoints.length]);
 
-    const start = renderPosition;
-    const end = targetPosition;
-    const startDir = renderDirection;
-    const endDir = targetDirection;
+  // ✅ محرك التشغيل (time-based) باستخدام requestAnimationFrame
+  useEffect(() => {
+    if (!isPlaying) return;
+    if (replayPoints.length < 2) return;
 
-    // لو نفس النقطة: لا حاجة لـ animation
-    if (start.lat === end.lat && start.lng === end.lng && startDir === endDir) {
-      return;
-    }
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    lastFrameMsRef.current = performance.now();
 
-    // حساب المسافة والمدة
-    const distM = haversineMeters(start.lat, start.lng, end.lat, end.lng);
-    // مدة الـ animation حسب المسافة (clamp بين 200ms و 800ms)
-    const dur = Math.max(200, Math.min(800, distM * 2));
+    const step = (now) => {
+      // ✅ حماية: لو التبويب كان متوقف/lag، لا تسمح بقفزات كبيرة في فريم واحد
+      const dt = Math.min(50, now - lastFrameMsRef.current);
+      lastFrameMsRef.current = now;
 
-    if (animRef.current.raf) cancelAnimationFrame(animRef.current.raf);
+      let idx = indexRef.current;
+      let prog = progressRef.current;
 
-    animRef.current = {
-      raf: 0,
-      start,
-      end,
-      startDir,
-      endDir,
-      t0: performance.now(),
-      dur,
-    };
+      // stop at end
+      if (idx >= replayPoints.length - 1) {
+        setIsPlaying(false);
+        return;
+      }
 
-    const lerp = (a, b, t) => a + (b - a) * t;
-    const lerpAngle = (a, b, t) => {
-      const diff = ((b - a + 540) % 360) - 180;
-      return a + diff * t;
-    };
+      const baseDur = segmentDurationsMs[idx] || 500;
+      const effDur = Math.max(16, baseDur / Math.max(1, speedRef.current));
+      prog += dt / effDur;
 
-    const tick = (now) => {
-      const { start, end, startDir, endDir, t0, dur } = animRef.current;
-      const t = Math.min(1, (now - t0) / dur);
+      let idxChanged = false;
+      let advanced = 0;
+      while (prog >= 1 && idx < replayPoints.length - 1) {
+        prog -= 1;
+        idx += 1;
+        idxChanged = true;
+        advanced += 1;
+        // ✅ حماية إضافية: لا تتخطى عدد كبير من القطع في فريم واحد (يسبب خلل دوران/قفزات)
+        if (advanced > 20) {
+          prog = 0;
+          break;
+        }
+        if (idx >= replayPoints.length - 1) break;
+      }
 
-      const nextPos = {
-        lat: lerp(start.lat, end.lat, t),
-        lng: lerp(start.lng, end.lng, t),
+      indexRef.current = idx;
+      progressRef.current = prog;
+
+      if (idx >= replayPoints.length - 1) {
+        setCurrentIndex(replayPoints.length - 1);
+        setRenderPosition({
+          lat: replayPoints[replayPoints.length - 1].latitude,
+          lng: replayPoints[replayPoints.length - 1].longitude,
+        });
+        setIsPlaying(false);
+        return;
+      }
+
+      if (idxChanged) setCurrentIndex(idx);
+
+      const a = replayPoints[idx];
+      const b = replayPoints[idx + 1];
+      const t = Math.max(0, Math.min(1, prog));
+      const pos = {
+        lat: a.latitude + (b.latitude - a.latitude) * t,
+        lng: a.longitude + (b.longitude - a.longitude) * t,
       };
-      const nextDir = lerpAngle(startDir, endDir, t);
 
-      setRenderPosition(nextPos);
+      const targetBear = bearingDeg(a.latitude, a.longitude, b.latitude, b.longitude);
+      const nextDir = lerpAngle(renderDirRef.current, targetBear, 0.2);
+      renderDirRef.current = nextDir;
+
+      setRenderPosition(pos);
       setRenderDirection(nextDir);
 
-      if (t < 1) {
-        animRef.current.raf = requestAnimationFrame(tick);
-      } else {
-        animRef.current.raf = 0;
+      // follow logic
+      const map = mapRefRef.current;
+      if (map) {
+        const bounds = map.getBounds?.();
+        if (bounds) {
+          const carLatLng = new window.google.maps.LatLng(pos.lat, pos.lng);
+          if (!bounds.contains(carLatLng)) {
+            const tNow = Date.now();
+            const recentlyInteracted = tNow - lastUserMapInteractionAtRef.current < 1500;
+
+            // ✅ شرطك: لو العربية خرجت من الشاشة -> لازم نرجّع التمركز عليها
+            // نحترم تفاعل المستخدم لفترة قصيرة، وبعدها نرجع التمركز تلقائيًا.
+            if (!recentlyInteracted || followRef.current) {
+              if (tNow - lastPanToRef.current > 200) {
+                lastPanToRef.current = tNow;
+                map.panTo(carLatLng);
+              }
+              if (!followRef.current) {
+                followRef.current = true;
+                setFollowCar(true);
+              }
+            }
+          }
+        }
       }
+
+      rafRef.current = requestAnimationFrame(step);
     };
 
-    animRef.current.raf = requestAnimationFrame(tick);
-
+    rafRef.current = requestAnimationFrame(step);
     return () => {
-      if (animRef.current.raf) {
-        cancelAnimationFrame(animRef.current.raf);
-        animRef.current.raf = 0;
-      }
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, points.length]);
-
-  useEffect(() => {
-    if (!mapRef || !renderPosition) return;
-
-    const carLatLng = new window.google.maps.LatLng(
-      renderPosition.lat,
-      renderPosition.lng
-    );
-
-    const bounds = mapRef.getBounds();
-
-    if (!bounds) return;
-
-    if (!bounds.contains(carLatLng)) {
-      // تهدئة panTo عشان السلاسة (خاصة مع سرعات تشغيل عالية)
-      const now = Date.now();
-      if (now - lastPanToRef.current > 250) {
-        lastPanToRef.current = now;
-        mapRef.panTo(carLatLng);
-      }
-    }
-  }, [mapRef, renderPosition]);
-
-  useEffect(() => {
-    if (isPlaying && points.length > 0) {
-      intervalRef.current = setInterval(() => {
-        setCurrentIndex((prev) => {
-          if (prev < points.length - 1) return prev + 1;
-          clearInterval(intervalRef.current);
-          setIsPlaying(false);
-          return prev;
-        });
-      }, 1000 / speed);
-    } else {
-      clearInterval(intervalRef.current);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [isPlaying, speed, points]);
+  }, [isPlaying, replayPoints, segmentDurationsMs]);
 
   const handleTogglePlay = () => {
-    if (points.length > 0 && currentIndex === points.length - 1) {
+    if (replayPoints.length > 0 && currentIndex === replayPoints.length - 1) {
+      indexRef.current = 0;
+      progressRef.current = 0;
       setCurrentIndex(0);
+      setRenderPosition({ lat: replayPoints[0].latitude, lng: replayPoints[0].longitude });
     }
     setIsPlaying((prev) => !prev);
+  };
+
+  const handleIndexChange = (idx) => {
+    if (!replayPoints.length) return;
+    const nextIdx = Math.max(0, Math.min(replayPoints.length - 1, idx));
+    indexRef.current = nextIdx;
+    progressRef.current = 0;
+    setCurrentIndex(nextIdx);
+    setRenderPosition({
+      lat: replayPoints[nextIdx].latitude,
+      lng: replayPoints[nextIdx].longitude,
+    });
+
+    const next = replayPoints[nextIdx + 1] || replayPoints[nextIdx];
+    const b = bearingDeg(
+      replayPoints[nextIdx].latitude,
+      replayPoints[nextIdx].longitude,
+      next.latitude,
+      next.longitude
+    );
+    renderDirRef.current = b;
+    setRenderDirection(b);
+  };
+
+  const handleRecenter = () => {
+    const map = mapRefRef.current;
+    if (!map || !renderPosition) return;
+    setFollowCar(true);
+    const carLatLng = new window.google.maps.LatLng(renderPosition.lat, renderPosition.lng);
+    map.panTo(carLatLng);
+  };
+
+  const handleUserMapInteraction = () => {
+    lastUserMapInteractionAtRef.current = Date.now();
+    setFollowCar(false);
   };
 
   const getReplayCarColor = useCallback((speedValue) => {
@@ -517,25 +737,23 @@ const CarReplay = () => {
     return s > 1 ? "#22c55e" : "#3b82f6";
   }, []);
 
-  const MAX_POLYLINE_POINTS = 5000;
   const MAX_PARKING_MARKERS = 200;
 
-  // ✅ Polylines حسب اللون + تبسيط ذكي (RDP) بدل downsample الساذج
+  // ✅ Polylines حسب اللون (بنفس نقاط التشغيل) لتفادي اختلاف المسار
   const polylineSegments = useMemo(() => {
-    if (points.length === 0) return { green: [], yellow: [], red: [] };
-    const raw = buildPolylineSegmentsByColor(points, speedLimits);
-    return simplifySegmentsToMaxPoints(raw, points, MAX_POLYLINE_POINTS);
-  }, [points, speedLimits]);
+    if (replayPoints.length === 0) return { green: [], yellow: [], red: [] };
+    return buildPolylineSegmentsByColor(replayPoints, speedLimits);
+  }, [replayPoints, speedLimits]);
 
   // ✅ تحسين: نقاط الوقوف بدون نسخ كل points + مع حد أقصى
   const parkingMarkers = useMemo(() => {
-    if (points.length === 0) return [];
+    if (replayPoints.length === 0) return [];
     const markers = [];
     let inStop = false;
     let stopStartIdx = -1;
 
-    for (let i = 1; i < points.length - 1; i++) {
-      const p = points[i];
+    for (let i = 1; i < replayPoints.length - 1; i++) {
+      const p = replayPoints[i];
       const isStop = Number(p.speed) === 0;
       if (isStop && !inStop) {
         inStop = true;
@@ -543,7 +761,11 @@ const CarReplay = () => {
       } else if (!isStop && inStop) {
         // نهاية الوقوف: خذ نقطة وسطية لتمثيل الوقوف
         const mid = Math.floor((stopStartIdx + i - 1) / 2);
-        markers.push({ index: mid, latitude: points[mid].latitude, longitude: points[mid].longitude });
+        markers.push({
+          index: mid,
+          latitude: replayPoints[mid].latitude,
+          longitude: replayPoints[mid].longitude,
+        });
         inStop = false;
         stopStartIdx = -1;
         if (markers.length >= MAX_PARKING_MARKERS) break;
@@ -551,20 +773,20 @@ const CarReplay = () => {
     }
 
     return markers;
-  }, [points]);
+  }, [replayPoints]);
 
   // ✅ تحسين: حفظ نقاط البداية والنهاية
   const startEndMarkers = useMemo(() => {
-    if (points.length === 0) return null;
+    if (replayPoints.length === 0) return null;
 
     return {
-      start: { lat: points[0].latitude, lng: points[0].longitude },
+      start: { lat: replayPoints[0].latitude, lng: replayPoints[0].longitude },
       end: {
-        lat: points[points.length - 1].latitude,
-        lng: points[points.length - 1].longitude,
+        lat: replayPoints[replayPoints.length - 1].latitude,
+        lng: replayPoints[replayPoints.length - 1].longitude,
       },
     };
-  }, [points]);
+  }, [replayPoints]);
 
   if (!isLoaded) return <LoadingPage />;
 
@@ -598,17 +820,21 @@ const CarReplay = () => {
     return formattedDate;
   };
 
+  const speedKmh = Math.max(0, Math.round(Number(currentPoint?.speed) || 0));
+
   return (
     <div className="relative">
       <GoogleMap
         mapContainerStyle={containerStyle}
         onLoad={(map) => setMapRef(map)}
+        onDragStart={handleUserMapInteraction}
+        onZoomChanged={handleUserMapInteraction}
         center={initialCenter}
-        zoom={points.length > 0 ? 16 : 6}
+        zoom={replayPoints.length > 0 ? 16 : 6}
         mapTypeId={mapType}
       >
         {/* ✅ المسار الكامل - محسّن */}
-        {points.length > 0 && (
+        {replayPoints.length > 0 && (
           <>
             {/* رسم المسارات الخضراء */}
             {polylineSegments.green.map((path, index) => (
@@ -719,7 +945,7 @@ const CarReplay = () => {
         )}
 
         {/* العربية */}
-        {points.length > 0 && renderPosition && (
+        {replayPoints.length > 0 && renderPosition && (
           <Marker
             position={renderPosition}
             icon={{
@@ -752,7 +978,7 @@ const CarReplay = () => {
                     </p>
                     <p className="flex items-center gap-1 font-medium">
                       <GiPathDistance size={16} />
-                      {currentPoint.distance.toFixed(6)} km
+                      {(Number(currentPoint.distance) || 0).toFixed(6)} km
                     </p>
                     <p className="flex items-center gap-1 font-medium">
                       <IoMdLocate size={16} />
@@ -777,13 +1003,39 @@ const CarReplay = () => {
 
       <div className="absolute top-[15%] right-3 z-20 space-y-2 flex flex-col items-center">
         <MapTypes onChange={setMapType} />
+        <button
+          type="button"
+          onClick={handleRecenter}
+          className={`btn btn-sm btn-circle shadow bg-white border border-gray-200 hover:bg-gray-50 ${
+            followCar ? "text-mainColor" : "text-gray-600"
+          }`}
+          title="الانتقال لمكان السيارة"
+        >
+          <FaCrosshairs />
+        </button>
       </div>
+
+      {/* ✅ مؤشر السرعة */}
+      {replayPoints.length > 0 && (
+        <div className="absolute top-4 left-4 z-20">
+          <div className="bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2">
+            <IoMdSpeedometer className="text-mainColor" size={18} />
+            <span className="font-bold text-gray-800 tabular-nums">
+              {speedKmh}
+            </span>
+            <span className="text-xs text-gray-500">km/h</span>
+            <span className="text-xs text-gray-400 border-l ps-2 ms-1">
+              x{speed}
+            </span>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="absolute w-full max-w-4xl bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-full px-8 py-6 flex items-center justify-center">
           <Loader />
         </div>
-      ) : points.length === 0 ? (
+      ) : replayPoints.length === 0 ? (
         <div className="absolute w-full max-w-4xl bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-full px-8 py-6 flex items-center justify-center">
           <h2 className="text-lg md:text-xl font-semibold text-gray-700">
             لا يوجد بيانات لعرضها في هذه الفترة
@@ -794,8 +1046,8 @@ const CarReplay = () => {
           isPlaying={isPlaying}
           onTogglePlay={handleTogglePlay}
           currentIndex={currentIndex}
-          onIndexChange={setCurrentIndex}
-          pointsLength={points.length}
+          onIndexChange={handleIndexChange}
+          pointsLength={replayPoints.length}
           speed={speed}
           onSpeedChange={setSpeed}
         />

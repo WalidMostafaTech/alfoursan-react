@@ -11,7 +11,7 @@ import Loader from "../../../Loading/Loader";
 import MainInput from "../../../form/MainInput";
 import FormBtn from "../../../form/FormBtn";
 
-const Maintenance = ({ deviceID }) => {
+const Maintenance = ({ deviceID, deviceSettings }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     type: "mileage",
@@ -88,20 +88,26 @@ const Maintenance = ({ deviceID }) => {
 
   return (
     <article>
-      <h2 className="font-semibold tracking-wide mb-4">
-        الصيانة بالأميال{" "}
-        <span className="bg-sky-600 text-white py-1 px-2 rounded text-sm">
-          {5370.11} km
-        </span>
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold tracking-wide">
+          الصيانة بالأميال{" "}
+          <span className="bg-sky-600 text-white py-1 px-2 rounded text-sm">
+            {Number(deviceSettings?.device?.km_total).toFixed(2)} km
+          </span>
+        </h2>
 
-      {/* ✅ زر فتح الفورم */}
-      <button
-        className="btn btn-primary btn-sm my-2"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? "إغلاق النموذج" : "إضافة جديد"}
-      </button>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`btn btn-sm ${
+            isOpen
+              ? "btn-ghost text-gray-600"
+              : "btn-primary"
+          }`}
+        >
+          {isOpen ? "إلغاء" : "+ إضافة صيانة"}
+        </button>
+      </div>
 
       {/* ✅ Accordion من DaisyUI */}
       <div

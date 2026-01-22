@@ -23,7 +23,7 @@ const ReplayControls = ({
       <input
         type="range"
         min="0"
-        max={pointsLength - 1}
+        max={Math.max(0, pointsLength - 1)}
         value={currentIndex}
         onChange={(e) => onIndexChange(Number(e.target.value))}
         className="w-full accent-mainColor"
@@ -39,6 +39,9 @@ const ReplayControls = ({
         <option value={2}>x2</option>
         <option value={5}>x5</option>
         <option value={10}>x10</option>
+        <option value={20}>x16</option>
+        <option value={40}>x20</option>
+        <option value={80}>x24</option>
       </select>
     </div>
   );

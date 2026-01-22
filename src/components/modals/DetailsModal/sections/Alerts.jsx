@@ -14,6 +14,7 @@ const Alerts = ({ deviceSettings, refetch }) => {
     // نحفظ القيم الحالية في الـ state عند تحميل البيانات
     setFormData({
       alert_speed_limit: alerts.alert_speed_limit || 0,
+      alert_speed_limit_value: alerts.alert_speed_limit_value || "",
       alert_offline: alerts.alert_offline || 0,
       alert_restricted_driving: alerts.alert_restricted_driving || 0,
       alert_low_voltage: alerts.alert_low_voltage || 0,
@@ -36,7 +37,7 @@ const Alerts = ({ deviceSettings, refetch }) => {
     { label: "تنبيه القيادة بسبب التعب", key: "alert_fatigue_driving" },
     { label: "ACC OFF", key: "alert_acc_off" },
     { label: "ACC ON", key: "alert_acc_on" },
-    { label: "حكم غير متصل بالإنترنت", key: "alert_offline_judgment" },
+    // { label: "حكم غير متصل بالإنترنت", key: "alert_offline_judgment" },
   ];
 
   // ✅ Mutation للتحديث
@@ -59,6 +60,14 @@ const Alerts = ({ deviceSettings, refetch }) => {
     }));
   };
 
+  // ✅ لما المستخدم يغيّر قيمة input
+  const handleInputChange = (key, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   // ✅ عند الضغط على زر التحديث
   const handleSubmit = () => {
     mutate();
@@ -69,17 +78,31 @@ const Alerts = ({ deviceSettings, refetch }) => {
       {/* ✅ السويتشات */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-4">
         {alertsList.map((item, index) => (
-          <label key={index} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              className="toggle toggle-primary toggle-sm"
-              checked={formData[item.key] === 1}
-              onChange={() => handleToggle(item.key)}
-            />
-            <span className="text-gray-700 text-xs font-medium">
-              {item.label}
-            </span>
-          </label>
+          <div key={index} className="flex flex-col gap-1">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={formData[item.key] === 1}
+                onChange={() => handleToggle(item.key)}
+              />
+              <span className="text-gray-700 text-xs font-medium">
+                {item.label}
+              </span>
+            </label>
+
+            {/* ✅ input الحد الأقصى للسرعة يظهر فقط عند تفعيل alert_speed_limit */}
+            {item.key === "alert_speed_limit" && formData.alert_speed_limit === 1 && (
+              <input
+                type="number"
+                min="0"
+                placeholder="الحد الأقصى (كم/س)"
+                className="input input-bordered input-sm w-full mt-1 text-xs"
+                value={formData.alert_speed_limit_value || ""}
+                onChange={(e) => handleInputChange("alert_speed_limit_value", e.target.value)}
+              />
+            )}
+          </div>
         ))}
       </div>
 

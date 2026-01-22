@@ -1,0 +1,196 @@
+
+  public function replay(Request $request)
+  {
+    // return $request->all();
+    $serialNumber = $request->serial_number;
+//    try {
+//      $serialNumber = decrypt($serialNumber);
+//    }catch (Exception $e){
+//      abort(403 );
+//    }
+
+
+//    abort_if(!$serialNumber, 403);
+
+//    $device = Device::where('serial_number', $serialNumber)->first();
+//    $query = DeviceLog::where('imei', $serialNumber);
+
+    $query  = DB::connection('mongodb')->table('gpslogs');
+
+    $device= Device::whereSerialNumber($serialNumber)->first();
+    /**
+     * ✅ مهم:
+     * - date = وقت الجهاز (GPS timestamp)
+     * - createdAt = وقت الإدخال في MongoDB (قد يختلف عن وقت الجهاز)
+     *
+     * لذلك: الفلترة والترتيب لازم تكون على نفس الحقل (date) لتجنب القفزات والـ out-of-order.
+     */
+    $from = $request->filled('from_time')
+      ? Carbon::parse($request->from_time)->startOfDay()
+      : now()->subDays(15)->startOfDay();
+
+    $to = $request->filled('to_time')
+      ? Carbon::parse($request->input('to_time'))->endOfDay()
+      : now()->endOfDay();
+
+    $query->where('date', '>=', $from)
+          ->where('date', '<=', $to);
+
+    $retData = collect();
+
+    $query->where('type' , 'gps') ;
+    $query->whereNotNull('latitude' ) ;
+    $query->whereNotNull('speed' ) ;
+    $query->whereNotNull('longitude' )
+      ->where('imei', $serialNumber);
+
+    $logs = $query->orderBy('date' ,'asc')
+      ->select(['latitude', 'longitude','speed', 'direction', 'id', 'date'])
+
+
+
+//      ->chunk(1000, function ($logs)  use (&$retData) {
+//        $retData = $retData->merge($logs);
+//        })
+
+     //   ->limit(9000)
+
+//    ->get()
+//    ->dd()
+    ;
+
+
+    $retData = [];
+    $lastAddedDate = null; // لتتبع آخر تاريخ تم إضافته (حماية من out-of-order)
+
+    // Stop detection (speed=0 lasting >= 5 minutes)
+    $inStop = false;
+    $stopStartAt = null;   // Carbon
+    $stopLastLog = null;   // آخر log بسرعة 0 داخل مقطع التوقف
+    $lastSeenAt = null;    // آخر نقطة تمت قراءتها (لإنهاء التوقف في نهاية البيانات)
+
+    $distance_m = 0;
+    $distance_km = 0;
+    $oldL = null;
+
+    // ✅ تقليل نقاط السرعة البطيئة بدل حذفها بالكامل (لتجنب فجوات كبيرة)
+    // مثال: عند السرعة بين 0 و 3 كم/س نحتفظ بنقطة كل 10 ثواني تقريبًا
+    $lastSlowKeptAt = null; // Carbon
+
+    foreach ($logs->cursor() as $log) {
+
+      // التحقق من الترتيب المنطقي للنقاط (التاريخ يجب أن يكون >= آخر تاريخ)
+      $logDate = Carbon::parse($log->date);
+      if ($lastAddedDate && $logDate->lt($lastAddedDate)) {
+        continue;
+      }
+      $lastSeenAt = $logDate;
+
+      $speed = (float)($log->speed ?? 0);
+
+      // 1) مقطع توقف: نقاط speed=0 متتالية (لا نضيفها الآن)
+      if ($speed === 0.0) {
+        if (!$inStop) {
+          $inStop = true;
+          $stopStartAt = $logDate;
+          $stopLastLog = $log;
+        } else {
+          $stopLastLog = $log;
+        }
+        continue;
+      }
+
+      // 2) انتهى التوقف (أول نقطة بعد 0) => إذا مدة السكون >= 5 دقائق أضف stop point واحدة
+      if ($inStop && $stopStartAt && $stopLastLog) {
+        $stopMinutes = $logDate->diffInMinutes($stopStartAt);
+        if ($stopMinutes >= 5) {
+          $stopLastLog->timeDiff = $stopMinutes;
+          $stopLastLog->stop_point = true;
+
+          // (اختياري) ضع السرعة 0 للتأكيد
+          $stopLastLog->speed = 0;
+
+          // حساب مسافة حتى نقطة التوقف (نفس منطق باقي النقاط)
+          $newL = "{$stopLastLog->latitude},{$stopLastLog->longitude}";
+          if ($oldL) {
+            $distance_m += $this->distanceMetersFromStrings($oldL, $newL);
+            $distance_km += round($distance_m / 1000, 3);
+          }
+          $stopLastLog->distance = $distance_km;
+          $oldL = $newL;
+
+          $retData[] = $stopLastLog;
+          $lastAddedDate = Carbon::parse($stopLastLog->date);
+        }
+      }
+
+      // إعادة ضبط حالة التوقف
+      $inStop = false;
+      $stopStartAt = null;
+      $stopLastLog = null;
+
+      // 3) نقاط الحركة البطيئة جدًا: لا نحذفها بالكامل (تعمل فجوة/قفزة)
+      if ($speed > 0.0 && $speed < 3.0) {
+        if ($lastSlowKeptAt) {
+          $diffSec = $logDate->diffInSeconds($lastSlowKeptAt);
+          if ($diffSec < 10) {
+            continue;
+          }
+        }
+        $lastSlowKeptAt = $logDate;
+      } else {
+        $lastSlowKeptAt = null;
+      }
+
+      // 4) نقاط الحركة الطبيعية
+      $log->timeDiff = "-";
+      $log->stop_point = false;
+
+
+
+//      $start = Carbon::parse($old_recorde->start_time);
+//      $end = Carbon::parse($dataStore['date'] ?? $log->created_at);
+//
+
+      $newL = "$log->latitude,$log->longitude" ;
+      if ($oldL){
+        $distance_m += $this->distanceMetersFromStrings($oldL, $newL);
+        $distance_km += round($distance_m / 1000, 3);
+//        $running_time = $start->diffInSeconds($end);
+      }
+      $log->distance =$distance_km  ;
+      $oldL = "$log->latitude,$log->longitude" ;
+      $retData[] = $log;
+      $lastAddedDate = $logDate; // تحديث آخر تاريخ تم إضافته
+
+    }
+
+    // 5) لو انتهت البيانات ونحن داخل توقف: أضف stop point إن كانت مدة التوقف >= 5 دقائق
+    if ($inStop && $stopStartAt && $stopLastLog && $lastSeenAt) {
+      $stopMinutes = $lastSeenAt->diffInMinutes($stopStartAt);
+      if ($stopMinutes >= 5) {
+        $stopLastLog->timeDiff = $stopMinutes;
+        $stopLastLog->stop_point = true;
+        $stopLastLog->speed = 0;
+
+        $newL = "{$stopLastLog->latitude},{$stopLastLog->longitude}";
+        if ($oldL) {
+          $distance_m += $this->distanceMetersFromStrings($oldL, $newL);
+          $distance_km += round($distance_m / 1000, 3);
+        }
+        $stopLastLog->distance = $distance_km;
+        $retData[] = $stopLastLog;
+      }
+    }
+
+
+
+    return $this->success($retData, 'تمت معالجة النقاط بنجاح' ,meta:[
+    "id"=>$device->id,
+    "name"=>$device->name,
+    "carnum"=>$device->carnum,
+  ]);
+
+
+
+  }

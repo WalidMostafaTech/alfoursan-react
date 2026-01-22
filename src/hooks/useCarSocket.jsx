@@ -147,10 +147,19 @@ const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
 };
 
 /* ===== Hook ===== */
-const useCarSocket = (cars, setCars, isInit) => {
+// options:
+// - enabled: لتفعيل/إيقاف السوكت يدويًا (مثلاً لإعادة تشغيل دورية)
+// - resetKey: تغيير القيمة يجبر الـ hook يعمل disconnect ثم reconnect
+// - onStatusChange: callback لاستقبال حالة السوكت (للـ loaders/health UI)
+const useCarSocket = (cars, setCars, isInit, options = {}) => {
   const dispatch = useDispatch();
   const { notificationSound } = useSelector((state) => state.map);
   const { detailsModal } = useSelector((state) => state.modals);
+  const enabled = options?.enabled ?? true;
+  const resetKey = options?.resetKey ?? 0;
+  const onStatusChange = options?.onStatusChange;
+  const debug = options?.debug ?? false;
+  const tag = options?.tag ?? "CarSocket";
 
   const alarmAudioRef = useRef(null);
 
@@ -159,6 +168,7 @@ const useCarSocket = (cars, setCars, isInit) => {
   const wsRef = useRef(null);
   const subscribedImeisRef = useRef(new Set());
   const indexByImeiRef = useRef(new Map());
+  const onStatusRef = useRef(onStatusChange);
 
   useEffect(() => {
     notificationSoundRef.current = notificationSound;
@@ -168,7 +178,35 @@ const useCarSocket = (cars, setCars, isInit) => {
     detailsModalRef.current = detailsModal;
   }, [detailsModal]);
 
+  useEffect(() => {
+    onStatusRef.current = onStatusChange;
+  }, [onStatusChange]);
+
+  const emitStatus = (status, extra = {}) => {
+    try {
+      onStatusRef.current?.({ status, ...extra });
+    } catch {
+      // ignore
+    }
+  };
+
   const carsRef = useRef(cars);
+
+  const log = (...args) => {
+    if (!debug) return;
+    // eslint-disable-next-line no-console
+    console.log(`[${tag}]`, ...args);
+  };
+  const warn = (...args) => {
+    if (!debug) return;
+    // eslint-disable-next-line no-console
+    console.warn(`[${tag}]`, ...args);
+  };
+  const error = (...args) => {
+    // أخطاء السوكت مفيدة حتى لو debug=false
+    // eslint-disable-next-line no-console
+    console.error(`[${tag}]`, ...args);
+  };
 
   const parseTimeMs = (value) => {
     if (!value) return null;
@@ -179,11 +217,6 @@ const useCarSocket = (cars, setCars, isInit) => {
 
   useEffect(() => {
     carsRef.current = cars;
-    const next = new Map();
-    (cars || []).forEach((car, idx) => {
-      if (car?.serial_number) next.set(car.serial_number, idx);
-    });
-    indexByImeiRef.current = next;
   }, [cars]);
 
   useEffect(() => {
@@ -194,24 +227,73 @@ const useCarSocket = (cars, setCars, isInit) => {
   }, []);
 
   useEffect(() => {
+    // ✅ إيقاف السوكت يدويًا (مثلاً أثناء refresh كل 15 دقيقة)
+    if (!enabled) {
+      emitStatus("disabled");
+      const ws = wsRef.current;
+      if (ws) {
+        try {
+          ws.close();
+        } catch {
+          // ignore
+        } finally {
+          wsRef.current = null;
+          subscribedImeisRef.current = new Set();
+          indexByImeiRef.current = new Map();
+        }
+      }
+      return;
+    }
+
+    if (!isInit) return;
     if (!cars || cars.length === 0) return;
 
+    emitStatus("connecting");
+    log("connecting...", { resetKey });
     const ws = new WebSocket("wss://alfursantracking.com:2053");
     wsRef.current = ws;
     subscribedImeisRef.current = new Set();
+    indexByImeiRef.current = new Map();
 
     ws.onopen = () => {
-      carsRef.current.forEach((car) => {
-        const imei = car.serial_number;
+      emitStatus("open");
+      let subscribedCount = 0;
+      (carsRef.current || []).forEach((car, idx) => {
+        const imei = car?.serial_number;
         if (!imei) return;
+        // index map: يجهّز lookup سريع لتحديثات GPS
+        if (!indexByImeiRef.current.has(imei)) indexByImeiRef.current.set(imei, idx);
         if (subscribedImeisRef.current.has(imei)) return;
         subscribedImeisRef.current.add(imei);
         ws.send(JSON.stringify({ type: "subscribe", imei }));
+        subscribedCount += 1;
+        log("subscribe =>", imei);
       });
+      // ✅ "ready": تم فتح الاتصال وبعث الاشتراكات الحالية
+      emitStatus("ready", { subscribedCount });
+      log("ready", { subscribedCount });
+    };
+
+    ws.onerror = (e) => {
+      emitStatus("error");
+      error("socket error", e);
+    };
+
+    ws.onclose = (e) => {
+      emitStatus("closed");
+      warn("socket closed", { code: e?.code, reason: e?.reason });
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (e) {
+        error("failed to parse ws message", e, event?.data);
+        return;
+      }
+
+      log("<= message", data);
 
       /* ===== GPS ===== */
       // if (data.type === "gps" && data.data?.imei) {
@@ -236,37 +318,67 @@ const useCarSocket = (cars, setCars, isInit) => {
       //   }
       // }
 
-      if (data.type === "gps" && data.data?.imei) {
-        const gps = data.data.gps;
-        if (gps?.longitude && gps?.latitude) {
-          const imei = data.data.imei;
-          const incomingMs = parseTimeMs(data.data.date);
-          const nextPos = {
-            lat: parseFloat(gps.latitude),
-            lng: parseFloat(gps.longitude),
-          };
-          const nextSpeed = data.data.speed || 0;
-          const nextDir = data.data.direction;
-          const nextStatus = data.data.statusDecoded?.accOn ? "on" : "off";
+      if (data.type === "gps" && (data.data?.imei || data.data?.serial)) {
+        // السيرفر أحيانًا يبعث imei + serial معًا (مثل: imei=3539..., serial=10b2)
+        const imei = data.data.imei ?? null;
+        const serial = data.data.serial ?? null;
+        const matchKeys = [imei, serial].filter(Boolean);
 
-          setCars((prev) => {
-            // ✅ استخدم index سريع لو صحيح، وإلا اعمل fallback للبحث (لتجنب تحديث عنصر غلط عند reorder)
-            let idx = indexByImeiRef.current.get(imei);
-            if (idx !== undefined && prev[idx]?.serial_number !== imei) {
-              idx = prev.findIndex((c) => c?.serial_number === imei);
+        // ✅ دعم أكثر من شكل للـ payload (أحيانًا gps تكون داخل data.data.gps وأحيانًا مباشرة)
+        const gps = data.data.gps ?? data.data;
+        const latRaw = gps?.latitude ?? gps?.lat;
+        const lngRaw = gps?.longitude ?? gps?.lng;
+        if (latRaw == null || lngRaw == null) return;
+
+        const lat = parseFloat(latRaw);
+        const lng = parseFloat(lngRaw);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+        const dateValue = data.data.date ?? gps?.date ?? null;
+        const incomingMs = parseTimeMs(dateValue);
+
+        const nextPos = { lat, lng };
+        const nextSpeed = Number(data.data.speed ?? gps?.speed ?? 0) || 0;
+        const nextDir = data.data.direction ?? gps?.direction;
+        const nextStatus = data.data.statusDecoded?.accOn ? "on" : "off";
+
+        log("GPS", { imei, serial, lat, lng, speed: nextSpeed, direction: nextDir, date: dateValue });
+
+        setCars((prev) => {
+          // ✅ اختَر أول مفتاح يطابق (imei ثم serial)
+          const resolveIndex = () => {
+            for (const key of matchKeys) {
+              let idx = indexByImeiRef.current.get(key);
+              if (idx !== undefined && prev[idx]?.serial_number === key) return { idx, key };
+              if (idx !== undefined && prev[idx]?.serial_number !== key) {
+                idx = prev.findIndex((c) => c?.serial_number === key);
+              } else if (idx === undefined) {
+                idx = prev.findIndex((c) => c?.serial_number === key);
+              }
+              if (idx >= 0) {
+                indexByImeiRef.current.set(key, idx);
+                return { idx, key };
+              }
             }
+            return { idx: -1, key: null };
+          };
+
+          const { idx, key: matchedKey } = resolveIndex();
 
             const applyUpdate = (car) => {
               if (!car) return car;
 
-              // ✅ تجاهل تحديثات GPS القديمة (out-of-order) لتجنب القفزات الكبيرة/الوميض
+              // ✅ تجاهل تحديثات GPS الأقدم (out-of-order) لتجنب الرجوع للخلف/الوميض
               const prevMs =
                 car.lastGpsAtMs ??
                 parseTimeMs(car.lastSignelGPS) ??
                 parseTimeMs(car.lastSignel);
-              if (incomingMs != null && prevMs != null && incomingMs <= prevMs) {
-                return car;
-              }
+              // ملاحظة: نسمح بـ incomingMs === prevMs لأن بعض البروتوكولات قد تعيد نفس التوقيت
+              // مع تحديثات مختلفة، لكن نرفض الأقدم فقط.
+              // if (incomingMs != null && prevMs != null && incomingMs < prevMs) {
+              //   log("GPS ignored (out-of-order)", { matchedKey, incomingMs, prevMs });
+              //  // return car;
+              // }
 
               const samePos =
                 car.position?.lat === nextPos.lat && car.position?.lng === nextPos.lng;
@@ -285,32 +397,30 @@ const useCarSocket = (cars, setCars, isInit) => {
                 direction: nextDir,
                 status: nextStatus,
                 lastUpdate: Date.now(),
-                lastSignel: data.data.date,
-                lastSignelGPS: data.data.date,
+                lastSignel: dateValue ?? car.lastSignel,
+                lastSignelGPS: dateValue ?? car.lastSignelGPS,
                 lastGpsAtMs: incomingMs ?? Date.now(),
               };
             };
 
-            if (idx === undefined || idx < 0) {
-              let changed = false;
-              const next = prev.map((car) => {
-                if (car?.serial_number !== imei) return car;
-                const updated = applyUpdate(car);
-                if (updated !== car) changed = true;
-                return updated;
-              });
-              return changed ? next : prev;
-            }
+          if (idx < 0) {
+            // لم نجد السيارة — هذا أهم log لتشخيص "السيارة لا تتحرك"
+            warn("GPS for unknown device (no matching serial_number)", {
+              matchKeys,
+              availableCount: prev?.length || 0,
+            });
+            return prev;
+          }
 
-            const existing = prev[idx];
-            if (!existing) return prev;
-            const updated = applyUpdate(existing);
-            if (updated === existing) return prev;
-            const next = prev.slice();
-            next[idx] = updated;
-            return next;
-          });
-        }
+          const existing = prev[idx];
+          if (!existing) return prev;
+          const updated = applyUpdate(existing);
+          if (updated === existing) return prev;
+
+          const next = prev.slice();
+          next[idx] = updated;
+          return next;
+        });
       }
 
       /* ===== ALARM ===== */
@@ -340,14 +450,17 @@ const useCarSocket = (cars, setCars, isInit) => {
       /* ===== HEARTBEAT ===== */
       if (data.type === "heartbeat" && data.data?.imei) {
         setCars((prev) => {
-          const idx = indexByImeiRef.current.get(data.data.imei);
-          if (idx === undefined) {
-            return prev.map((car) =>
-              car.serial_number === data.data.imei
-                ? { ...car, voltage: data.data.heartbeat.externalVoltage }
-                : car
-            );
+          const key = data.data.imei;
+          let idx = indexByImeiRef.current.get(key);
+          if (idx !== undefined && prev[idx]?.serial_number !== key) {
+            idx = prev.findIndex((c) => c?.serial_number === key);
+            if (idx >= 0) indexByImeiRef.current.set(key, idx);
           }
+          if (idx === undefined) {
+            idx = prev.findIndex((c) => c?.serial_number === key);
+            if (idx >= 0) indexByImeiRef.current.set(key, idx);
+          }
+          if (idx < 0) return prev;
           const existing = prev[idx];
           if (!existing) return prev;
           const next = prev.slice();
@@ -405,23 +518,28 @@ const useCarSocket = (cars, setCars, isInit) => {
       } finally {
         if (wsRef.current === ws) wsRef.current = null;
         subscribedImeisRef.current = new Set();
+        indexByImeiRef.current = new Map();
+        emitStatus("closed");
+        log("cleanup");
       }
     };
-  }, [isInit]);
+  }, [isInit, enabled, resetKey]);
 
   // لو الأجهزة اتغيرت بعد فتح الـ socket (مثلاً بعد full=1)، اشترك في IMEIs الجديدة بدون reconnect
   useEffect(() => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-    carsRef.current.forEach((car) => {
-      const imei = car.serial_number;
+    (carsRef.current || []).forEach((car, idx) => {
+      const imei = car?.serial_number;
       if (!imei) return;
+      if (!indexByImeiRef.current.has(imei)) indexByImeiRef.current.set(imei, idx);
       if (subscribedImeisRef.current.has(imei)) return;
       subscribedImeisRef.current.add(imei);
       ws.send(JSON.stringify({ type: "subscribe", imei }));
+      log("subscribe (late) =>", imei);
     });
-  }, [cars]);
+  }, [cars?.length]);
 
   return null;
 };

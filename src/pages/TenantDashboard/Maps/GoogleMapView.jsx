@@ -23,6 +23,8 @@ const GoogleMapView = ({
   const markerLabelMetaRef = useRef(new Map());
   const pendingMarkerUpdatesRef = useRef(new Map());
   const markerRafRef = useRef(0);
+  const markerAnimRef = useRef(new Map()); // id -> { start, end, t0, dur }
+  const markerAnimRafRef = useRef(0);
 
   const {
     clusters,
@@ -166,13 +168,58 @@ const GoogleMapView = ({
               const m = markers.get(id);
               if (!m) return;
               const cur = m.getPosition();
+              const curLat = cur && typeof cur.lat === "function" ? cur.lat() : null;
+              const curLng = cur && typeof cur.lng === "function" ? cur.lng() : null;
               const same =
-                cur &&
-                typeof cur.lat === "function" &&
-                typeof cur.lng === "function" &&
-                cur.lat() === pos.lat &&
-                cur.lng() === pos.lng;
-              if (!same) m.setPosition(pos);
+                curLat != null &&
+                curLng != null &&
+                curLat === pos.lat &&
+                curLng === pos.lng;
+              if (same) return;
+
+              // ✅ حركة ناعمة: انيميشن خفيف بين النقطة الحالية والنقطة الجديدة
+              const now = performance.now();
+              const start =
+                curLat != null && curLng != null ? { lat: curLat, lng: curLng } : pos;
+              const end = pos;
+              const dLat = end.lat - start.lat;
+              const dLng = end.lng - start.lng;
+              const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+              // مدة بسيطة (clamp) — هدفنا "نعومة قليلة" بدون lag كبير
+              const dur = Math.max(250, Math.min(900, dist * 120000)); // dist بالدرجات تقريبًا
+
+              markerAnimRef.current.set(id, { start, end, t0: now, dur });
+
+              const tick = (t) => {
+                markerAnimRafRef.current = 0;
+                const anims = markerAnimRef.current;
+                if (!anims.size) return;
+
+                anims.forEach((a, carId) => {
+                  const mm = markers.get(carId);
+                  if (!mm) {
+                    anims.delete(carId);
+                    return;
+                  }
+                  const tt = Math.min(1, (t - a.t0) / a.dur);
+                  // easeOutCubic
+                  const e = 1 - Math.pow(1 - tt, 3);
+                  const next = {
+                    lat: a.start.lat + (a.end.lat - a.start.lat) * e,
+                    lng: a.start.lng + (a.end.lng - a.start.lng) * e,
+                  };
+                  mm.setPosition(next);
+                  if (tt >= 1) anims.delete(carId);
+                });
+
+                if (anims.size) {
+                  markerAnimRafRef.current = requestAnimationFrame(tick);
+                }
+              };
+
+              if (!markerAnimRafRef.current) {
+                markerAnimRafRef.current = requestAnimationFrame(tick);
+              }
             });
           });
         }
@@ -206,6 +253,19 @@ const GoogleMapView = ({
       markers.delete(id);
     });
   }, [map, validCars, createRotatedMarker, getCarColor]);
+
+  // ✅ Cleanup للأنيميشن
+  useEffect(() => {
+    return () => {
+      try {
+        if (markerAnimRafRef.current) cancelAnimationFrame(markerAnimRafRef.current);
+      } catch {
+        // ignore
+      }
+      markerAnimRafRef.current = 0;
+      markerAnimRef.current.clear();
+    };
+  }, []);
 
   // ✅ إدارة أسماء الأجهزة (labels) بشكل خفيف جدًا:
   // - لا نستدعي setLabel إلا عند تغيير الاسم أو عند toggle showDeviceName

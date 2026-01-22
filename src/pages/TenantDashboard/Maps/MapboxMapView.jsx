@@ -68,6 +68,7 @@ const MapboxMapView = ({
           longitude={car.position.lng}
           latitude={car.position.lat}
           anchor="center"
+          style={{ transition: "transform 600ms linear" }}
           onClick={(e) => {
             e.originalEvent.stopPropagation();
             handleSelectCar(car);
