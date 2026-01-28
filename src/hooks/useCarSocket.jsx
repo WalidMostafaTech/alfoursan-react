@@ -133,15 +133,40 @@ import { setCommandResponse } from "../store/modalsSlice";
 /* ===== Alarm Toast UI ===== */
 const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
   return (
-    <div className="text-sm leading-5 space-y-2 w-full" dir="rtl">
-      <p className="font-bold text-mainColor">{alarm}</p>
-      <p>
-        السيارة: <b>{carName}</b>
-      </p>
-      <p>
-        السرعة: <b>{speed} كم/س</b>
-      </p>
-      <p>IMEI: {IMEI}</p>
+    <div className="w-full" dir="rtl">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 h-9 w-9 shrink-0 rounded-full border border-red-200 bg-red-50 text-red-700 flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-5 w-5"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              d="M9.401 3.003c1.155-2 4.043-2 5.198 0l7.17 12.414c1.154 2-.288 4.5-2.599 4.5H4.83c-2.31 0-3.753-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-extrabold text-red-700 leading-5">{alarm}</p>
+
+          <div className="mt-2 space-y-1 text-xs text-slate-700">
+            <p className="truncate">
+              السيارة: <span className="font-bold text-slate-900">{carName}</span>
+            </p>
+            <p>
+              السرعة:{" "}
+              <span className="font-bold text-slate-900">{speed}</span>{" "}
+              كم/س
+            </p>
+            <p className="text-[11px] text-slate-500 break-all">IMEI: {IMEI}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -441,8 +466,43 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
             alarm={data.data.alarmTextAr || "غير معروف"}
             IMEI={imei}
           />,
-          { position: "bottom-right", autoClose: 5000 }
-        );
+          {
+            position: "bottom-right",
+            autoClose: 5000, // ✅ رجعنا الإغلاق التلقائي
+            closeOnClick: true,
+            draggable: true,
+            hideProgressBar: false,
+            icon: false,
+            closeButton: ({ closeToast }) => (
+              <button
+                type="button"
+                onClick={closeToast}
+                aria-label="إغلاق"
+                className="opacity-100! text-slate-500 hover:text-slate-900 transition-colors
+                  rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-mainColor/40
+                   left-0 absolute z-10 top-5"
+                style={{ marginInlineStart: "8px" }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-5 w-5"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            ),
+            className:
+              "alarm-toast !bg-white !text-slate-900 !rounded-xl !shadow-xl !border !border-red-200",
+            style: { marginBottom: "48px" }, // رفع بسيط عن المكان الحالي
+          }
+        ,  );
       }
 
 
