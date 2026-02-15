@@ -26,6 +26,7 @@ const PolygonMenu = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [activeRowId, setActiveRowId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const dispatch = useDispatch();
   const { polygonMenu } = useSelector((state) => state.modals);
@@ -38,6 +39,10 @@ const PolygonMenu = () => {
     queryKey: ["fences", polygonMenu.show],
     queryFn: getFences,
   });
+
+  const filteredFences = fences?.items.filter((fence) =>
+    fence.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   // ✅ Mutation لحذف عنصر واحد
   const deleteMutation = useMutation({
@@ -83,7 +88,7 @@ const PolygonMenu = () => {
   // ✅ تحديد صف واحد
   const handleRowSelect = (id) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
@@ -228,40 +233,50 @@ const PolygonMenu = () => {
           </div>
 
           {/* Search Input */}
-          <div className="flex gap-1">
-            <div className="flex-1">
-              <MainInput placeholder="Search by name" />
-            </div>
-            <span className="btn btn-square btn-sm btn-primary">
-              <FaSearch />
-            </span>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2.5 pr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm 
+                focus:outline-none focus:ring-2 focus:ring-mainColor/40 focus:border-mainColor transition-all"
+            />
+            <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           </div>
 
-          {/* باقي المحتوى (Loader, Table, إلخ) زي ما هو */}
           {isLoading ? (
-            <Loader />
+            <div className="py-8">
+              <Loader />
+            </div>
+          ) : filteredFences?.length === 0 ? (
+            <div className="py-8 text-center text-gray-600 font-semibold">
+              لا يوجد سياجات
+            </div>
           ) : (
             <>
               {/* Actions */}
-              <div className="flex justify-between text-xs text-mainColor mb-2">
-                <button
-                  className="hover:underline cursor-pointer"
-                  onClick={handleShowAll}
-                >
-                  Show All
-                </button>
-                <div className="flex gap-3">
+              {filteredFences?.length > 0 && (
+                <div className="flex justify-between text-xs mb-2">
                   <button
-                    className="hover:underline cursor-pointer"
-                    onClick={handleBatchDelete}
-                    disabled={destroyMutation.isPending}
+                    className="hover:underline cursor-pointer text-mainColor"
+                    onClick={handleShowAll}
                   >
-                    {destroyMutation.isPending
-                      ? "جاري الحذف..."
-                      : "Batch Delete"}
+                    Show All
                   </button>
+                  <div className="flex gap-3">
+                    <button
+                      className="hover:underline cursor-pointer text-red-500"
+                      onClick={handleBatchDelete}
+                      disabled={destroyMutation.isPending}
+                    >
+                      {destroyMutation.isPending
+                        ? "جاري الحذف..."
+                        : "Batch Delete"}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Table */}
               <div className="overflow-y-auto max-h-96 rounded-md">
@@ -307,7 +322,7 @@ const PolygonMenu = () => {
                                 openGeoFenceModal({
                                   fenceData: fence,
                                   mission: "edit",
-                                })
+                                }),
                               )
                             }
                             className="text-sm cursor-pointer text-mainColor hover:text-mainColor"
@@ -318,7 +333,7 @@ const PolygonMenu = () => {
                                 openGeoFenceModal({
                                   fenceData: fence,
                                   mission: "copy",
-                                })
+                                }),
                               )
                             }
                             className="text-sm cursor-pointer text-gray-500 hover:text-gray-700"
@@ -326,7 +341,7 @@ const PolygonMenu = () => {
                           <LuSquareSplitHorizontal
                             onClick={() =>
                               dispatch(
-                                openAssociateDeviceModal({ id: fence.id })
+                                openAssociateDeviceModal({ id: fence.id }),
                               )
                             }
                             className="text-sm cursor-pointer text-gray-500 hover:text-gray-700"

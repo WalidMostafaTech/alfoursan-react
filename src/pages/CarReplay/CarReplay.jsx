@@ -207,8 +207,7 @@ const bearingDeg = (lat1, lng1, lat2, lng2) => {
   const Δλ = toRad(lng2 - lng1);
   const y = Math.sin(Δλ) * Math.cos(φ2);
   const x =
-    Math.cos(φ1) * Math.sin(φ2) -
-    Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
   const θ = Math.atan2(y, x);
   return (toDeg(θ) + 360) % 360;
 };
@@ -267,7 +266,10 @@ const countKept = (keepMask) => {
 
 const simplifyPointsToMax = (points, maxPoints) => {
   if (!points || points.length <= maxPoints) return points || [];
-  const path = points.map((p) => ({ lat: Number(p.latitude), lng: Number(p.longitude) }));
+  const path = points.map((p) => ({
+    lat: Number(p.latitude),
+    lng: Number(p.longitude),
+  }));
   const diag = getBoundsDiag(path);
   if (!Number.isFinite(diag) || diag <= 0) return points;
 
@@ -291,7 +293,8 @@ const simplifyPointsToMax = (points, maxPoints) => {
   }
 
   // fallback safety
-  if (bestCount <= 2) return [points[0], points[points.length - 1]].filter(Boolean);
+  if (bestCount <= 2)
+    return [points[0], points[points.length - 1]].filter(Boolean);
 
   const out = [];
   for (let i = 0; i < points.length; i++) {
@@ -452,7 +455,7 @@ const CarReplay = () => {
   // ✅ نقطة واحدة "مصدر" للحركة + للرسم (لتجنب اختلاف المسار عند تبسيط polyline فقط)
   const replayPoints = useMemo(
     () => simplifyPointsToMax(points, MAX_REPLAY_POINTS),
-    [points]
+    [points],
   );
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -502,7 +505,12 @@ const CarReplay = () => {
     for (let i = 0; i < replayPoints.length - 1; i++) {
       const a = replayPoints[i];
       const b = replayPoints[i + 1];
-      const distM = haversineMeters(a.latitude, a.longitude, b.latitude, b.longitude);
+      const distM = haversineMeters(
+        a.latitude,
+        a.longitude,
+        b.latitude,
+        b.longitude,
+      );
 
       const t0 = a?.date ? parseMs(a.date) : null;
       const t1 = b?.date ? parseMs(b.date) : null;
@@ -565,14 +573,17 @@ const CarReplay = () => {
     indexRef.current = idx;
     progressRef.current = 0;
     setCurrentIndex(idx);
-    setRenderPosition({ lat: replayPoints[0].latitude, lng: replayPoints[0].longitude });
+    setRenderPosition({
+      lat: replayPoints[0].latitude,
+      lng: replayPoints[0].longitude,
+    });
 
     const b = replayPoints[1]
       ? bearingDeg(
           replayPoints[0].latitude,
           replayPoints[0].longitude,
           replayPoints[1].latitude,
-          replayPoints[1].longitude
+          replayPoints[1].longitude,
         )
       : 0;
     renderDirRef.current = b;
@@ -644,7 +655,12 @@ const CarReplay = () => {
         lng: a.longitude + (b.longitude - a.longitude) * t,
       };
 
-      const targetBear = bearingDeg(a.latitude, a.longitude, b.latitude, b.longitude);
+      const targetBear = bearingDeg(
+        a.latitude,
+        a.longitude,
+        b.latitude,
+        b.longitude,
+      );
       const nextDir = lerpAngle(renderDirRef.current, targetBear, 0.2);
       renderDirRef.current = nextDir;
 
@@ -659,7 +675,8 @@ const CarReplay = () => {
           const carLatLng = new window.google.maps.LatLng(pos.lat, pos.lng);
           if (!bounds.contains(carLatLng)) {
             const tNow = Date.now();
-            const recentlyInteracted = tNow - lastUserMapInteractionAtRef.current < 1500;
+            const recentlyInteracted =
+              tNow - lastUserMapInteractionAtRef.current < 1500;
 
             // ✅ شرطك: لو العربية خرجت من الشاشة -> لازم نرجّع التمركز عليها
             // نحترم تفاعل المستخدم لفترة قصيرة، وبعدها نرجع التمركز تلقائيًا.
@@ -692,7 +709,10 @@ const CarReplay = () => {
       indexRef.current = 0;
       progressRef.current = 0;
       setCurrentIndex(0);
-      setRenderPosition({ lat: replayPoints[0].latitude, lng: replayPoints[0].longitude });
+      setRenderPosition({
+        lat: replayPoints[0].latitude,
+        lng: replayPoints[0].longitude,
+      });
     }
     setIsPlaying((prev) => !prev);
   };
@@ -713,7 +733,7 @@ const CarReplay = () => {
       replayPoints[nextIdx].latitude,
       replayPoints[nextIdx].longitude,
       next.latitude,
-      next.longitude
+      next.longitude,
     );
     renderDirRef.current = b;
     setRenderDirection(b);
@@ -723,7 +743,10 @@ const CarReplay = () => {
     const map = mapRefRef.current;
     if (!map || !renderPosition) return;
     setFollowCar(true);
-    const carLatLng = new window.google.maps.LatLng(renderPosition.lat, renderPosition.lng);
+    const carLatLng = new window.google.maps.LatLng(
+      renderPosition.lat,
+      renderPosition.lng,
+    );
     map.panTo(carLatLng);
   };
 
@@ -999,7 +1022,10 @@ const CarReplay = () => {
         defaultSpeedLimit={defaultSpeedLimit}
       />
 
-      <ReplayFilter onDateChange={handleDateChange} />
+      <ReplayFilter
+        onDateChange={handleDateChange}
+        serial_number={serial_number}
+      />
 
       <div className="absolute top-[15%] right-3 z-20 space-y-2 flex flex-col items-center">
         <MapTypes onChange={setMapType} />
@@ -1017,7 +1043,7 @@ const CarReplay = () => {
 
       {/* ✅ مؤشر السرعة */}
       {replayPoints.length > 0 && (
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute top-32 left-4 z-20">
           <div className="bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2">
             <IoMdSpeedometer className="text-mainColor" size={18} />
             <span className="font-bold text-gray-800 tabular-nums">

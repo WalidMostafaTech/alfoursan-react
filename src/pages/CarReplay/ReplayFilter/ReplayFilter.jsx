@@ -2,9 +2,13 @@ import { useState } from "react";
 import { FaPlay } from "react-icons/fa";
 import MainInput from "../../../components/form/MainInput";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getDevicesForCarReplay } from "../../../services/monitorServices";
 
-const ReplayFilter = ({ onDateChange }) => {
-  const today = new Date().toISOString().split("T")[0];
+const ReplayFilter = ({ onDateChange, serial_number }) => {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 16);
 
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
@@ -77,19 +81,65 @@ const ReplayFilter = ({ onDateChange }) => {
     onDateChange(lastWeekStart, lastWeekEnd);
   };
 
+  const {
+    data: devices,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["devices-for-car-replay"],
+    queryFn: getDevicesForCarReplay,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const navigate = useNavigate();
+
   return (
     <header className="absolute w-screen top-0 left-0 bg-white shadow-lg rounded-b-4xl p-3">
       <form
         onSubmit={handleSubmit}
         className="flex flex-wrap items-center justify-center gap-4"
       >
+        <div className="flex items-center gap-1 max-w-[170px]">
+          <label className="text-sm" htmlFor="device">
+            Device:
+          </label>
+          <MainInput
+            id="device"
+            type="select"
+            value={serial_number}
+            options={
+              isLoading
+                ? [
+                    {
+                      value: "",
+                      label: "جاري التحميل...",
+                    },
+                  ]
+                : isError
+                  ? [
+                      {
+                        value: "",
+                        label: "جاري التحميل...",
+                      },
+                    ]
+                  : (devices?.map((device) => ({
+                      value: device.serial_number,
+                      label: device.name,
+                    })) ?? [])
+            }
+            onChange={(e) => navigate(`/car-replay/${e.target.value}`)}
+          />
+        </div>
+
         <div className="flex items-center gap-1">
           <label className="text-sm" htmlFor="from">
             From:
           </label>
+
           <MainInput
             id="from"
-            type="date"
+            type="datetime-local"
             value={from}
             max={today}
             onChange={(e) => setFrom(e.target.value)}
@@ -100,9 +150,10 @@ const ReplayFilter = ({ onDateChange }) => {
           <label className="text-sm" htmlFor="to">
             To:
           </label>
+
           <MainInput
             id="to"
-            type="date"
+            type="datetime-local"
             value={to}
             max={today}
             onChange={(e) => setTo(e.target.value)}

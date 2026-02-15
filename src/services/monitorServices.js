@@ -81,9 +81,12 @@ export const getReplay = async ({ serial_number, from_time, to_time }) => {
 
 // ✅ تتبع جهاز واحد (صفحة التتبع الجديدة)
 export const getTrackingDevice = async (deviceId) => {
-  const { data } = await api.get(`/tenant-dashboard/tenant/devices/tracking-getDevice`, {
-    params: { deviceId },
-  });
+  const { data } = await api.get(
+    `/tenant-dashboard/tenant/devices/tracking-getDevice`,
+    {
+      params: { deviceId },
+    },
+  );
   return data;
 };
 
@@ -94,4 +97,9 @@ export const getOutsideTracking = async (id) => {
     params: { is_json: 1 },
   });
   return data;
+};
+
+export const getDevicesForCarReplay = async () => {
+  const { data } = await api.get(`/devices-list`);
+  return data?.data;
 };
