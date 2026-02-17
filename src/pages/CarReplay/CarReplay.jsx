@@ -14,7 +14,7 @@ import { FaCrosshairs } from "react-icons/fa";
 
 import ReplayControls from "./ReplayControls/ReplayControls";
 import ReplayFilter from "./ReplayFilter/ReplayFilter";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getReplay } from "../../services/monitorServices";
 import { toast } from "react-toastify";
@@ -23,11 +23,14 @@ import LoadingPage from "../../components/Loading/LoadingPage";
 import MapTypes from "../../components/common/MapTypes";
 import TraceColor from "./TraceColor/TraceColor";
 import { carPath } from "../../services/carPath";
+import { CgHomeAlt } from "react-icons/cg";
 
 const containerStyle = {
   width: "100%",
   height: "100vh",
 };
+
+const BACK_URL = window.__BACK_URL__;
 
 const getPointColor = (speed, speedLimits) => {
   const s = Number(speed) || 0;
@@ -1028,6 +1031,12 @@ const CarReplay = () => {
       />
 
       <div className="absolute top-[15%] right-3 z-20 space-y-2 flex flex-col items-center">
+        <Link
+          to={BACK_URL}
+          className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100"
+        >
+          <CgHomeAlt className="text-xl text-gray-700" />
+        </Link>
         <MapTypes onChange={setMapType} />
         <button
           type="button"

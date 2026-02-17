@@ -8,6 +8,11 @@
   --color-mainRed: #ff0000;
 }
 
+[data-theme="light"] {
+  --color-primary: var(--color-mainColor);
+  --color-success: var(--color-mainColor);
+}
+
 body {
   font-family: "Cairo", sans-serif;
 }
