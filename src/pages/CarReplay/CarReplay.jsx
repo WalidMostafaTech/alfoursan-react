@@ -343,6 +343,13 @@ const simplifySegmentsToMaxPoints = (rawSegments, points, maxTotalPoints) => {
 const CarReplay = () => {
   const { serial_number } = useParams();
   const [showInfo, setShowInfo] = useState(false);
+  const [address, setAddress] = useState("");
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const lastGeoKeyRef = useRef("");
+  const [showTripSummary, setShowTripSummary] = useState(false);
+  const [startAddress, setStartAddress] = useState("");
+  const [endAddress, setEndAddress] = useState("");
+  const [isSummaryGeocoding, setIsSummaryGeocoding] = useState(false);
 
   const [mapType, setMapType] = useState("roadmap");
 
@@ -476,6 +483,7 @@ const CarReplay = () => {
   // ✅ حركة ناعمة (time-based) بين النقاط
   const [renderPosition, setRenderPosition] = useState(null);
   const [renderDirection, setRenderDirection] = useState(0);
+  const [renderDistanceKm, setRenderDistanceKm] = useState(0);
   const rafRef = useRef(0);
   const lastFrameMsRef = useRef(0);
   const indexRef = useRef(0);
@@ -538,6 +546,81 @@ const CarReplay = () => {
     return out;
   }, [replayPoints]);
 
+  const distanceKmByIndex = useMemo(() => {
+    if (!replayPoints || replayPoints.length === 0) return [];
+    const out = new Array(replayPoints.length).fill(0);
+    let lastKm = 0;
+    for (let i = 0; i < replayPoints.length; i++) {
+      const raw = Number(replayPoints[i]?.distance);
+      if (Number.isFinite(raw)) {
+        lastKm = Math.max(raw, lastKm);
+        out[i] = lastKm;
+        continue;
+      }
+      if (i === 0) {
+        out[i] = 0;
+        continue;
+      }
+      const prev = replayPoints[i - 1];
+      const curr = replayPoints[i];
+      const incM = haversineMeters(
+        prev.latitude,
+        prev.longitude,
+        curr.latitude,
+        curr.longitude,
+      );
+      lastKm += incM / 1000;
+      out[i] = lastKm;
+    }
+    return out;
+  }, [replayPoints]);
+
+  const tripStats = useMemo(() => {
+    if (!replayPoints || replayPoints.length === 0) return null;
+
+    const start = replayPoints[0];
+    const end = replayPoints[replayPoints.length - 1];
+    const startTime = start?.date ? new Date(start.date) : null;
+    const endTime = end?.date ? new Date(end.date) : null;
+    const durationSec =
+      startTime && endTime ? Math.max(0, (endTime - startTime) / 1000) : 0;
+
+    let maxSpeed = 0;
+    let sumSpeed = 0;
+    let countSpeed = 0;
+    for (let i = 0; i < replayPoints.length; i++) {
+      const s = Number(replayPoints[i]?.speed);
+      if (Number.isFinite(s)) {
+        maxSpeed = Math.max(maxSpeed, s);
+        sumSpeed += s;
+        countSpeed += 1;
+      }
+    }
+
+    const totalDistanceKm =
+      distanceKmByIndex[distanceKmByIndex.length - 1] ?? 0;
+    const avgSpeedByPoints = countSpeed ? sumSpeed / countSpeed : 0;
+    const avgSpeedByTime =
+      durationSec > 0 ? totalDistanceKm / (durationSec / 3600) : 0;
+
+    return {
+      startTime,
+      endTime,
+      durationSec,
+      totalDistanceKm,
+      avgSpeedByPoints,
+      avgSpeedByTime,
+      maxSpeed,
+      start,
+      end,
+    };
+  }, [replayPoints, distanceKmByIndex]);
+
+  useEffect(() => {
+    setStartAddress("");
+    setEndAddress("");
+  }, [replayPoints]);
+
   // تحديد نقطة البداية أول مرة فقط
   useEffect(() => {
     if (replayPoints.length > 0) {
@@ -556,7 +639,7 @@ const CarReplay = () => {
     }
     if (currentIndex > replayPoints.length - 1) setCurrentIndex(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replayPoints.length]);
+  }, [replayPoints, distanceKmByIndex]);
 
   const currentPoint = replayPoints[currentIndex] || {
     latitude: 23.8859,
@@ -570,6 +653,7 @@ const CarReplay = () => {
   useEffect(() => {
     if (replayPoints.length === 0) {
       setRenderPosition(null);
+      setRenderDistanceKm(0);
       return;
     }
     const idx = 0;
@@ -580,6 +664,7 @@ const CarReplay = () => {
       lat: replayPoints[0].latitude,
       lng: replayPoints[0].longitude,
     });
+    setRenderDistanceKm(distanceKmByIndex[0] ?? 0);
 
     const b = replayPoints[1]
       ? bearingDeg(
@@ -591,8 +676,7 @@ const CarReplay = () => {
       : 0;
     renderDirRef.current = b;
     setRenderDirection(b);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replayPoints.length]);
+  }, [replayPoints, distanceKmByIndex]);
 
   // ✅ محرك التشغيل (time-based) باستخدام requestAnimationFrame
   useEffect(() => {
@@ -613,6 +697,7 @@ const CarReplay = () => {
       // stop at end
       if (idx >= replayPoints.length - 1) {
         setIsPlaying(false);
+        setShowTripSummary(true);
         return;
       }
 
@@ -645,6 +730,7 @@ const CarReplay = () => {
           lng: replayPoints[replayPoints.length - 1].longitude,
         });
         setIsPlaying(false);
+        setShowTripSummary(true);
         return;
       }
 
@@ -657,6 +743,9 @@ const CarReplay = () => {
         lat: a.latitude + (b.latitude - a.latitude) * t,
         lng: a.longitude + (b.longitude - a.longitude) * t,
       };
+      const aDist = distanceKmByIndex[idx] ?? 0;
+      const bDist = distanceKmByIndex[idx + 1] ?? aDist;
+      const dist = aDist + (bDist - aDist) * t;
 
       const targetBear = bearingDeg(
         a.latitude,
@@ -669,6 +758,7 @@ const CarReplay = () => {
 
       setRenderPosition(pos);
       setRenderDirection(nextDir);
+      setRenderDistanceKm(dist);
 
       // follow logic
       const map = mapRefRef.current;
@@ -705,7 +795,66 @@ const CarReplay = () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
     };
-  }, [isPlaying, replayPoints, segmentDurationsMs]);
+  }, [isPlaying, replayPoints, segmentDurationsMs, distanceKmByIndex]);
+
+  const handleFetchAddress = useCallback(() => {
+    if (!renderPosition || !window.google?.maps?.Geocoder) return;
+
+    const lat = Number(renderPosition.lat);
+    const lng = Number(renderPosition.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const key = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+    if (lastGeoKeyRef.current === key) return;
+    lastGeoKeyRef.current = key;
+
+    setIsGeocoding(true);
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results?.length) {
+        setAddress(results[0].formatted_address || "");
+      } else {
+        setAddress("");
+      }
+      setIsGeocoding(false);
+    });
+  }, [renderPosition]);
+
+  const handleFetchSummaryAddresses = useCallback(() => {
+    if (!tripStats?.start || !tripStats?.end) return;
+    if (!window.google?.maps?.Geocoder) return;
+
+    const geocoder = new window.google.maps.Geocoder();
+    const startLoc = {
+      lat: Number(tripStats.start.latitude),
+      lng: Number(tripStats.start.longitude),
+    };
+    const endLoc = {
+      lat: Number(tripStats.end.latitude),
+      lng: Number(tripStats.end.longitude),
+    };
+
+    if (!Number.isFinite(startLoc.lat) || !Number.isFinite(startLoc.lng)) return;
+    if (!Number.isFinite(endLoc.lat) || !Number.isFinite(endLoc.lng)) return;
+
+    setIsSummaryGeocoding(true);
+    geocoder.geocode({ location: startLoc }, (results, status) => {
+      if (status === "OK" && results?.length) {
+        setStartAddress(results[0].formatted_address || "");
+      } else {
+        setStartAddress("");
+      }
+
+      geocoder.geocode({ location: endLoc }, (results2, status2) => {
+        if (status2 === "OK" && results2?.length) {
+          setEndAddress(results2[0].formatted_address || "");
+        } else {
+          setEndAddress("");
+        }
+        setIsSummaryGeocoding(false);
+      });
+    });
+  }, [tripStats]);
 
   const handleTogglePlay = () => {
     if (replayPoints.length > 0 && currentIndex === replayPoints.length - 1) {
@@ -716,6 +865,9 @@ const CarReplay = () => {
         lat: replayPoints[0].latitude,
         lng: replayPoints[0].longitude,
       });
+    }
+    if (!isPlaying) {
+      setShowTripSummary(false);
     }
     setIsPlaying((prev) => !prev);
   };
@@ -730,6 +882,7 @@ const CarReplay = () => {
       lat: replayPoints[nextIdx].latitude,
       lng: replayPoints[nextIdx].longitude,
     });
+    setRenderDistanceKm(distanceKmByIndex[nextIdx] ?? 0);
 
     const next = replayPoints[nextIdx + 1] || replayPoints[nextIdx];
     const b = bearingDeg(
@@ -847,6 +1000,7 @@ const CarReplay = () => {
   };
 
   const speedKmh = Math.max(0, Math.round(Number(currentPoint?.speed) || 0));
+  const speedKmhDisplay = Math.max(0, Number(currentPoint?.speed) || 0).toFixed(2);
 
   return (
     <div className="relative">
@@ -988,29 +1142,57 @@ const CarReplay = () => {
           >
             {showInfo && (
               <InfoWindow onCloseClick={() => setShowInfo(false)}>
-                <div className="p-2 pb-4 w-[400px]">
-                  <h3 className="text-lg font-bold text-mainColor mb-4">
+                <div className="p-3 w-[360px]">
+                  <h3 className="text-lg font-bold text-mainColor mb-2">
                     {meta?.name}
                   </h3>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
                     <p className="flex items-center gap-1 font-medium">
-                      <IoMdSpeedometer size={16} />
-                      {currentPoint.speed} km/h
+                      <IoMdSpeedometer size={15} />
+                      {speedKmhDisplay} km/h
                     </p>
                     <p className="flex items-center gap-1 font-medium">
-                      <IoCalendarSharp size={16} />
+                      <IoCalendarSharp size={15} />
                       {formatDate(currentPoint.date)}
                     </p>
                     <p className="flex items-center gap-1 font-medium">
-                      <GiPathDistance size={16} />
-                      {(Number(currentPoint.distance) || 0).toFixed(6)} km
+                      <GiPathDistance size={15} />
+                      {(Number(renderDistanceKm) || 0).toFixed(6)} km
                     </p>
                     <p className="flex items-center gap-1 font-medium">
-                      <IoMdLocate size={16} />
-                      {currentPoint.latitude.toFixed(6)},
-                      {currentPoint.longitude.toFixed(6)}
+                      <IoMdLocate size={15} />
+                      {renderPosition?.lat?.toFixed(6)},
+                      {renderPosition?.lng?.toFixed(6)}
                     </p>
+                  </div>
+
+                  <div className="mt-3 border-t pt-2 text-sm">
+                    <div className="text-gray-500 mb-1">المكان</div>
+                    <button
+                      type="button"
+                      onClick={handleFetchAddress}
+                      className="text-xs text-mainColor hover:underline mb-2"
+                      disabled={isGeocoding}
+                    >
+                      تحديث العنوان
+                    </button>
+                    {isGeocoding ? (
+                      <div className="text-gray-400">جاري جلب العنوان...</div>
+                    ) : address ? (
+                      <div className="text-gray-700 leading-snug">{address}</div>
+                    ) : (
+                      <div className="text-gray-400">غير متاح</div>
+                    )}
+
+                    <a
+                      href={`https://www.google.com/maps?q=${renderPosition?.lat},${renderPosition?.lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 mt-2 text-mainColor hover:underline"
+                    >
+                      فتح في Google Maps
+                    </a>
                   </div>
                 </div>
               </InfoWindow>
@@ -1086,6 +1268,104 @@ const CarReplay = () => {
           speed={speed}
           onSpeedChange={setSpeed}
         />
+      )}
+
+      {showTripSummary && tripStats && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-bold text-mainColor">ملخص الرحلة</h3>
+              <button
+                type="button"
+                onClick={() => setShowTripSummary(false)}
+                className="text-gray-500 hover:text-gray-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mb-3 text-sm">
+              <button
+                type="button"
+                onClick={handleFetchSummaryAddresses}
+                className="text-mainColor hover:underline"
+                disabled={isSummaryGeocoding}
+              >
+                تحديث العناوين
+              </button>
+              {isSummaryGeocoding ? (
+                <span className="text-gray-400 ms-2">جاري الجلب...</span>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-sm text-gray-700">
+              <div>
+                <div className="text-gray-500">من</div>
+                <div className="font-medium">
+                  {tripStats.startTime ? formatDate(tripStats.startTime) : "-"}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {startAddress || "—"}
+                </div>
+                <a
+                  href={`https://www.google.com/maps?q=${tripStats.start?.latitude},${tripStats.start?.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-mainColor hover:underline"
+                >
+                  فتح في Google Maps
+                </a>
+              </div>
+              <div>
+                <div className="text-gray-500">إلى</div>
+                <div className="font-medium">
+                  {tripStats.endTime ? formatDate(tripStats.endTime) : "-"}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {endAddress || "—"}
+                </div>
+                <a
+                  href={`https://www.google.com/maps?q=${tripStats.end?.latitude},${tripStats.end?.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-mainColor hover:underline"
+                >
+                  فتح في Google Maps
+                </a>
+              </div>
+              <div>
+                <div className="text-gray-500">المدة</div>
+                <div className="font-medium">
+                  {Math.floor(tripStats.durationSec / 3600)}h{" "}
+                  {Math.floor((tripStats.durationSec % 3600) / 60)}m{" "}
+                  {Math.floor(tripStats.durationSec % 60)}s
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500">المسافة</div>
+                <div className="font-medium">
+                  {tripStats.totalDistanceKm.toFixed(3)} km
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500">متوسط السرعة</div>
+                <div className="font-medium">
+                  {tripStats.avgSpeedByTime.toFixed(2)} km/h
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500">أعلى سرعة</div>
+                <div className="font-medium">
+                  {tripStats.maxSpeed.toFixed(2)} km/h
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 text-xs text-gray-500">
+              المسافة والسرعات محسوبة من نقاط المسار.
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

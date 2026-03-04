@@ -14,6 +14,9 @@ const SideMenu = ({
   isFetching,
   activeFilter,
   setActiveFilter,
+  branches,
+  activeBranchId,
+  setActiveBranchId,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -46,6 +49,22 @@ const SideMenu = ({
           </button>
 
           <Search cars={cars} handleSelectCar={handleSelectCar} />
+
+          {/* الفروع */}
+          <div className="w-full">
+            <select
+              className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-mainColor"
+              value={activeBranchId}
+              onChange={(e) => setActiveBranchId(e.target.value)}
+            >
+              <option value="">كل الفروع</option>
+              {(branches || []).map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* الفلاتر */}
           <Filters

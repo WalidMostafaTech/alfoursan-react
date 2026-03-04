@@ -7,6 +7,7 @@ import Command from "./sections/Command";
 import Alerts from "./sections/Alerts";
 import SpecificTask from "./sections/SpecificTask";
 import Reminders from "./sections/Reminders";
+import CarDriver from "./sections/CarDriver";
 import { useDispatch, useSelector } from "react-redux";
 import { closeDetailsModal } from "../../../store/modalsSlice";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import Maintenance from "./sections/Maintenance";
 
 const tabs = [
   { key: "details", label: "اعدادات عامة" },
+  { key: "carDriver", label: "السياره / السائق" },
   { key: "serviceVersion", label: "إصدار الخدمة" },
   { key: "membership", label: "عضوية" },
   { key: "command", label: "قائمه الاوامر" },
@@ -87,6 +89,13 @@ const DetailsModal = () => {
             <>
               {activeTab === "details" && (
                 <Details deviceSettings={deviceSettings} refetch={refetch} />
+              )}
+              {activeTab === "carDriver" && (
+                <CarDriver
+                  deviceSettings={deviceSettings}
+                  refetch={refetch}
+                  deviceID={id}
+                />
               )}
               {activeTab === "serviceVersion" && (
                 <ServiceVersion deviceSettings={deviceSettings} />

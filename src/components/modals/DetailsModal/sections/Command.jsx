@@ -14,6 +14,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
   const [activeCommand, setActiveCommand] = useState(0);
   const [selectedCommand, setSelectedCommand] = useState("");
   const [waitingForResponse, setWaitingForResponse] = useState(false);
+  const [builderState, setBuilderState] = useState({});
   
   // التحقق من أن الاستجابة تخص هذا الجهاز
   const deviceImei = deviceSettings?.device?.serial_number;
@@ -28,6 +29,10 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
     { label: "Query latitude and longitude", isNew: false },
     { label: "Query software version", isNew: false },
     { label: "Check Status", isNew: false },
+    { label: "Set SOS Number", isNew: true },
+    { label: "Delete SOS Number", isNew: true },
+    { label: "Set Center Number", isNew: true },
+    { label: "Delete Center Number", isNew: true },
     { label: "Vibration Alarm", isNew: true },
     { label: "Power Alarm", isNew: true },
     { label: "ACC Alarm", isNew: true },
@@ -88,7 +93,41 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
         "The current status of device, including GPRS connection status, whether external power is connected, voltage value, GSM signal strength, GPS status, etc.",
       value: "STATUS#",
     },
-    // 6: Vibration Alarm (NEW)
+    // 6: Set SOS Number (NEW) -> SOS,A,[phone1][,phone2][,phone3]#
+    {
+      type: "builder",
+      builderId: "sos_set",
+      selectOptions: null,
+      content:
+        "Add SOS number(s). You can set up to 3 SOS numbers at the same time.\nFormat: SOS,A,[phone1][,phone2][,phone3]#\nExample: SOS,A,13122012031,13122012032#",
+      value: null,
+    },
+    // 7: Delete SOS Number (NEW) -> SOS,D,[seq...]# or SOS,D,[phone...]#
+    {
+      type: "builder",
+      builderId: "sos_delete",
+      selectOptions: null,
+      content:
+        "Delete SOS number(s) by sequence number(s) or by phone number(s).\nFormats:\n- SOS,D,[sequence1][,sequence2][,sequence3]#\n- SOS,D,[phone1][,phone2][,phone3]#\nExample: SOS,D,2#",
+      value: null,
+    },
+    // 8: Set Center Number (NEW) -> CENTER,A,[phone]#
+    {
+      type: "builder",
+      builderId: "center_set",
+      selectOptions: null,
+      content:
+        "Set center number. Only one center number can be set.\nFormat: CENTER,A,[phone]#\nExample: CENTER,A,13122012031#",
+      value: null,
+    },
+    // 9: Delete Center Number (NEW) -> CENTER,D#
+    {
+      type: "static",
+      selectOptions: null,
+      content: "Delete center number.\nFormat: CENTER,D#\nExample: CENTER,D#",
+      value: "CENTER,D#",
+    },
+    // 10: Vibration Alarm (NEW)
     {
       type: "select",
       selectOptions: [
@@ -109,7 +148,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
       content: "تنبيه الاهتزاز: يرسل تنبيه عند اكتشاف اهتزاز. OFF=إيقاف، ON=تفعيل (لا يعمل مع ACC ON)، FULL=تفعيل كامل. الحساسية من 1-10 (الأقل = أكثر حساسية).",
       value: null,
     },
-    // 7: Power Alarm (NEW)
+    // 11: Power Alarm (NEW)
     {
       type: "select",
       selectOptions: [
@@ -123,7 +162,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
       content: "تنبيه انقطاع الطاقة: يرسل تنبيه عند فصل الطاقة الخارجية عن الجهاز. مفعّل افتراضياً.",
       value: null,
     },
-    // 8: ACC Alarm (NEW)
+    // 12: ACC Alarm (NEW)
     {
       type: "select",
       selectOptions: [
@@ -139,7 +178,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
       content: "تنبيه ACC: يرسل تنبيه عند تشغيل/إيقاف المحرك (ACC ON/OFF). B=1: ACC ON، B=2: ACC OFF، B=3: كلاهما.",
       value: null,
     },
-    // 9: Driving Behavior (NEW)
+    // 13: Driving Behavior (NEW)
     {
       type: "select",
       selectOptions: [
@@ -168,7 +207,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
       content: "تنبيهات سلوك القيادة: التسارع المفاجئ (2-10 م/ث²)، التباطؤ المفاجئ (3-10 م/ث²)، الانعطاف الحاد (3-15 م/ث²)، التصادم (10-25). القيمة الأصغر = حساسية أعلى.",
       value: null,
     },
-    // 10: Door & AC Control (NEW)
+    // 14: Door & AC Control (NEW)
     {
       type: "select",
       selectOptions: [
@@ -214,7 +253,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
     },
 */
 
-    // 12: Customized Command
+    // 15: Customized Command
     {
       type: "customized",
       selectOptions: null,
@@ -222,6 +261,56 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
       value: null,
     },
   ];
+
+  const getBuilderValue = () => builderState?.[activeCommand] || {};
+  const setBuilderValue = (patch) => {
+    setBuilderState((prev) => ({
+      ...prev,
+      [activeCommand]: {
+        ...(prev?.[activeCommand] || {}),
+        ...patch,
+      },
+    }));
+  };
+
+  const buildCommandFromBuilder = () => {
+    const cmd = commands[activeCommand];
+    const v = getBuilderValue();
+
+    if (cmd.builderId === "sos_set") {
+      const phones = [v.phone1, v.phone2, v.phone3]
+        .map((x) => String(x || "").trim())
+        .filter(Boolean);
+      if (!phones.length) return "";
+      return `SOS,A,${phones.join(",")}#`;
+    }
+
+    if (cmd.builderId === "sos_delete") {
+      const mode = v.mode || "seq"; // 'seq' | 'phone'
+      const raw = String(v.values || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!raw.length) return "";
+      if (mode === "seq") {
+        const seqs = raw
+          .map((x) => Number.parseInt(x, 10))
+          .filter((n) => Number.isFinite(n) && n > 0);
+        if (!seqs.length) return "";
+        return `SOS,D,${seqs.join(",")}#`;
+      }
+      // by phone
+      return `SOS,D,${raw.join(",")}#`;
+    }
+
+    if (cmd.builderId === "center_set") {
+      const phone = String(v.phone || "").trim();
+      if (!phone) return "";
+      return `CENTER,A,${phone}#`;
+    }
+
+    return "";
+  };
 
   // ✅ عند استلام الاستجابة، إلغاء حالة الانتظار
   useEffect(() => {
@@ -261,6 +350,10 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
     // في حالة static أوامر
     if (commands[activeCommand].type === "static") {
       commandValue = commands[activeCommand].value;
+    }
+
+    if (commands[activeCommand].type === "builder") {
+      commandValue = buildCommandFromBuilder();
     }
 
     // تحقق من الإدخال
@@ -342,6 +435,89 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
               value={selectedCommand}
               onChange={(e) => setSelectedCommand(e.target.value)}
             />
+          )}
+
+          {commands[activeCommand].type === "builder" && (
+            <>
+              {commands[activeCommand].content && (
+                <p className="text-gray-600 bg-blue-50 border border-blue-200 p-3 rounded-lg text-xs mb-3 leading-relaxed whitespace-pre-line">
+                  💡 {commands[activeCommand].content}
+                </p>
+              )}
+
+              {commands[activeCommand].builderId === "sos_set" && (
+                <div className="grid grid-cols-1 gap-2">
+                  <MainInput
+                    id="sos_phone_1"
+                    label="SOS Phone 1"
+                    placeholder="13122012031"
+                    value={getBuilderValue().phone1 || ""}
+                    onChange={(e) => setBuilderValue({ phone1: e.target.value })}
+                  />
+                  <MainInput
+                    id="sos_phone_2"
+                    label="SOS Phone 2 (اختياري)"
+                    placeholder="13122012032"
+                    value={getBuilderValue().phone2 || ""}
+                    onChange={(e) => setBuilderValue({ phone2: e.target.value })}
+                  />
+                  <MainInput
+                    id="sos_phone_3"
+                    label="SOS Phone 3 (اختياري)"
+                    placeholder="13122012033"
+                    value={getBuilderValue().phone3 || ""}
+                    onChange={(e) => setBuilderValue({ phone3: e.target.value })}
+                  />
+                  <div className="text-xs text-gray-500">
+                    سيتم الإرسال بصيغة: <span className="font-mono">SOS,A,phone1[,phone2][,phone3]#</span>
+                  </div>
+                </div>
+              )}
+
+              {commands[activeCommand].builderId === "sos_delete" && (
+                <div className="space-y-2">
+                  <MainInput
+                    type="select"
+                    id="sos_delete_mode"
+                    label="طريقة الحذف"
+                    options={[
+                      { value: "seq", label: "بالترتيب (Sequence Number)" },
+                      { value: "phone", label: "برقم الهاتف" },
+                    ]}
+                    value={getBuilderValue().mode || "seq"}
+                    onChange={(e) => setBuilderValue({ mode: e.target.value })}
+                  />
+                  <MainInput
+                    id="sos_delete_values"
+                    label={getBuilderValue().mode === "phone" ? "أرقام الهاتف (مفصولة بفواصل)" : "أرقام التسلسل (مفصولة بفواصل)"}
+                    placeholder={getBuilderValue().mode === "phone" ? "13122012031,13122012032" : "1,2,3"}
+                    value={getBuilderValue().values || ""}
+                    onChange={(e) => setBuilderValue({ values: e.target.value })}
+                  />
+                  <div className="text-xs text-gray-500">
+                    سيتم الإرسال بصيغة:{" "}
+                    <span className="font-mono">
+                      SOS,D,{getBuilderValue().mode === "phone" ? "phone1[,phone2][,phone3]" : "seq1[,seq2][,seq3]"}#
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {commands[activeCommand].builderId === "center_set" && (
+                <div className="space-y-2">
+                  <MainInput
+                    id="center_phone"
+                    label="Center Phone Number"
+                    placeholder="13122012031"
+                    value={getBuilderValue().phone || ""}
+                    onChange={(e) => setBuilderValue({ phone: e.target.value })}
+                  />
+                  <div className="text-xs text-gray-500">
+                    سيتم الإرسال بصيغة: <span className="font-mono">CENTER,A,phone#</span>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* ✅ عرض Loader أثناء انتظار الاستجابة */}

@@ -53,9 +53,13 @@ export const getCarStatus = (car) => {
   if (!car) return { status: "Unknown", color: "#6b7280" }; // رمادي فاتح
 
   const { lastSignel, lastSignelGPS, speed } = car;
-
-  // ✅ Inactive: لم يتم استلام إشارة نهائيًا
   if (!lastSignel) return { status: "Inactive", color: "#6b7280" };
+  const isInactive =
+    car.isInactive === true ||
+    (!lastSignel && !lastSignelGPS && !car.device_status && car.isOffline !== true);
+
+  // ✅ Inactive: عمره ما اتصل / لا يوجد أي إشارات
+  if (isInactive) return { status: "Inactive", color: "#6b7280" };
   /*
   const nowSaudi = new Date(
     new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" })
@@ -71,23 +75,11 @@ export const getCarStatus = (car) => {
   // const hoursSinceLastSignal = (nowSaudi - lastSignalTime) / (1000 * 60 * 60);
   // const hoursSinceLastGPS = (nowSaudi - lastGPS) / (1000 * 60 * 60);
 
-  // ✅ أداء: لو عندنا lastGpsAtMs (من السوكت) نستخدمه بدل parsing string
-  const nowRiyadh = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" })
-  );
-
-  const hoursSinceLastSignal = (() => {
-    if (car.lastGpsAtMs && Number.isFinite(car.lastGpsAtMs)) {
-      return (Date.now() - car.lastGpsAtMs) / (1000 * 60 * 60);
-    }
-    const diff = getTimeDiffDetailed(lastSignel);
-    return diff.hoursSinceLastGPS;
-  })();
-
-  // ⏹ Offline
-  if (hoursSinceLastSignal >= 4) {
+  // ⏹ Offline (مصدره API.isOffline أو السوكت device.status='offline')
+  if (car.isOffline) {
+    const sinceSource = lastSignelGPS || lastSignel || car.device_lastUpdate;
     return {
-      status: `Offline (${getTimeDiffString(lastSignel)})`,
+      status: sinceSource ? `Offline (${getTimeDiffString(sinceSource)})` : "Offline",
       color: "#ef4444",
     };
   }
@@ -101,11 +93,11 @@ export const getCarStatus = (car) => {
     };
   }
 
-  // 🔵 Static
+  // 🔵 Static (متصل لكن متوقف) — مدة التوقف من آخر GPS
   if (s <= 1) {
     const sinceSource = lastSignelGPS || lastSignel;
     return {
-      status: sinceSource ? `Static ( ${getTimeDiffString(sinceSource)})` : "Static",
+      status: sinceSource ? `Static (${getTimeDiffString(sinceSource)})` : "Static",
       color: "#3b82f6",
     };
   }

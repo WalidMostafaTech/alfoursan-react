@@ -66,6 +66,7 @@ const TenantDashboard = () => {
   // const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [activeBranchId, setActiveBranchId] = useState("");
   const dispatch = useDispatch();
   const lastGeocodeAtRef = useRef(new Map());
 
@@ -131,17 +132,34 @@ const TenantDashboard = () => {
     return merged;
   }, []);
 
+  const branches = useMemo(() => {
+    const map = new Map();
+    (cars || []).forEach((c) => {
+      const id = c?.branch_effective_id ?? null;
+      const name = c?.branch_effective_name ?? null;
+      if (id != null && name) {
+        map.set(String(id), { id: String(id), name: String(name) });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "ar"));
+  }, [cars]);
+
   const filteredCars = useMemo(() => {
     return cars.filter((car) => {
+      if (activeBranchId) {
+        const carBranchId = car?.branch_effective_id != null ? String(car.branch_effective_id) : "";
+        if (carBranchId !== String(activeBranchId)) return false;
+      }
       if (activeFilter === "all") return true;
-      if (activeFilter === "online") return !car.isOffline;
-      if (activeFilter === "offline") return car.isOffline;
+      if (activeFilter === "inactive") return !!car.isInactive;
+      if (activeFilter === "online") return !car.isOffline && !car.isInactive;
+      if (activeFilter === "offline") return !!car.isOffline && !car.isInactive;
       if (activeFilter === "moving") {
-        return !car.isOffline && Number(car.speed) > 0;
+        return !car.isOffline && !car.isInactive && Number(car.speed) > 0;
       }
       return true;
     });
-  }, [cars, activeFilter]);
+  }, [cars, activeFilter, activeBranchId]);
 
   const [viewState, setViewState] = useState({
     longitude: center.lng,
@@ -348,6 +366,9 @@ const TenantDashboard = () => {
         selectedCarId={selectedCarId}
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
+        branches={branches}
+        activeBranchId={activeBranchId}
+        setActiveBranchId={setActiveBranchId}
       />
 
       <MapActions setViewState={setViewState} />

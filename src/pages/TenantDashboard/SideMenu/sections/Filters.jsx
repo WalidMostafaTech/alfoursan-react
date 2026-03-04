@@ -6,8 +6,13 @@ const Filters = ({ cars, activeFilter, setActiveFilter }) => {
     let online = 0;
     let offline = 0;
     let moving = 0;
+    let inactive = 0;
 
     (cars || []).forEach((c) => {
+      if (c.isInactive) {
+        inactive += 1;
+        return;
+      }
       if (c.isOffline) {
         offline += 1;
         return;
@@ -19,6 +24,7 @@ const Filters = ({ cars, activeFilter, setActiveFilter }) => {
 
     return [
       { label: "all", value: total },
+    //  { label: "inactive", value: inactive },
       { label: "online", value: online },
       { label: "offline", value: offline },
       { label: "moving", value: moving },

@@ -103,3 +103,8 @@ export const getDevicesForCarReplay = async () => {
   const { data } = await api.get(`/devices-list`);
   return data?.data;
 };
+
+export const updateCarDriverLink = async (payload) => {
+  const { data } = await api.post(`/car-driver`, payload);
+  return data?.data;
+};

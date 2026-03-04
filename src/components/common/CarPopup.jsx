@@ -66,9 +66,38 @@ const CarPopup = ({ car, showActions = true }) => {
     });
   };
 
+  const formatTotalDistance = () => {
+    // Prefer Traccar total distance (meters) coming from backend as device_total_distance
+    const meters =
+      car?.device_total_distance ??
+      car?.totalDistance ??
+      car?.attributes?.totalDistance ??
+      null;
+      // return `${meters.toFixed(1)} km`;
+
+    if (meters != null && Number.isFinite(Number(meters))) {
+      const km = Number(meters) / 1000;
+      return `${km.toFixed(1)} km`;
+    }
+
+    // If backend sends a ready-to-display km field, use it WITHOUT converting again
+    if (car?.totalDistanceKm != null && Number.isFinite(Number(car.totalDistanceKm))) {
+      return `${Number(car.totalDistanceKm).toFixed(1)} km`;
+    }
+
+    // Legacy fallback
+    if (car?.km_total != null && Number.isFinite(Number(car.km_total))) {
+      return `${Number(car.km_total).toFixed(1)} km`;
+    }
+
+    return "—";
+  };
+
   // ملاحظة: تجنب console.log داخل Popup لأن تحديثات العربيات كثيفة وقد تبطئ المتصفح
 
   const carDetails = [
+    //totalDistance 
+    // { label: formatTotalDistance(), icon: <FiNavigation /> },
     { label: formatDate(car.lastSignel), icon: <FaSatelliteDish /> },
     { label: "Wired", icon: <FiWifi /> },
     
@@ -77,12 +106,14 @@ const CarPopup = ({ car, showActions = true }) => {
     { label: status, icon: <MdOutlineCarCrash /> },
 
 
-    isFlightMode
-      ? {
-          label: "Flight mode",
-          icon: <FaPlane style={{ color: "#ef4444" }} />,
-        }
-      : { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
+    // isFlightMode
+    //   ? {
+    //       label: "Flight mode",
+    //       icon: <FaPlane style={{ color: "#ef4444" }} />,
+    //     }
+    //   : { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
+
+
     { label: car.iccid, icon: `iccid` },
 
     { label: car.contact_person, icon: <FaUser /> },
@@ -105,11 +136,11 @@ const CarPopup = ({ car, showActions = true }) => {
           className="text-xs font-semibold whitespace-nowrap"
           style={{ color }}
         >
-          {isFlightMode && (
+          {/* {isFlightMode && (
             <span className="inline-flex items-center me-1" title="Flight mode">
               <FaPlaneSlash style={{ color: "#ef4444" }} />
             </span>
-          )}
+          )} */}
           {status}
         </span>
       </h4>

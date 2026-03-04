@@ -532,6 +532,37 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         });
       }
 
+      /* ===== DEVICE STATUS (Traccar devices[] updates) ===== */
+      if (data.type === "device" && (data.data?.imei || data.data?.uniqueId)) {
+        const imei = (data.data.imei ?? data.data.uniqueId ?? "").toString();
+        const status = data.data.status ?? data.data.device_status ?? null; // 'online' | 'offline'
+        const lastUpdate = data.data.lastUpdate ?? data.data.device_lastUpdate ?? null;
+
+        setCars((prev) => {
+          const idx = prev.findIndex((c) => c?.serial_number === imei);
+          if (idx < 0) return prev;
+          const existing = prev[idx];
+          if (!existing) return prev;
+
+          const nextOffline =
+            status === "offline" ? true : status === "online" ? false : existing.isOffline;
+
+          const next = prev.slice();
+          next[idx] = {
+            ...existing,
+            device_status: status ?? existing.device_status,
+            device_lastUpdate: lastUpdate ?? existing.device_lastUpdate,
+            // ✅ ربط Offline/Online من السوكت (بدون 4 ساعات)
+            isOffline: nextOffline,
+            isInactive: false,
+            // لو ما عنده lastSignel قبل كده، خليه يتحدث من device.lastUpdate
+            lastSignel: existing.lastSignel ?? lastUpdate ?? existing.lastSignel,
+            lastUpdate: Date.now(),
+          };
+          return next;
+        });
+      }
+
       /* ===== COMMAND RESPONSE ===== */
       if (data.type === "command_response" && data.data?.response && data.data?.imei) {
         const response = data.data.response;
