@@ -21,7 +21,7 @@ import { changeZoom } from "../../store/mapSlice";
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
 const MAPBOX_TOKEN =
-  "pk.eyJ1IjoiYWJkZWxyaG1hbm10MSIsImEiOiJja3kycjZwMjEwb2FzMnVwbjE4Mjdrb3V3In0.YE8v8xOauf5v6k1KqDHHFQ";
+  "";
 
 // 🧮 دالة حساب المسافة بين نقطتين (كم)
 function haversineDistance(lat1, lng1, lat2, lng2) {
