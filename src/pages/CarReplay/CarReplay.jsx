@@ -1142,57 +1142,82 @@ const CarReplay = () => {
           >
             {showInfo && (
               <InfoWindow onCloseClick={() => setShowInfo(false)}>
-                <div className="p-3 w-[360px]">
-                  <h3 className="text-lg font-bold text-mainColor mb-2">
-                    {meta?.name}
-                  </h3>
+                <div className="w-[380px]">
+                  <div className="rounded-2xl bg-gradient-to-br from-mainColor/10 via-white to-indigo-50 border border-slate-100 shadow-lg overflow-hidden">
+                    <div className="px-4 py-3 flex items-center justify-between bg-white/70 backdrop-blur border-b border-slate-100">
+                      <div>
+                        <p className="text-[11px] text-slate-500">سيارة</p>
+                        <h3 className="text-lg font-bold text-slate-900">
+                          {meta?.name}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-600">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white border border-slate-200 shadow-sm">
+                          <IoMdSpeedometer size={12} />
+                          {speedKmhDisplay} km/h
+                        </span>
+                      </div>
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-                    <p className="flex items-center gap-1 font-medium">
-                      <IoMdSpeedometer size={15} />
-                      {speedKmhDisplay} km/h
-                    </p>
-                    <p className="flex items-center gap-1 font-medium">
-                      <IoCalendarSharp size={15} />
-                      {formatDate(currentPoint.date)}
-                    </p>
-                    <p className="flex items-center gap-1 font-medium">
-                      <GiPathDistance size={15} />
-                      {(Number(renderDistanceKm) || 0).toFixed(6)} km
-                    </p>
-                    <p className="flex items-center gap-1 font-medium">
-                      <IoMdLocate size={15} />
-                      {renderPosition?.lat?.toFixed(6)},
-                      {renderPosition?.lng?.toFixed(6)}
-                    </p>
-                  </div>
+                    <div className="p-4 grid grid-cols-2 gap-3 text-xs text-slate-700">
+                      <div className="rounded-xl border border-slate-100 bg-white/80 px-3 py-2">
+                        <div className="flex items-center gap-1 text-slate-500">
+                          <IoCalendarSharp size={14} />
+                          الوقت
+                        </div>
+                        <div className="mt-1 font-semibold text-slate-800">
+                          {formatDate(currentPoint.date)}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-slate-100 bg-white/80 px-3 py-2">
+                        <div className="flex items-center gap-1 text-slate-500">
+                          <GiPathDistance size={14} />
+                          المسافة
+                        </div>
+                        <div className="mt-1 font-semibold text-slate-800">
+                          {(Number(renderDistanceKm) || 0).toFixed(6)} km
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-slate-100 bg-white/80 px-3 py-2 col-span-2">
+                        <div className="flex items-center gap-1 text-slate-500">
+                          <IoMdLocate size={14} />
+                          الإحداثيات
+                        </div>
+                        <div className="mt-1 font-semibold text-slate-800">
+                          {renderPosition?.lat?.toFixed(6)},
+                          {renderPosition?.lng?.toFixed(6)}
+                        </div>
+                      </div>
+                    </div>
 
-                  <div className="mt-3 border-t pt-2 text-sm">
-                    <div className="text-gray-500 mb-1">المكان</div>
-                    <button
-                      type="button"
-                      onClick={handleFetchAddress}
-                      className="text-xs text-mainColor hover:underline mb-2"
-                      disabled={isGeocoding}
-                    >
-                      تحديث العنوان
-                    </button>
-                    {isGeocoding ? (
-                      <div className="text-gray-400">جاري جلب العنوان...</div>
-                    ) : address ? (
-                      <div className="text-gray-700 leading-snug">{address}</div>
-                    ) : (
-                      <div className="text-gray-400">غير متاح</div>
-                    )}
-
-                    <a
-                      href={`https://www.google.com/maps?q=${renderPosition?.lat},${renderPosition?.lng}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 mt-2 text-mainColor hover:underline"
-                    >
-                      فتح في Google Maps
-                    </a>
+                    <div className="px-4 pb-4">
+                      <div className="rounded-xl border border-slate-100 bg-white/90 px-3 py-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <div className="text-slate-500">المكان</div>
+                          <button
+                            type="button"
+                            onClick={handleFetchAddress}
+                            className="text-[11px] text-mainColor hover:underline"
+                            disabled={isGeocoding}
+                          >
+                            تحديث العنوان
+                          </button>
+                        </div>
+                        <div className="mt-2 text-slate-700 leading-snug min-h-[18px]">
+                          {isGeocoding
+                            ? "جاري جلب العنوان..."
+                            : address || "غير متاح"}
+                        </div>
+                        <a
+                          href={`https://www.google.com/maps?q=${renderPosition?.lat},${renderPosition?.lng}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 mt-2 text-mainColor hover:underline"
+                        >
+                          فتح في Google Maps
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </InfoWindow>

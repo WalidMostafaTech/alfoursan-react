@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import Loader from "../../../../components/Loading/Loader";
 import { getCarStatus } from "../../../../utils/getCarStatus";
 import { Link } from "react-router-dom";
+import { MdOutlinePowerSettingsNew } from "react-icons/md";
 
 const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
   const dispatch = useDispatch();
@@ -28,9 +29,18 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
     >
       <div
         onClick={() => handleSelectCar(car, true)}
-        className="flex items-center justify-between gap-4 flex-1 p-2 text-xs cursor-pointer"
+        className="flex items-center justify-between gap-3 flex-1 p-2 text-xs cursor-pointer"
       >
-        <span className="flex-1 line-clamp-1">{car.name}</span>
+        <span className="flex items-center gap-1.5 flex-1 min-w-0">
+          <span
+            className="text-[12px]"
+            title={car?.ignition_on == null ? "غير معروف" : car?.ignition_on ? "تشغيل" : "إيقاف"}
+            style={{ color: car?.ignition_on ? "#22c55e" : car?.ignition_on === false ? "#ef4444" : "#9ca3af" }}
+          >
+            <MdOutlinePowerSettingsNew />
+          </span>
+          <span className="line-clamp-1">{car.name}</span>
+        </span>
         <span>{status}</span>
       </div>
 

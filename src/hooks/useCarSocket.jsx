@@ -240,6 +240,23 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
     return Number.isFinite(ms) ? ms : null;
   };
 
+  const normalizeBool = (value) => {
+    if (value === null || value === undefined) return null;
+    if (value === "") return null;
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+      const v = value.toLowerCase();
+      if (v === "on" || v === "true" || v === "1") return true;
+      if (v === "off" || v === "false" || v === "0") return false;
+      return null;
+    }
+    if (typeof value === "number") {
+      if (!Number.isFinite(value)) return null;
+      return value !== 0;
+    }
+    return !!value;
+  };
+
   useEffect(() => {
     carsRef.current = cars;
   }, [cars]);
@@ -366,6 +383,20 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         const nextSpeed = Number(data.data.speed ?? gps?.speed ?? 0) || 0;
         const nextDir = data.data.direction ?? gps?.direction;
         const nextStatus = data.data.statusDecoded?.accOn ? "on" : "off";
+        const attrs =
+          data.data.attributes ??
+          data.data.traccar_raw?.attributes ??
+          data.data.legacy?.attributes ??
+          {};
+        const nextIgnition = normalizeBool(
+          attrs?.ignition ??
+            data.data.ignition ??
+            data.data.accOn ??
+            data.data.acc_status ??
+            null,
+        );
+        const nextMotion = normalizeBool(attrs?.motion ?? data.data.motion ?? null);
+        const nextCharge = normalizeBool(attrs?.charge ?? data.data.charge ?? null);
 
         log("GPS", { imei, serial, lat, lng, speed: nextSpeed, direction: nextDir, date: dateValue });
 
@@ -390,8 +421,12 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
 
           const { idx, key: matchedKey } = resolveIndex();
 
-            const applyUpdate = (car) => {
+          const applyUpdate = (car) => {
               if (!car) return car;
+            const ignition_on =
+              nextIgnition === null ? car.ignition_on : nextIgnition;
+            const motion = nextMotion === null ? car.motion : nextMotion;
+            const charge = nextCharge === null ? car.charge : nextCharge;
 
               // ✅ تجاهل تحديثات GPS الأقدم (out-of-order) لتجنب الرجوع للخلف/الوميض
               const prevMs =
@@ -410,7 +445,10 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
               const sameMeta =
                 (Number(car.speed) || 0) === nextSpeed &&
                 (car.direction ?? 0) === (nextDir ?? 0) &&
-                (car.status ?? "") === nextStatus;
+              (car.status ?? "") === nextStatus &&
+              (car.ignition_on ?? null) === ignition_on &&
+              (car.motion ?? null) === motion &&
+              (car.charge ?? null) === charge;
 
               // ✅ no-op: لا تعمل rerender لو مفيش تغيير فعلي
               if (samePos && sameMeta) return car;
@@ -421,6 +459,9 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
                 speed: nextSpeed,
                 direction: nextDir,
                 status: nextStatus,
+                ignition_on,
+                motion,
+                charge,
                 lastUpdate: Date.now(),
                 lastSignel: dateValue ?? car.lastSignel,
                 lastSignelGPS: dateValue ?? car.lastSignelGPS,
@@ -452,6 +493,39 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
       if (data.type === "alarm" && data.data?.imei) {
         const imei = data.data.imei;
         const car = carsRef.current.find((c) => c.serial_number === imei);
+        const attrs =
+          data.data.attributes ??
+          data.data.traccar_raw?.attributes ??
+          data.data.legacy?.attributes ??
+          {};
+        const nextIgnition = normalizeBool(
+          attrs?.ignition ??
+            data.data.ignition ??
+            data.data.accOn ??
+            data.data.acc_status ??
+            null,
+        );
+        const nextMotion = normalizeBool(attrs?.motion ?? data.data.motion ?? null);
+        const nextCharge = normalizeBool(attrs?.charge ?? data.data.charge ?? null);
+
+        if (nextIgnition !== null || nextMotion !== null || nextCharge !== null) {
+          setCars((prev) => {
+            const idx = prev.findIndex((c) => c?.serial_number === imei);
+            if (idx < 0) return prev;
+            const existing = prev[idx];
+            if (!existing) return prev;
+            const next = prev.slice();
+            next[idx] = {
+              ...existing,
+              ignition_on:
+                nextIgnition === null ? existing.ignition_on : nextIgnition,
+              motion: nextMotion === null ? existing.motion : nextMotion,
+              charge: nextCharge === null ? existing.charge : nextCharge,
+              lastUpdate: Date.now(),
+            };
+            return next;
+          });
+        }
 
         // 🔥 شغّل الصوت فقط لو ref.current = true
         if (notificationSoundRef.current && alarmAudioRef.current) {

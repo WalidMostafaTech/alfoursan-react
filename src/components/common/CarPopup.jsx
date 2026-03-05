@@ -1,5 +1,6 @@
 import { FaMapMarkerAlt, FaPlane, FaPlaneSlash, FaSatelliteDish, FaUser } from "react-icons/fa";
 import {
+  FiActivity,
   FiBarChart2,
   FiMenu,
   FiNavigation,
@@ -11,7 +12,11 @@ import {
 import { ImLocation2 } from "react-icons/im";
 import { HiOutlineCommandLine } from "react-icons/hi2";
 import { IoSpeedometerSharp } from "react-icons/io5";
-import { MdOutlineCarCrash, MdOutlineElectricBolt } from "react-icons/md";
+import {
+  MdOutlineCarCrash,
+  MdOutlineElectricBolt,
+  MdOutlinePowerSettingsNew,
+} from "react-icons/md";
 import { getCarStatus } from "../../utils/getCarStatus";
 import { useDispatch } from "react-redux";
 import {
@@ -57,13 +62,19 @@ const CarPopup = ({ car, showActions = true }) => {
   const formatDate = (isoString) => {
     if (!isoString) return "—";
     const date = new Date(isoString);
-    return date.toLocaleString("en-US", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    if (Number.isNaN(date.getTime())) return "—";
+    const pad = (n) => String(n).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    const mm = pad(date.getMonth() + 1);
+    const dd = pad(date.getDate());
+    const hh = pad(date.getHours());
+    const mi = pad(date.getMinutes());
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  };
+
+  const formatBoolLabel = (value, onLabel, offLabel) => {
+    if (value === null || value === undefined) return "—";
+    return value ? onLabel : offLabel;
   };
 
   const formatTotalDistance = () => {
@@ -104,6 +115,30 @@ const CarPopup = ({ car, showActions = true }) => {
     { label: formatDate(car.lastSignelGPS), icon: <ImLocation2 /> },
     // { label: `${car.speed} km/h`, icon: <IoSpeedometerSharp /> },
     { label: status, icon: <MdOutlineCarCrash /> },
+    {
+      label: formatBoolLabel(car?.ignition_on, "تشغيل", "إيقاف"),
+      icon: (
+        <MdOutlinePowerSettingsNew
+          style={{ color: car?.ignition_on ? "#22c55e" : "#ef4444" }}
+        />
+      ),
+    },
+    {
+      label: formatBoolLabel(car?.motion, "متحركة", "ثابتة"),
+      icon: (
+        <FiActivity style={{ color: car?.motion ? "#22c55e" : "#9ca3af" }} />
+      ),
+    },
+    { label: car.iccid, icon: `iccid`, colSpan: 2 },
+
+    {
+      label: formatBoolLabel(car?.charge, "شحن", "غير شاحن"),
+      icon: (
+        <MdOutlineElectricBolt
+          style={{ color: car?.charge ? "#f59e0b" : "#9ca3af" }}
+        />
+      ),
+    },
 
 
     // isFlightMode
@@ -114,7 +149,6 @@ const CarPopup = ({ car, showActions = true }) => {
     //   : { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
 
 
-    { label: car.iccid, icon: `iccid` },
 
     { label: car.contact_person, icon: <FaUser /> },
     { label: car.contact_phone, icon: <PiPhoneCall /> },
@@ -127,149 +161,157 @@ const CarPopup = ({ car, showActions = true }) => {
   const dispatch = useDispatch();
 
   return (
-    <div className="
-    bg-white p-3 rounded-xl shadow-lg space-y-3 w-[400px] max-w-[95vw]" dir="rtl">
-      {/* عنوان العربية */}
-      <h4 className="font-bold text-sm flex items-center justify-between gap-2">
-        <span className="line-clamp-1">{car.name}</span>
+    <div
+      className="bg-gradient-to-br from-white via-slate-50 to-white rounded-2xl shadow-xl border border-slate-200/70 w-[520px] max-w-[98vw] overflow-hidden"
+      dir="rtl"
+    >
+      {/* Header */}
+      <div className="px-4 py-2 flex items-center justify-between gap-3 bg-white/70 backdrop-blur border-b border-slate-100">
+        <div className="min-w-0">
+          <h4 className="font-bold text-sm text-slate-900 line-clamp-1">
+            {car.name}
+          </h4>
+          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+            {car.carnum || car.serial_number || "—"}
+          </p>
+        </div>
         <span
-          className="text-xs font-semibold whitespace-nowrap"
+          className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-slate-200 bg-white shadow-sm whitespace-nowrap"
           style={{ color }}
         >
-          {/* {isFlightMode && (
-            <span className="inline-flex items-center me-1" title="Flight mode">
-              <FaPlaneSlash style={{ color: "#ef4444" }} />
-            </span>
-          )} */}
           {status}
         </span>
-      </h4>
-
-      {/* بيانات */}
-      <div className="grid grid-cols-2 gap-2">
-        {carDetails.map((detail, index) => (
-          <div key={index} className="flex items-center gap-1.5">
-            <span className="text-sm text-gray-400"> {detail.icon}</span>
-            <p className="text-gray-600 text-xs font-medium line-clamp-1">
-              {detail.label || "—"}
-            </p>
-          </div>
-        ))}
       </div>
 
-      {/* العنوان */}
-      <a
-        href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
-        target="_blank"
-        rel="noreferrer"
-        className="flex gap-1 w-full hover:underline outline-none"
-      >
-        <FaMapMarkerAlt className="text-mainColor text-base mt-0.5" />
-        <p className="text-gray-600 font-medium flex-1 text-xs line-clamp-2">
-          {car.address}{" "}
-          {/* {addressCountdown && (
-            <span className="text-[10px] text-gray-400 whitespace-nowrap">
-              (تحديث بعد {addressCountdown.mm}:{addressCountdown.ss})
-            </span>
-          )} */}
-        </p>
-      </a>
+      {/* Details */}
+      <div className="px-4 pt-2 pb-2">
+        <div className="grid grid-cols-3 gap-1.5">
+          {carDetails.map((detail, index) => (
+            <div
+              key={index}
+              className={`flex items-center gap-1.5 rounded-xl border border-slate-100 bg-white/80 px-2 py-1 shadow-sm ${
+                detail.colSpan === 2 ? "col-span-2" : ""
+              }`}
+            >
+              <span className="text-base text-slate-400 bg-slate-50 border border-slate-100 rounded-lg p-1.5">
+                {detail.icon}
+              </span>
+              <p className="text-slate-700 text-[11px] font-medium leading-snug break-words">
+                {detail.label || "—"}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Address */}
+      <div className="px-4 pb-2">
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-1 hover:bg-slate-100 transition"
+        >
+          <span className="text-mainColor text-base mt-0.5">
+            <FaMapMarkerAlt />
+          </span>
+          <p className="text-slate-600 font-medium text-xs line-clamp-2">
+            {car.address}
+          </p>
+        </a>
+      </div>
 
       {showActions && (
-        <div className="w-full flex flex-wrap justify-between items-center gap-1 text-lg">
-          <span className="tooltip tooltip-top" data-tip="التفاصيل">
+        <div className="px-4 pb-3">
+          <div className="grid grid-cols-8 gap-2 text-lg">
             <button
               type="button"
               aria-label="التفاصيل"
-              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
-              onClick={() => dispatch(openDetailsModal({ section: "", id: car.id }))}
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              onClick={() =>
+                dispatch(openDetailsModal({ section: "", id: car.id }))
+              }
+              title="التفاصيل"
             >
               <FiMenu />
             </button>
-          </span>
 
-          <span className="tooltip tooltip-top" data-tip="تتبع">
             <a
               aria-label="Tracking"
               href={car.tracking_url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              title="تتبع"
             >
               <FiNavigation />
             </a>
-          </span>
 
-          <span className="tooltip tooltip-top" data-tip="Playback">
             <Link
               aria-label="Playback"
               target="_blank"
               to={`/car-replay/${car.serial_number}`}
               rel="noreferrer"
-              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              title="Playback"
             >
               <FiPlayCircle />
             </Link>
-          </span>
 
-          <span className="tooltip tooltip-top" data-tip="أوامر">
             <button
               type="button"
               aria-label="أوامر"
-              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
               onClick={() =>
                 dispatch(openDetailsModal({ section: "command", id: car.id }))
               }
+              title="أوامر"
             >
               <HiOutlineCommandLine />
             </button>
-          </span>
 
-          <span className="tooltip tooltip-top" data-tip="Fence">
             <button
               type="button"
               aria-label="Fence"
-              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
               onClick={() => dispatch(openPolygonMenu())}
+              title="Fence"
             >
               <PiPolygon />
             </button>
-          </span>
 
-          <span className="tooltip tooltip-top" data-tip="Street View">
             <a
               aria-label="Street View"
               href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              title="Street View"
             >
               <FiUser />
             </a>
-          </span>
 
-          <span className="tooltip tooltip-top" data-tip="تقارير">
             <a
               aria-label="Reports"
               href={car.report_url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              title="تقارير"
             >
               <FiBarChart2 />
             </a>
-          </span>
 
-          <span className="tooltip tooltip-top" data-tip="مشاركة">
             <button
               type="button"
               aria-label="مشاركة"
-              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
               onClick={() => dispatch(openShareModal(car.serial_number))}
+              title="مشاركة"
             >
               <FiShare2 />
             </button>
-          </span>
+          </div>
         </div>
       )}
     </div>
