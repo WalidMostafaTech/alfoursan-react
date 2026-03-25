@@ -8,6 +8,7 @@ import Actions from "./sections/Actions";
 
 const SideMenu = ({
   cars,
+  carsByBranch,
   filteredCars,
   handleSelectCar,
   selectedCarId,
@@ -48,7 +49,7 @@ const SideMenu = ({
             <IoMdClose size={22} />
           </button>
 
-          <Search cars={cars} handleSelectCar={handleSelectCar} />
+          <Search cars={carsByBranch ?? cars} handleSelectCar={handleSelectCar} />
 
           {/* الفروع */}
           <div className="w-full">
@@ -70,7 +71,7 @@ const SideMenu = ({
           <Filters
             activeFilter={activeFilter}
             setActiveFilter={setActiveFilter}
-            cars={cars}
+            cars={carsByBranch ?? cars}
           />
 
           <Actions />

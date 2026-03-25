@@ -144,12 +144,17 @@ const TenantDashboard = () => {
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "ar"));
   }, [cars]);
 
+  // سيارات مفلترة بالفرع فقط (تُمرَّر للـ Filters و Search لتعكس الخيارات والأعداد حسب الفرع)
+  const carsByBranch = useMemo(() => {
+    if (!activeBranchId) return cars || [];
+    return (cars || []).filter((car) => {
+      const carBranchId = car?.branch_effective_id != null ? String(car.branch_effective_id) : "";
+      return carBranchId === String(activeBranchId);
+    });
+  }, [cars, activeBranchId]);
+
   const filteredCars = useMemo(() => {
-    return cars.filter((car) => {
-      if (activeBranchId) {
-        const carBranchId = car?.branch_effective_id != null ? String(car.branch_effective_id) : "";
-        if (carBranchId !== String(activeBranchId)) return false;
-      }
+    return carsByBranch.filter((car) => {
       if (activeFilter === "all") return true;
       if (activeFilter === "inactive") return !!car.isInactive;
       if (activeFilter === "online") return !car.isOffline && !car.isInactive;
@@ -159,7 +164,7 @@ const TenantDashboard = () => {
       }
       return true;
     });
-  }, [cars, activeFilter, activeBranchId]);
+  }, [carsByBranch, activeFilter]);
 
   const [viewState, setViewState] = useState({
     longitude: center.lng,
@@ -360,6 +365,7 @@ const TenantDashboard = () => {
     <section className="w-screen h-screen relative">
       <SideMenu
         cars={cars}
+        carsByBranch={carsByBranch}
         filteredCars={filteredCars}
         isFetching={isFetching}
         handleSelectCar={handleSelectCar}
