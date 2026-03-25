@@ -6,8 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { getDevicesForCarReplay } from "../../../services/monitorServices";
 import { IoChevronDown } from "react-icons/io5";
 import { IoMdSearch } from "react-icons/io";
+import { useTranslation } from "react-i18next";
 
 const ReplayFilter = ({ onDateChange, serial_number }) => {
+  const { t } = useTranslation();
   const now = new Date();
   const today = now.toISOString().slice(0, 16);
 
@@ -22,12 +24,12 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
       (1000 * 60 * 60 * 24);
 
     if (diffDays < 0) {
-      toast.warning(" يجب أن يكون تاريخ النهاية بعد تاريخ البداية");
+      toast.warning(t("replayFilter.endDateAfterStart"));
       return;
     }
 
     if (diffDays > 30) {
-      toast.warning(" لا يمكن اختيار أكثر من 30 يومًا");
+      toast.warning(t("replayFilter.max30Days"));
       return;
     }
 
@@ -111,7 +113,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
         className="flex flex-wrap items-center justify-center gap-4"
       >
         <div className="flex items-center gap-1 relative">
-          <label className="text-sm">Device:</label>
+          <label className="text-sm">{t("replayFilter.device")}:</label>
 
           <div className={`dropdown ${isOpen ? "dropdown-open" : ""}`}>
             <div
@@ -122,7 +124,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
             >
               <span>
                 {devices?.find((d) => d.serial_number === serial_number)
-                  ?.name || "Select Device"}
+                  ?.name || t("replayFilter.selectDevice")}
               </span>
 
               <IoChevronDown
@@ -140,7 +142,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
               <div className="p-2">
                 <input
                   type="text"
-                  placeholder="Search device..."
+                  placeholder={t("replayFilter.searchDevice")}
                   className="input input-sm input-primary input-bordered w-full"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -151,13 +153,13 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
               <ul className="max-h-60 overflow-y-auto">
                 {isLoading && (
                   <li className="px-3 py-2 text-sm text-gray-400">
-                    جاري التحميل...
+                    {t("replayFilter.loading")}
                   </li>
                 )}
 
                 {!isLoading && filteredDevices.length === 0 && (
                   <li className="px-3 py-2 text-sm text-gray-400">
-                    لا يوجد نتائج
+                    {t("replayFilter.noResults")}
                   </li>
                 )}
 
@@ -182,7 +184,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
 
         <div className="flex items-center gap-1">
           <label className="text-sm" htmlFor="from">
-            From:
+            {t("replayFilter.from")}
           </label>
 
           <MainInput
@@ -196,7 +198,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
 
         <div className="flex items-center gap-1">
           <label className="text-sm" htmlFor="to">
-            To:
+            {t("replayFilter.to")}
           </label>
 
           <MainInput
@@ -211,7 +213,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
         <button
           type="submit"
           className="btn btn-circle btn-md btn-primary bg-mainColor border-mainColor"
-          title="Search"
+          title={t("replayFilter.search")}
         >
           <IoMdSearch className="text-2xl" />
         </button>
@@ -224,7 +226,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
           onClick={setYesterday}
           className="text-mainColor cursor-pointer hover:underline"
         >
-          Yesterday
+          {t("replayFilter.yesterday")}
         </button>
 
         <button
@@ -232,7 +234,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
           onClick={setToday}
           className="text-mainColor cursor-pointer hover:underline"
         >
-          Today
+          {t("replayFilter.today")}
         </button>
 
         <button
@@ -240,7 +242,7 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
           onClick={setThisWeek}
           className="text-mainColor cursor-pointer hover:underline"
         >
-          This Week
+          {t("replayFilter.thisWeek")}
         </button>
 
         <button
@@ -248,11 +250,11 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
           onClick={setLastWeek}
           className="text-mainColor cursor-pointer hover:underline"
         >
-          Last Week
+          {t("replayFilter.lastWeek")}
         </button>
 
         <p className="text-stone-600 text-center text-xs">
-          The maximum time range cannot exceed one month
+          {t("replayFilter.maxTimeRange")}
         </p>
       </div>
     </header>

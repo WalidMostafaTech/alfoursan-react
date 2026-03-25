@@ -1,4 +1,10 @@
-import { FaMapMarkerAlt, FaPlane, FaPlaneSlash, FaSatelliteDish, FaUser } from "react-icons/fa";
+import {
+  FaMapMarkerAlt,
+  FaPlane,
+  FaPlaneSlash,
+  FaSatelliteDish,
+  FaUser,
+} from "react-icons/fa";
 import {
   FiActivity,
   FiBarChart2,
@@ -27,21 +33,26 @@ import {
 import { PiPhoneCall, PiPolygon } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const CarPopup = ({ car, showActions = true }) => {
+  const { t } = useTranslation();
   const { status, color } = getCarStatus(car);
   const [now, setNow] = useState(() => Date.now());
 
-  // ✅ countdown بسيط لتحديث العنوان (فقط داخل الـ Popup المفتوح)
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
   const addressCountdown = useMemo(() => {
-    const minMs = typeof car?.addressMinIntervalMs === "number" ? car.addressMinIntervalMs : null;
-    if (minMs == null) return null; // لا نظهره إلا لو الصفحة مفعّلة الـ throttle
-    const last = typeof car?.lastGeocodeAtMs === "number" ? car.lastGeocodeAtMs : 0;
+    const minMs =
+      typeof car?.addressMinIntervalMs === "number"
+        ? car.addressMinIntervalMs
+        : null;
+    if (minMs == null) return null;
+    const last =
+      typeof car?.lastGeocodeAtMs === "number" ? car.lastGeocodeAtMs : 0;
     const remainingMs = Math.max(0, minMs - (now - last));
     const totalSec = Math.ceil(remainingMs / 1000);
     const mm = String(Math.floor(totalSec / 60)).padStart(2, "0");
@@ -49,74 +60,30 @@ const CarPopup = ({ car, showActions = true }) => {
     return { mm, ss };
   }, [car?.addressMinIntervalMs, car?.lastGeocodeAtMs, now]);
 
-  const isFlightMode = (() => {
-    return car?.status && car.status ==  "off";
-
-    const v = car?.voltageLevel;
-    if (v == null || v === "") return true;
-    const n = typeof v === "number" ? v : Number.parseFloat(String(v));
-    if (!Number.isFinite(n)) return true;
-    return n <= 0;
-  })();
-
   const formatDate = (isoString) => {
-    if (!isoString) return "—";
+    if (!isoString) return t("carPopup.noData");
     const date = new Date(isoString);
-    if (Number.isNaN(date.getTime())) return "—";
+    if (Number.isNaN(date.getTime())) return t("carPopup.noData");
     const pad = (n) => String(n).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    const mm = pad(date.getMonth() + 1);
-    const dd = pad(date.getDate());
-    const hh = pad(date.getHours());
-    const mi = pad(date.getMinutes());
-    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
   const formatBoolLabel = (value, onLabel, offLabel) => {
-    if (value === null || value === undefined) return "—";
+    if (value === null || value === undefined) return t("carPopup.noData");
     return value ? onLabel : offLabel;
   };
 
-  const formatTotalDistance = () => {
-    // Prefer Traccar total distance (meters) coming from backend as device_total_distance
-    const meters =
-      car?.device_total_distance ??
-      car?.totalDistance ??
-      car?.attributes?.totalDistance ??
-      null;
-      // return `${meters.toFixed(1)} km`;
-
-    if (meters != null && Number.isFinite(Number(meters))) {
-      const km = Number(meters) / 1000;
-      return `${km.toFixed(1)} km`;
-    }
-
-    // If backend sends a ready-to-display km field, use it WITHOUT converting again
-    if (car?.totalDistanceKm != null && Number.isFinite(Number(car.totalDistanceKm))) {
-      return `${Number(car.totalDistanceKm).toFixed(1)} km`;
-    }
-
-    // Legacy fallback
-    if (car?.km_total != null && Number.isFinite(Number(car.km_total))) {
-      return `${Number(car.km_total).toFixed(1)} km`;
-    }
-
-    return "—";
-  };
-
-  // ملاحظة: تجنب console.log داخل Popup لأن تحديثات العربيات كثيفة وقد تبطئ المتصفح
-
   const carDetails = [
-    //totalDistance 
-    // { label: formatTotalDistance(), icon: <FiNavigation /> },
     { label: formatDate(car.lastSignel), icon: <FaSatelliteDish /> },
-    { label: "Wired", icon: <FiWifi /> },
-    
+    { label: t("carPopup.wired"), icon: <FiWifi /> },
     { label: formatDate(car.lastSignelGPS), icon: <ImLocation2 /> },
-    // { label: `${car.speed} km/h`, icon: <IoSpeedometerSharp /> },
     { label: status, icon: <MdOutlineCarCrash /> },
     {
-      label: formatBoolLabel(car?.ignition_on, "تشغيل", "إيقاف"),
+      label: formatBoolLabel(
+        car?.ignition_on,
+        t("carPopup.on"),
+        t("carPopup.off"),
+      ),
       icon: (
         <MdOutlinePowerSettingsNew
           style={{ color: car?.ignition_on ? "#22c55e" : "#ef4444" }}
@@ -124,38 +91,30 @@ const CarPopup = ({ car, showActions = true }) => {
       ),
     },
     {
-      label: formatBoolLabel(car?.motion, "متحركة", "ثابتة"),
+      label: formatBoolLabel(
+        car?.motion,
+        t("carPopup.moving"),
+        t("carPopup.stopped"),
+      ),
       icon: (
         <FiActivity style={{ color: car?.motion ? "#22c55e" : "#9ca3af" }} />
       ),
     },
     { label: car.iccid, icon: `iccid`, colSpan: 2 },
-
     {
-      label: formatBoolLabel(car?.charge, "شحن", "غير شاحن"),
+      label: formatBoolLabel(
+        car?.charge,
+        t("carPopup.charging"),
+        t("carPopup.notCharging"),
+      ),
       icon: (
         <MdOutlineElectricBolt
           style={{ color: car?.charge ? "#f59e0b" : "#9ca3af" }}
         />
       ),
     },
-
-
-    // isFlightMode
-    //   ? {
-    //       label: "Flight mode",
-    //       icon: <FaPlane style={{ color: "#ef4444" }} />,
-    //     }
-    //   : { label: car.voltageLevel, icon: <MdOutlineElectricBolt /> },
-
-
-
     { label: car.contact_person, icon: <FaUser /> },
     { label: car.contact_phone, icon: <PiPhoneCall /> },
-
-    // إضافة اسم السائق و رقم الاي دي 
-
-
   ];
 
   const dispatch = useDispatch();
@@ -165,14 +124,13 @@ const CarPopup = ({ car, showActions = true }) => {
       className="bg-gradient-to-br from-white via-slate-50 to-white rounded-2xl shadow-xl border border-slate-200/70 w-[520px] max-w-[98vw] overflow-hidden"
       dir="rtl"
     >
-      {/* Header */}
       <div className="px-4 py-2 flex items-center justify-between gap-3 bg-white/70 backdrop-blur border-b border-slate-100">
         <div className="min-w-0">
           <h4 className="font-bold text-sm text-slate-900 line-clamp-1">
             {car.name}
           </h4>
           <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-            {car.carnum || car.serial_number || "—"}
+            {car.carnum || car.serial_number || t("carPopup.noData")}
           </p>
         </div>
         <span
@@ -183,7 +141,6 @@ const CarPopup = ({ car, showActions = true }) => {
         </span>
       </div>
 
-      {/* Details */}
       <div className="px-4 pt-2 pb-2">
         <div className="grid grid-cols-3 gap-1.5">
           {carDetails.map((detail, index) => (
@@ -197,14 +154,13 @@ const CarPopup = ({ car, showActions = true }) => {
                 {detail.icon}
               </span>
               <p className="text-slate-700 text-[11px] font-medium leading-snug break-words">
-                {detail.label || "—"}
+                {detail.label || t("carPopup.noData")}
               </p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Address */}
       <div className="px-4 pb-2">
         <a
           href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
@@ -226,88 +182,76 @@ const CarPopup = ({ car, showActions = true }) => {
           <div className="grid grid-cols-8 gap-2 text-lg">
             <button
               type="button"
-              aria-label="التفاصيل"
-              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              title={t("carPopup.details")}
               onClick={() =>
                 dispatch(openDetailsModal({ section: "", id: car.id }))
               }
-              title="التفاصيل"
+              className="btn"
             >
               <FiMenu />
             </button>
 
             <a
-              aria-label="Tracking"
               href={car.tracking_url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
-              title="تتبع"
+              title={t("carPopup.tracking")}
+              className="btn"
             >
               <FiNavigation />
             </a>
 
             <Link
-              aria-label="Playback"
-              target="_blank"
               to={`/car-replay/${car.serial_number}`}
-              rel="noreferrer"
-              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
-              title="Playback"
+              target="_blank"
+              title={t("carPopup.playback")}
+              className="btn"
             >
               <FiPlayCircle />
             </Link>
 
             <button
-              type="button"
-              aria-label="أوامر"
-              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              title={t("carPopup.commands")}
               onClick={() =>
                 dispatch(openDetailsModal({ section: "command", id: car.id }))
               }
-              title="أوامر"
+              className="btn"
             >
               <HiOutlineCommandLine />
             </button>
 
             <button
-              type="button"
-              aria-label="Fence"
-              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              title={t("carPopup.fence")}
               onClick={() => dispatch(openPolygonMenu())}
-              title="Fence"
+              className="btn"
             >
               <PiPolygon />
             </button>
 
             <a
-              aria-label="Street View"
               href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
-              title="Street View"
+              title={t("carPopup.streetView")}
+              className="btn"
             >
               <FiUser />
             </a>
 
             <a
-              aria-label="Reports"
               href={car.report_url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
-              title="تقارير"
+              title={t("carPopup.reports")}
+              className="btn"
             >
               <FiBarChart2 />
             </a>
 
             <button
-              type="button"
-              aria-label="مشاركة"
-              className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-mainColor/10 hover:text-mainColor hover:border-mainColor/30 transition"
+              title={t("carPopup.share")}
               onClick={() => dispatch(openShareModal(car.serial_number))}
-              title="مشاركة"
+              className="btn"
             >
               <FiShare2 />
             </button>

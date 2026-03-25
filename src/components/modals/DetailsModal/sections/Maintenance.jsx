@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 import {
   getMaintenances,
@@ -12,6 +13,7 @@ import MainInput from "../../../form/MainInput";
 import FormBtn from "../../../form/FormBtn";
 
 const Maintenance = ({ deviceID, deviceSettings }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     type: "mileage",
@@ -36,7 +38,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
   const { mutate, isPending } = useMutation({
     mutationFn: (data) => createMaintenances(data),
     onSuccess: () => {
-      toast.success("تمت إضافة الصيانة بنجاح ✅");
+      toast.success(t("maintenance.addSuccess"));
       setIsOpen(false);
       refetch();
       setFormData({
@@ -69,7 +71,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
   const { mutate: deleteMutation, isPending: isDeleting } = useMutation({
     mutationFn: (id) => deleteMaintenances(id),
     onSuccess: () => {
-      toast.success("تم حذف الصيانة بنجاح 🗑️");
+      toast.success(t("maintenance.deleteSuccess"));
       refetch();
     },
     onError: (error) => {
@@ -79,7 +81,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
   });
 
   const handleDelete = (id) => {
-    if (window.confirm("هل أنت متأكد من حذف هذا السجل؟")) {
+    if (window.confirm(t("maintenance.confirmDelete"))) {
       deleteMutation(id);
     }
   };
@@ -90,7 +92,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
     <article>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-semibold tracking-wide">
-          الصيانة بالأميال{" "}
+          {t("maintenance.title")}{" "}
           <span className="bg-sky-600 text-white py-1 px-2 rounded text-sm">
             {Number(deviceSettings?.device?.km_total).toFixed(2)} km
           </span>
@@ -105,7 +107,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
               : "btn-primary"
           }`}
         >
-          {isOpen ? "إلغاء" : "+ إضافة صيانة"}
+          {isOpen ? t("maintenance.cancel") : t("maintenance.addMaintenance")}
         </button>
       </div>
 
@@ -125,7 +127,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <MainInput
                 id="deviceName"
-                label="اسم الجهاز"
+                label={t("maintenance.deviceName")}
                 value="R12L-F-424279"
                 disabled
               />
@@ -133,7 +135,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
               <MainInput
                 id="planning_time"
                 type="date"
-                label="الوقت المخطط له"
+                label={t("maintenance.plannedTime")}
                 value={formData.planning_time}
                 onChange={handleChange}
               />
@@ -141,19 +143,19 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
               <MainInput
                 id="type"
                 type="select"
-                label="النوع"
+                label={t("maintenance.type")}
                 value={formData.type}
                 onChange={handleChange}
                 options={[
-                  { value: "comprehensive", label: "الصيانة الشاملة" },
-                  { value: "mileage", label: "الصيانة بالأميال" },
-                  { value: "date", label: "الصيانة بالموعد" },
+                  { value: "comprehensive", label: t("maintenance.comprehensive") },
+                  { value: "mileage", label: t("maintenance.mileage") },
+                  { value: "date", label: t("maintenance.date") },
                 ]}
               />
 
               <MainInput
                 id="planned_miles"
-                label="الأميال المخطط له"
+                label={t("maintenance.plannedMiles")}
                 value={formData.planned_miles}
                 onChange={handleChange}
               />
@@ -162,14 +164,14 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
               <div className="form-control w-full max-w-xs" dir="rtl">
                 <label className="label">
                   <span className="label-text text-sm font-bold text-gray-700">
-                    الإشعارات
+                    {t("maintenance.notifications")}
                   </span>
                 </label>
 
                 <div className="flex items-center gap-4 mt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <span className="text-gray-700 font-medium text-xs">
-                      تذكير بالصيانة
+                      {t("maintenance.maintenanceReminder")}
                     </span>
                     <input
                       id="notification"
@@ -182,7 +184,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
 
                   <label className="flex items-center gap-2 cursor-pointer">
                     <span className="text-gray-700 font-medium text-xs">
-                      تذكير المستخدم النهائي
+                      {t("maintenance.endUserReminder")}
                     </span>
                     <input
                       id="end_user"
@@ -197,7 +199,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
             </div>
 
             <FormBtn
-              title={isPending ? "جاري الحفظ..." : "حفظ"}
+              title={isPending ? t("maintenance.saving") : t("maintenance.save")}
               variant="success"
               disabled={isPending}
             />
@@ -210,12 +212,12 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
         <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm text-xs">
           <thead className="bg-mainColor/10 text-mainColor">
             <tr>
-              <th className="py-2 px-2 text-right">#</th>
-              <th className="py-2 px-2 text-right">النوع</th>
-              <th className="py-2 px-2 text-right">وقت المخطط لها</th>
-              <th className="py-2 px-2 text-right">الأميال المخطط لها</th>
-              <th className="py-2 px-2 text-right">الحالة</th>
-              <th className="py-2 px-2 text-right">الإجراءات</th>
+              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.number")}</th>
+              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.type")}</th>
+              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.plannedTime")}</th>
+              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.plannedMiles")}</th>
+              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.status")}</th>
+              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.actions")}</th>
             </tr>
           </thead>
 
@@ -249,7 +251,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
                       onClick={() => handleDelete(item.id)}
                       disabled={isDeleting}
                     >
-                      {isDeleting ? "جارٍ الحذف..." : "حذف"}
+                      {isDeleting ? t("maintenance.deleting") : t("maintenance.deleteSuccess")}
                     </button>
                   </td>
                 </tr>
@@ -257,7 +259,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
             ) : (
               <tr>
                 <td colSpan="6" className="text-center py-6 text-gray-500">
-                  لا توجد سجلات صيانة متاحة
+                  {t("maintenance.noRecords")}
                 </td>
               </tr>
             )}

@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { FiX } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
 import { updateDialogCar } from "../../../../services/monitorServices";
 
 const Details = ({ deviceSettings, refetch }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: "",
     sim_number: "",
@@ -51,7 +53,7 @@ const Details = ({ deviceSettings, refetch }) => {
   const { mutate: updateCar, isPending } = useMutation({
     mutationFn: ({ id, formData }) => updateDialogCar(id, formData),
     onSuccess: (res) => {
-      toast.success("تم تحديث بيانات السيارة بنجاح ✅");
+      toast.success(t("details.updateSuccess"));
 
       // ✅ حدث بيانات السيارة مباشرة داخل TenantDashboard باستخدام استجابة API
       // res shape: { device_id, imei, device }
@@ -127,55 +129,55 @@ const Details = ({ deviceSettings, refetch }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <MainInput
             id="name"
-            label="اسم الجهاز"
+            label={t("details.deviceName")}
             value={formData.name}
             onChange={handleChange}
           />
           <MainInput
             id="importTime"
-            label="وقت الاستيراد"
+            label={t("details.importTime")}
             value={device.imported_at || ""}
             disabled
           />
           <MainInput
             id="model"
-            label="الموديل"
+            label={t("details.model")}
             value={device.device_model?.name_ar || ""}
             disabled
           />
           <MainInput
             id="activationTime"
-            label="وقت التفعيل"
+            label={t("details.activationTime")}
             value={device.activated_at || ""}
             disabled
           />
           <MainInput
             id="imei"
-            label="IMEI"
+            label={t("details.imei")}
             value={device.serial_number || ""}
             disabled
           />
           <MainInput
             id="expiryDate"
-            label="انتهاء صلاحية المنصة"
+            label={t("details.expiryDate")}
             value={device.platform_expiry || ""}
             disabled
           />
           <MainInput
             id="sim_number"
-            label="SIM card number"
+            label={t("details.simCardNumber")}
             value={formData.sim_number}
             onChange={handleChange}
           />
           <MainInput
             id="iccid"
-            label="iccid"
+            label={t("details.iccid")}
             value={formData.iccid}
             onChange={handleChange}
           />
         </div>
 
-        <div className="divider my-3">المركبة</div>
+        <div className="divider my-3">{t("details.vehicle")}</div>
 
         {/* ✅ نموذج التحديث */}
         <form onSubmit={handleSubmit}>
@@ -183,7 +185,7 @@ const Details = ({ deviceSettings, refetch }) => {
             <MainInput
               id="carnum"
               name="carnum"
-              label="رقم السيارة"
+              label={t("details.carNumber")}
               value={formData.carnum}
               onChange={handleChange}
             />
@@ -191,7 +193,7 @@ const Details = ({ deviceSettings, refetch }) => {
             <MainInput
               id="fuel_consumption_per_100km"
               name="fuel_consumption_per_100km"
-              label="استهلاك الوقود / 100 كم"
+              label={t("details.fuelConsumption")}
               value={formData.fuel_consumption_per_100km}
               onChange={handleChange}
             />
@@ -199,7 +201,7 @@ const Details = ({ deviceSettings, refetch }) => {
             <MainInput
               id="contact_phone"
               name="contact_phone"
-              label="رقم الهاتف"
+              label={t("details.phoneNumber")}
               value={formData.contact_phone}
               onChange={handleChange}
             />
@@ -207,7 +209,7 @@ const Details = ({ deviceSettings, refetch }) => {
             <MainInput
               id="contact_person"
               name="contact_person"
-              label="الشخص الذي يمكن الاتصال به"
+              label={t("details.contactPerson")}
               value={formData.contact_person}
               onChange={handleChange}
             />
@@ -218,7 +220,7 @@ const Details = ({ deviceSettings, refetch }) => {
                 <MainInput
                   id="image"
                   type="file"
-                  label={"صورة السيارة"}
+                  label={t("details.carImage")}
                   onChange={handleImageChange}
                 />
                 {preview && (
@@ -243,7 +245,7 @@ const Details = ({ deviceSettings, refetch }) => {
             {/* ✅ اختيار الأيقونة */}
             <div>
               <p className="mb-2 text-sm font-medium text-gray-900">
-                أيقونة السيارة
+                {t("details.carIcon")}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 {icons.map((icon, index) => (
@@ -263,14 +265,14 @@ const Details = ({ deviceSettings, refetch }) => {
             <MainInput
               id="notes"
               name="notes"
-              label="ملاحظات"
+              label={t("details.notes")}
               type="textarea"
               value={formData.notes}
               onChange={handleChange}
             />
           </div>
 
-          <FormBtn title={"تحديث البيانات"} disabled={isPending} />
+          <FormBtn title={t("details.updateData")} disabled={isPending} />
         </form>
       </div>
     </section>

@@ -1,6 +1,8 @@
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 
 const DeviceNamePopup = ({ car }) => {
+  const { t } = useTranslation();
   const { showDeviceName } = useSelector((state) => state.map);
 
   return (
@@ -11,7 +13,7 @@ const DeviceNamePopup = ({ car }) => {
       } transition-all duration-500 ease-in-out origin-top`}
       onClick={(e) => e.stopPropagation()}
     >
-      {car.name || "بدون اسم"}
+      {car.name || t("deviceNamePopup.noName")}
 
       <span className="absolute bg-white w-2 h-2 rotate-45 -top-1 left-1/2 translate-x-[-50%]" />
     </div>

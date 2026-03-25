@@ -8,6 +8,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 // ✅ Schema التحقق
 const shareSchema = z.object({
@@ -22,6 +23,7 @@ const shareSchema = z.object({
 });
 
 const ShareModal = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { shareModal } = useSelector((state) => state.modals);
   const { imei } = shareModal || null;
@@ -29,19 +31,19 @@ const ShareModal = () => {
 
   // 🧠 أوامر متاحة
   const commands = [
-    { label: "استعلام الموقع", value: "WHERE#" },
-    { label: "قطع الزيت والكهرباء", value: "RELAY,1#" },
-    { label: "إعادة الزيت والكهرباء", value: "RELAY,0#" },
-    { label: "استعلام الحالة", value: "STATUS#" },
-    { label: "فتح الباب", value: "CTRDOOR,1#" },
-    { label: "إغلاق الباب", value: "CTRDOOR,0#" },
+    { label: t("shareModal.queryLocation"), value: "WHERE#" },
+    { label: t("shareModal.cutOilAndPower"), value: "RELAY,1#" },
+    { label: t("shareModal.restoreOilAndPower"), value: "RELAY,0#" },
+    { label: t("shareModal.statusQuery"), value: "STATUS#" },
+    { label: t("shareModal.openDoor"), value: "CTRDOOR,1#" },
+    { label: t("shareModal.closeDoor"), value: "CTRDOOR,0#" },
   ];
 
   // 🧠 أنواع المدة
   const unitTypes = [
-    { value: "hours", label: "ساعات" },
-    { value: "minutes", label: "دقايق" },
-    { value: "days", label: "أيام" },
+    { value: "hours", label: t("shareModal.hours") },
+    { value: "minutes", label: t("shareModal.minutes") },
+    { value: "days", label: t("shareModal.days") },
   ];
 
   // 🎯 React Hook Form setup
@@ -70,7 +72,7 @@ const ShareModal = () => {
       console.log("daadadad", data);
 
       setShareLink(data?.url);
-      toast.success(" تم إنشاء الرابط بنجاح!");
+      toast.success(t("shareModal.linkCreated"));
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message);
@@ -79,7 +81,7 @@ const ShareModal = () => {
 
   // 📤 عند الإرسال
   const onSubmit = (values) => {
-    if (!imei) return toast.error("لا يوجد IMEI محدد");
+    if (!imei) return toast.error(t("shareModal.noImei"));
 
     const payload = {
       imei,
@@ -108,7 +110,7 @@ const ShareModal = () => {
         </button>
 
         <h3 className="font-bold text-lg text-center mb-6">
-          مشاركة رابط التتبع
+          {t("shareModal.title")}
         </h3>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -116,7 +118,7 @@ const ShareModal = () => {
           <div className="form-control">
             <label className="label">
               <span className="label-text font-medium text-sm mb-2">
-                مدة صلاحية الرابط
+                {t("shareModal.durationLabel")}
               </span>
             </label>
             <div className="flex gap-2">
@@ -141,7 +143,7 @@ const ShareModal = () => {
           <div className="form-control">
             <label className="label">
               <span className="label-text font-medium mb-1 text-sm">
-                الأوامر
+                {t("shareModal.commandsLabel")}
               </span>
             </label>
             <div className="border border-base-300 rounded-lg p-3 bg-base-100 flex flex-col gap-2 max-h-40 overflow-y-auto">
@@ -173,7 +175,7 @@ const ShareModal = () => {
           {shareLink && (
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium mb-1">الرابط</span>
+                <span className="label-text font-medium mb-1">{t("shareModal.linkLabel")}</span>
               </label>
               <div className="join w-full">
                 <div className="flex-1">
@@ -182,12 +184,12 @@ const ShareModal = () => {
                 <button
                   onClick={() => {
                     copyToClipboard(shareLink);
-                    toast.success("تم نسخ الرابط بنجاح");
+                    toast.success(t("shareModal.linkCopied"));
                   }}
                   type="button"
                   className="btn btn-sm join-item"
                 >
-                  نسخ
+                  {t("shareModal.copy")}
                 </button>
                 <a
                   href={shareLink}
@@ -195,7 +197,7 @@ const ShareModal = () => {
                   rel="noreferrer"
                   className="btn btn-sm btn-primary join-item"
                 >
-                  فتح
+                  {t("shareModal.open")}
                 </a>
               </div>
             </div>
@@ -208,14 +210,14 @@ const ShareModal = () => {
               onClick={closeModal}
               className="btn btn-sm btn-outline px-8"
             >
-              إلغاء
+              {t("shareModal.cancel")}
             </button>
             <button
               type="submit"
               className="btn btn-sm btn-primary px-8"
               disabled={isPending}
             >
-              {isPending ? "جاري الإرسال..." : "إرسال"}
+              {isPending ? t("shareModal.sending") : t("shareModal.send")}
             </button>
           </div>
         </form>

@@ -11,6 +11,7 @@ import { IoMdSpeedometer } from "react-icons/io";
 import { IoCalendarSharp } from "react-icons/io5";
 import { IoMdLocate } from "react-icons/io";
 import { FaCrosshairs } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
 
 import ReplayControls from "./ReplayControls/ReplayControls";
 import ReplayFilter from "./ReplayFilter/ReplayFilter";
@@ -341,6 +342,7 @@ const simplifySegmentsToMaxPoints = (rawSegments, points, maxTotalPoints) => {
 };
 
 const CarReplay = () => {
+  const { t } = useTranslation();
   const { serial_number } = useParams();
   const [showInfo, setShowInfo] = useState(false);
   const [address, setAddress] = useState("");
@@ -974,7 +976,7 @@ const CarReplay = () => {
       (new Date(to).getTime() - new Date(from).getTime()) /
       (1000 * 60 * 60 * 24);
     if (diffDays > 30) {
-      toast.warn("⚠️ لا يمكن اختيار أكثر من 30 يومًا");
+      toast.warn(t("carReplay.max30DaysWarning"));
       return;
     }
 

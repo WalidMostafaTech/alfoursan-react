@@ -1,8 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 import { deleteCommand } from "../../../../services/monitorServices";
 
 const PreviousCommands = ({ deviceSettings, refetch }) => {
+  const { t } = useTranslation();
   const commands = deviceSettings?.commands || [];
 
   // ✅ دالة تنسيق التاريخ
@@ -23,7 +25,7 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
   const { mutate: removeCommand, isPending } = useMutation({
     mutationFn: deleteCommand,
     onSuccess: () => {
-      toast.success("✅ Command deleted successfully");
+      toast.success(t("previousCommands.deleteSuccess"));
       refetch(); // 🔄 تحديث البيانات لو متوفر refetch
     },
     onError: (error) => {
@@ -35,7 +37,7 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
   // ✅ تنفيذ الحذف مع تأكيد
   const handleDelete = (id) => {
     if (!id) return;
-    if (window.confirm("هل أنت متأكد أنك تريد حذف هذا الأمر؟")) {
+    if (window.confirm(t("previousCommands.confirmDelete"))) {
       removeCommand(id);
     }
   };
@@ -45,14 +47,14 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
       <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm text-xs">
         <thead className="bg-mainColor/10 text-mainColor">
           <tr>
-            <th className="py-2 px-2 text-left">No.</th>
-            <th className="py-2 px-2 text-left">Command name</th>
-            <th className="py-2 px-2 text-left">Command content</th>
-            <th className="py-2 px-2 text-left">Status</th>
-            <th className="py-2 px-2 text-left">Send time</th>
-            <th className="py-2 px-2 text-left">Reply Content</th>
-            <th className="py-2 px-2 text-left">Response Time</th>
-            <th className="py-2 px-2 text-left">Operate</th>
+            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.number")}</th>
+            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.commandName")}</th>
+            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.commandContent")}</th>
+            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.status")}</th>
+            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.sendTime")}</th>
+            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.replyContent")}</th>
+            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.responseTime")}</th>
+            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.operate")}</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
@@ -98,7 +100,7 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
                       : "bg-red-600 hover:bg-red-700"
                   }`}
                 >
-                  {isPending ? "Deleting..." : "Delete"}
+                  {isPending ? t("previousCommands.deleting") : t("previousCommands.deleteSuccess")}
                 </button>
               </td>
             </tr>

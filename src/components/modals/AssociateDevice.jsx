@@ -12,8 +12,10 @@ import {
 import Loader from "../Loading/Loader";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const AssociateDevice = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
 
   const { associateDeviceModal } = useSelector((state) => state.modals);
@@ -52,7 +54,7 @@ const AssociateDevice = () => {
     mutationFn: () =>
       addDeviceToFence(associateDeviceModal.id, selectedDevices),
     onSuccess: () => {
-      toast.success("تم ربط الأجهزة بنجاح");
+      toast.success(t("associateDevice.attachSuccess"));
       refetch();
       setSelectedDevices([]);
     },
@@ -66,7 +68,7 @@ const AssociateDevice = () => {
     mutationFn: () =>
       removeDeviceFromFence(associateDeviceModal.id, selectedDevices),
     onSuccess: () => {
-      toast.success("تم حذف الأجهزة بنجاح");
+      toast.success(t("associateDevice.deleteSuccess"));
       refetch();
       setSelectedDevices([]);
     },
@@ -79,7 +81,7 @@ const AssociateDevice = () => {
   const handleAttachDevice = async (deviceId) => {
     try {
       await addDeviceToFence(associateDeviceModal.id, [deviceId]);
-      toast.success("تم ربط الجهاز بنجاح");
+      toast.success(t("associateDevice.attachDeviceSuccess"));
       refetch();
     } catch (error) {
       console.error("Error attaching device:", error);
@@ -142,7 +144,7 @@ const AssociateDevice = () => {
       <div className="modal-box max-w-5xl p-0 mt-10" dir="rtl">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-300">
-          <h3 className="text-lg font-semibold">ربط الأجهزة</h3>
+          <h3 className="text-lg font-semibold">{t("associateDevice.title")}</h3>
           <button
             onClick={closeModal}
             className="btn btn-sm btn-circle btn-ghost"
@@ -155,19 +157,19 @@ const AssociateDevice = () => {
         <div className="px-6 py-4 border-b border-gray-300 bg-gray-50">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
-              <label className="font-medium">العميل:</label>
+              <label className="font-medium">{t("associateDevice.client")}:</label>
 
               <div className="w-40">
                 <MainInput
                   type="select"
-                  options={[{ label: "الكل", value: "all" }]}
+                  options={[{ label: t("associateDevice.all"), value: "all" }]}
                   disabled
                 />
               </div>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              <label className="font-medium">الجهاز:</label>
+              <label className="font-medium">{t("associateDevice.device")}:</label>
 
               <div className="w-40">
                 <MainInput
@@ -180,15 +182,15 @@ const AssociateDevice = () => {
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              <label className="font-medium">الحالة:</label>
+              <label className="font-medium">{t("associateDevice.status")}:</label>
 
               <div className="w-40">
                 <MainInput
                   type="select"
                   options={[
-                    { label: "الكل", value: "all" },
-                    { label: "مرتبط", value: "attached" },
-                    { label: "غير مرتبط", value: "not_attached" },
+                    { label: t("associateDevice.all"), value: "all" },
+                    { label: t("associateDevice.attached"), value: "attached" },
+                    { label: t("associateDevice.notAttached"), value: "not_attached" },
                   ]}
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
@@ -219,7 +221,7 @@ const AssociateDevice = () => {
                   disabled={selectedDevices.length === 0 || isAdding}
                   onClick={() => addDevices()}
                 >
-                  {isAdding ? "جارٍ الربط..." : "ربط مجموعة"}
+                  {isAdding ? t("associateDevice.attaching") : t("associateDevice.attachGroup")}
                 </button>
 
                 <button
@@ -227,7 +229,7 @@ const AssociateDevice = () => {
                   className="btn btn-error btn-sm "
                   disabled={selectedDevices.length === 0 || isRemoving}
                 >
-                  {isRemoving ? "جارٍ الحذف..." : "حذف مجموعة"}
+                  {isRemoving ? t("associateDevice.deleting") : t("associateDevice.deleteGroup")}
                 </button>
               </div>
             </div>
@@ -245,12 +247,12 @@ const AssociateDevice = () => {
                         onChange={handleSelectAll}
                       />
                     </th>
-                    <th>الجهاز</th>
+                    <th>{t("associateDevice.deviceName")}</th>
                     <th>IMEI</th>
-                    <th>الموديل</th>
-                    <th>الحالة</th>
-                    <th>العضوية</th>
-                    <th>العمليات</th>
+                    <th>{t("associateDevice.model")}</th>
+                    <th>{t("associateDevice.status")}</th>
+                    <th>{t("associateDevice.membership")}</th>
+                    <th>{t("associateDevice.operations")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -281,7 +283,7 @@ const AssociateDevice = () => {
                             className="text-mainColor font-bold hover:underline cursor-pointer"
                             onClick={() => handleAttachDevice(device.id)}
                           >
-                            ربط
+                            {t("associateDevice.attach")}
                           </button>
                         </td>
                       </tr>
@@ -292,7 +294,7 @@ const AssociateDevice = () => {
                         colSpan="7"
                         className="text-center text-lg font-medium bg-mainColor/20"
                       >
-                        لا يوجد اجهزة
+                        {t("associateDevice.noDevices")}
                       </td>
                     </tr>
                   )}
@@ -347,7 +349,7 @@ const AssociateDevice = () => {
               </div>
 
               <div className="text-black">
-                الكل :{" "}
+                {t("associateDevice.total")} : {" "}
                 <span className="font-bold text-mainColor">
                   {pagination?.total}
                 </span>

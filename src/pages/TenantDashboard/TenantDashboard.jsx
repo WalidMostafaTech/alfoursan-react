@@ -17,6 +17,7 @@ import GeoFenceModal from "../../components/modals/GeoFenceModal";
 import AssociateDevice from "../../components/modals/AssociateDevice";
 import SupportModal from "../../components/modals/SupportModal";
 import { changeZoom } from "../../store/mapSlice";
+import { useTranslation } from "react-i18next";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
@@ -37,6 +38,7 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 }
 
 const TenantDashboard = () => {
+  const { t } = useTranslation();
   const { data: devices, isFetching } = useQuery({
     queryKey: ["devices", { full: false }],
     queryFn: getDevices,
@@ -230,11 +232,11 @@ const TenantDashboard = () => {
 
   // 🔍 دوال العنوان (Google / Mapbox)
   const getGoogleAddress = (lat, lng, cb) => {
-    if (!window.google) return cb("عنوان غير متاح");
+    if (!window.google) return cb(t("tenantDashboard.addressUnavailable"));
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === "OK" && results[0]) cb(results[0].formatted_address);
-      else cb("لم يتم العثور على عنوان");
+      else cb(t("tenantDashboard.addressNotFound"));
     });
   };
 
@@ -245,10 +247,10 @@ const TenantDashboard = () => {
       );
       const data = await res.json();
       if (data.features?.length) cb(data.features[0].place_name);
-      else cb("لم يتم العثور على عنوان");
+      else cb(t("tenantDashboard.addressNotFound"));
     } catch (err) {
       console.error(err);
-      cb("خطأ في جلب العنوان");
+      cb(t("tenantDashboard.addressError"));
     }
   };
 
@@ -337,7 +339,7 @@ const TenantDashboard = () => {
         isNaN(lat) ||
         isNaN(lng)
       ) {
-        toast.warning(" لا يمكن تحديد موقع هذه السيارة حاليًا");
+        toast.warning(t("tenantDashboard.locationUnavailable"));
         return setSelectedCarId(null);
       }
 
@@ -358,7 +360,7 @@ const TenantDashboard = () => {
     [dispatch, mapProvider]
   );
 
-  if (loadError) return <div>فشل تحميل الخريطة</div>;
+  if (loadError) return <div>{t("tenantDashboard.mapLoadError")}</div>;
   if (!isLoaded && mapProvider === "google") return <LoadingPage />;
 
   return (

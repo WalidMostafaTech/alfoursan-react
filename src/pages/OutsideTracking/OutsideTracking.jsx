@@ -9,13 +9,14 @@ import { getOutsideTracking, sendCommand } from "../../services/monitorServices"
 import { toast } from "react-toastify";
 import { carPath } from "../../services/carPath";
 import { getCarStatus } from "../../utils/getCarStatus";
+import { useTranslation } from "react-i18next";
 
 const containerStyle = { width: "100%", height: "100vh" };
 
 const getCarColor = (car) => getCarStatus(car).color;
 
 const formatTimeLeft = (ms) => {
-  if (ms <= 0) return "انتهت الصلاحية";
+  if (ms <= 0) return t("outsideTracking.linkExpired");
   const totalSeconds = Math.floor(ms / 1000);
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
@@ -25,6 +26,7 @@ const formatTimeLeft = (ms) => {
 };
 
 const OutsideTracking = () => {
+  const { t } = useTranslation();
   const { id } = useParams(); // token أو id
 
   const { isLoaded, loadError } = useLoadScript({
@@ -94,7 +96,7 @@ const OutsideTracking = () => {
         status.last_voltage_unit === "mv"
           ? `${(Number(status.last_voltage) / 1000).toFixed(2)} V`
           : status.last_voltage,
-      address: device.address || "جارٍ التحديد...",
+      address: device.address || t("outsideTracking.determiningAddress"),
       tracking_url: device.tracking_url,
       report_url: device.report_url,
     };
@@ -233,27 +235,27 @@ const OutsideTracking = () => {
   const { mutate: sendOutsideCommand, isPending: isSending } = useMutation({
     mutationFn: ({ device_id, command }) => sendCommand({ device_id, command }),
     onSuccess: () => {
-      toast.success("✅ تم إرسال الأمر بنجاح");
+      toast.success(t("outsideTracking.commandSentSuccess"));
       setShowCommandDialog(false);
       setSelectedCommand("");
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "فشل إرسال الأمر");
+      toast.error(error?.response?.data?.message || t("outsideTracking.commandSendFailed"));
     },
   });
 
   const handleSendCommand = () => {
-    if (isExpired) return toast.warn("انتهت صلاحية الرابط");
-    if (!car?.id) return toast.warn("لا يوجد جهاز");
-    if (!selectedCommand) return toast.warn("اختر أمرًا أولاً");
+    if (isExpired) return toast.warn(t("outsideTracking.linkExpiredWarning"));
+    if (!car?.id) return toast.warn(t("outsideTracking.noDeviceWarning"));
+    if (!selectedCommand) return toast.warn(t("outsideTracking.selectCommandWarning"));
     sendOutsideCommand({ device_id: car.id, command: selectedCommand });
   };
 
-  if (loadError) return <div>فشل تحميل الخريطة</div>;
+  if (loadError) return <div>{t("outsideTracking.mapLoadFailed")}</div>;
   if (!isLoaded) return <LoadingPage />;
   if (isLoading) return <LoadingPage />;
-  if (isError || !data) return <div className="p-4">فشل تحميل بيانات المشاركة</div>;
-  if (!position) return <div className="p-4">لا يوجد موقع متاح لهذا الجهاز حاليًا</div>;
+  if (isError || !data) return <div className="p-4">{t("outsideTracking.shareDataLoadFailed")}</div>;
+  if (!position) return <div className="p-4">{t("outsideTracking.noLocationAvailable")}</div>;
 
   return (
     <div className="relative">
@@ -268,7 +270,7 @@ const OutsideTracking = () => {
             }`}
             dir="rtl"
           >
-            {isExpired ? "انتهت صلاحية الرابط" : `الوقت المتبقي: ${timeLeft}`}
+            {isExpired ? t("outsideTracking.linkExpired") : `${t("outsideTracking.timeLeft")} ${timeLeft}`}
           </div>
         </div>
       )}
@@ -321,12 +323,12 @@ const OutsideTracking = () => {
         <button
           className="btn btn-primary btn-sm rounded-full px-5 shadow-lg"
           onClick={() => {
-            if (isExpired) return toast.warn("انتهت صلاحية الرابط");
+            if (isExpired) return toast.warn(t("outsideTracking.linkExpiredWarning"));
             setShowCommandDialog(true);
           }}
           disabled={isExpired}
         >
-          إرسال أمر
+          {t("outsideTracking.sendCommand")}
         </button>
       </div>
 
@@ -338,15 +340,15 @@ const OutsideTracking = () => {
             onClick={() => setShowCommandDialog(false)}
           />
           <div className="relative bg-white w-[92vw] max-w-md rounded-2xl shadow-xl p-4">
-            <h3 className="font-bold text-sm mb-3">إرسال أمر للجهاز</h3>
+            <h3 className="font-bold text-sm mb-3">{t("outsideTracking.sendCommandToDevice")}</h3>
 
-            <label className="text-xs text-gray-600">الأوامر المتاحة</label>
+            <label className="text-xs text-gray-600">{t("outsideTracking.availableCommands")}</label>
             <select
               className="select select-bordered w-full mt-1"
               value={selectedCommand}
               onChange={(e) => setSelectedCommand(e.target.value)}
             >
-              <option value="">اختر أمرًا...</option>
+              <option value="">{t("outsideTracking.selectCommand")}</option>
               {allowedCommands.map((c, idx) => (
                 <option key={`${c.key}-${idx}`} value={c.key}>
                   {c.label}
@@ -359,14 +361,14 @@ const OutsideTracking = () => {
                 className="btn btn-ghost btn-sm"
                 onClick={() => setShowCommandDialog(false)}
               >
-                إلغاء
+                {t("outsideTracking.cancel")}
               </button>
               <button
                 className="btn btn-success btn-sm"
                 onClick={handleSendCommand}
                 disabled={isSending || !selectedCommand || isExpired}
               >
-                {isSending ? "جاري الإرسال..." : "إرسال"}
+                {isSending ? t("outsideTracking.sending") : t("outsideTracking.send")}
               </button>
             </div>
           </div>

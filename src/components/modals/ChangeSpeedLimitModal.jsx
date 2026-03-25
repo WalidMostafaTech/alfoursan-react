@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const ChangeSpeedLimitModal = ({
   closeModal,
@@ -6,6 +7,7 @@ const ChangeSpeedLimitModal = ({
   setSpeedLimits,
   defaultSpeedLimit,
 }) => {
+  const { t } = useTranslation();
   const [mode, setMode] = useState("custom"); // default | custom
 
   const list = [
@@ -23,7 +25,7 @@ const ChangeSpeedLimitModal = ({
       <div className="modal-box max-w-2xl max-h-[90%] space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-200">
-          <h3 className="font-bold text-lg text-mainColor">Speed Settings</h3>
+          <h3 className="font-bold text-lg text-mainColor">{t("changeSpeedLimitModal.title")}</h3>
           <button
             className="btn btn-md btn-circle btn-ghost"
             onClick={closeModal}
@@ -34,7 +36,7 @@ const ChangeSpeedLimitModal = ({
 
         {/* Mode Selector */}
         <div className="flex items-center gap-4">
-          <p className="font-semibold">Trace Color:</p>
+          <p className="font-semibold">{t("changeSpeedLimitModal.traceColor")}</p>
 
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-3 cursor-pointer">
@@ -44,7 +46,7 @@ const ChangeSpeedLimitModal = ({
                 checked={mode === "default"}
                 onChange={() => setMode("default")}
               />
-              <span>Default</span>
+              <span>{t("changeSpeedLimitModal.default")}</span>
             </label>
 
             <label className="flex items-center gap-3 cursor-pointer">
@@ -54,14 +56,14 @@ const ChangeSpeedLimitModal = ({
                 checked={mode === "custom"}
                 onChange={() => setMode("custom")}
               />
-              <span>Customized</span>
+              <span>{t("changeSpeedLimitModal.customized")}</span>
             </label>
           </div>
         </div>
 
         {/* Slider */}
         <div className="flex gap-4">
-          <p className="font-semibold">Trace Color:</p>
+          <p className="font-semibold">{t("changeSpeedLimitModal.traceColor")}</p>
 
           <div className="flex-1">
             {mode === "custom" ? (
@@ -140,10 +142,10 @@ const ChangeSpeedLimitModal = ({
         {/* Buttons */}
         <div className="modal-action">
           <button className="btn" onClick={closeModal}>
-            Cancel
+            {t("changeSpeedLimitModal.cancel")}
           </button>
           <button className="btn btn-primary" onClick={closeModal}>
-            Confirm
+            {t("changeSpeedLimitModal.confirm")}
           </button>
         </div>
       </div>

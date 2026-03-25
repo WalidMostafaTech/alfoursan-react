@@ -2,8 +2,10 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { FiMap } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { switchMap } from "../../store/mapSlice";
+import { useTranslation } from "react-i18next";
 
 const MapSwitcher = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { provider: mapProvider } = useSelector((state) => state.map);
 
@@ -30,7 +32,7 @@ const MapSwitcher = () => {
             }`}
             onSelect={() => dispatch(switchMap("google"))}
           >
-            Google Maps
+            {t("mapSwitcher.googleMaps")}
           </DropdownMenu.Item>
 
           <DropdownMenu.Item
@@ -41,7 +43,7 @@ const MapSwitcher = () => {
             }`}
             onSelect={() => dispatch(switchMap("mapbox"))}
           >
-            Mapbox
+            {t("mapSwitcher.mapbox")}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

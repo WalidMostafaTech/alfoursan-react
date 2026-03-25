@@ -14,22 +14,25 @@ import { useQuery } from "@tanstack/react-query";
 import { getDeviceSettings } from "../../../services/monitorServices";
 import Loader from "../../Loading/Loader";
 import Maintenance from "./sections/Maintenance";
+import { useTranslation } from "react-i18next";
 
-const tabs = [
-  { key: "details", label: "اعدادات عامة" },
-  { key: "carDriver", label: "السياره / السائق" },
-  { key: "serviceVersion", label: "إصدار الخدمة" },
-  { key: "membership", label: "عضوية" },
-  { key: "command", label: "قائمه الاوامر" },
-  { key: "previousCommands", label: "الاوامر السابقه" },
-  { key: "alerts", label: "إعدادات التنبيهات" },
-  { key: "maintenance", label: "صيانة الاميال" },
-  { key: "specificTask", label: "تعيين مهمة محددة بوقت" },
-];
 
 const DetailsModal = () => {
+  const { t } = useTranslation();
   const { detailsModal } = useSelector((state) => state.modals);
   const { section, id } = detailsModal;
+
+  const tabs = [
+    { key: "details", label: t("detailsModal.tabs.details") },
+    { key: "carDriver", label: t("detailsModal.tabs.carDriver") },
+    { key: "serviceVersion", label: t("detailsModal.tabs.serviceVersion") },
+    { key: "membership", label: t("detailsModal.tabs.membership") },
+    { key: "command", label: t("detailsModal.tabs.command") },
+    { key: "previousCommands", label: t("detailsModal.tabs.previousCommands") },
+    { key: "alerts", label: t("detailsModal.tabs.alerts") },
+    { key: "maintenance", label: t("detailsModal.tabs.maintenance") },
+    { key: "specificTask", label: t("detailsModal.tabs.specificTask") },
+  ];
 
   const [activeTab, setActiveTab] = useState(section || "details");
 

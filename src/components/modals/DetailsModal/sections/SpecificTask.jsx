@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
 import { sendScheduledTask } from "../../../../services/monitorServices";
 
 const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
+  const { t } = useTranslation();
   const scheduledTask = deviceSettings?.scheduled_task;
 
   const [executionType, setExecutionType] = useState("everyday");
@@ -60,7 +62,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
   const { mutate, isPending } = useMutation({
     mutationFn: (data) => sendScheduledTask(deviceID, data),
     onSuccess: () => {
-      toast.success("تم إرسال المهمة بنجاح ✅");
+      toast.success(t("specificTask.taskSentSuccess"));
       refetch?.();
     },
     onError: (error) => {
@@ -93,18 +95,18 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
     // تحقق بسيط: لو اختيار نطاق تاريخ لازم تواريخ موجودة
     if (executionType === "date_range") {
       if (!formData.start_date || !formData.end_date) {
-        toast.warn("يرجى تحديد تاريخ البداية و تاريخ النهاية لنطاق التاريخ.");
+        toast.warn(t("specificTask.selectDateRange"));
         return;
       }
     }
 
     // تحقق أن الأوقات موجودة وصحيحة (اختياري، حسب متطلباتك)
     if (!formData.start_time) {
-      toast.warn("يرجى تحديد وقت البداية.");
+      toast.warn(t("specificTask.selectStartTime"));
       return;
     }
     if (!formData.end_time) {
-      toast.warn("يرجى تحديد وقت النهاية.");
+      toast.warn(t("specificTask.selectEndTime"));
       return;
     }
 
@@ -127,11 +129,11 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <MainInput
           id="deviceName"
-          label="اسم الجهاز"
+          label={t("specificTask.deviceName")}
           value={deviceSettings?.device?.name || ""}
           disabled
         />
-        <MainInput id="type" label="نوع" value="إيقاف المحرك" disabled />
+        <MainInput id="type" label={t("specificTask.type")} value={t("specificTask.engineStop")} disabled />
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -140,7 +142,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
           <div className="form-control w-full max-w-xs" dir="rtl">
             <label className="label">
               <span className="label-text text-sm font-semibold text-gray-700">
-                نوع التنفيذ
+                {t("specificTask.executionType")}
               </span>
             </label>
 
@@ -153,7 +155,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
                   checked={executionType === "everyday"}
                   onChange={() => handleExecutionTypeChange("everyday")}
                 />
-                <span className="text-gray-700 font-medium text-sm">يوميًا</span>
+                <span className="text-gray-700 font-medium text-sm">{t("specificTask.daily")}</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -164,7 +166,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
                   checked={executionType === "date_range"}
                   onChange={() => handleExecutionTypeChange("date_range")}
                 />
-                <span className="text-gray-700 font-medium text-sm">نطاق التاريخ</span>
+                <span className="text-gray-700 font-medium text-sm">{t("specificTask.dateRange")}</span>
               </label>
             </div>
           </div>
@@ -172,7 +174,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
           {/* ✅ تفعيل المهمة */}
           <div>
             <label className="flex items-center gap-2 mt-4">
-              <span className="text-gray-700 font-medium text-sm">تفعيل المهمة :</span>
+              <span className="text-gray-700 font-medium text-sm">{t("specificTask.enableTask")} :</span>
               <input
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
@@ -189,14 +191,14 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
               <MainInput
                 id="start_date"
                 type="date"
-                label="تاريخ البداية"
+                label={t("specificTask.startDate")}
                 value={formData.start_date}
                 onChange={handleChange}
               />
               <MainInput
                 id="end_date"
                 type="date"
-                label="تاريخ النهاية"
+                label={t("specificTask.endDate")}
                 value={formData.end_date}
                 onChange={handleChange}
               />
@@ -206,20 +208,20 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
           <MainInput
             id="start_time"
             type="time"
-            label="من"
+            label={t("specificTask.from")}
             value={formData.start_time}
             onChange={handleChange}
           />
           <MainInput
             id="end_time"
             type="time"
-            label="إلى"
+            label={t("specificTask.to")}
             value={formData.end_time}
             onChange={handleChange}
           />
         </div>
 
-        <FormBtn title={"تأكيد"} variant="success" disabled={isPending} />
+        <FormBtn title={t("specificTask.confirm")} variant="success" disabled={isPending} />
       </form>
     </section>
   );

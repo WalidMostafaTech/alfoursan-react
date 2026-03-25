@@ -20,8 +20,10 @@ import {
 } from "../../services/fencesServices";
 import Loader from "../Loading/Loader";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const PolygonMenu = () => {
+  const { t } = useTranslation();
   const [drawType, setDrawType] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -48,7 +50,7 @@ const PolygonMenu = () => {
   const deleteMutation = useMutation({
     mutationFn: deleteFences,
     onSuccess: () => {
-      toast.success("تم حذف السياج بنجاح ✅");
+      toast.success(t("polygonMenu.deleteSuccess"));
       refetch();
     },
     onError: (error) => toast.error(error?.response?.data?.message),
@@ -58,7 +60,7 @@ const PolygonMenu = () => {
   const destroyMutation = useMutation({
     mutationFn: destroyFences,
     onSuccess: () => {
-      toast.success("تم حذف الأسياج المحددة ✅");
+      toast.success(t("polygonMenu.batchDeleteSuccess"));
       setSelectedIds([]);
       setSelectAll(false);
       refetch();
@@ -94,7 +96,7 @@ const PolygonMenu = () => {
 
   // ✅ حذف عنصر واحد
   const handleDelete = (id) => {
-    if (confirm("هل أنت متأكد من حذف هذا السياج؟")) {
+    if (confirm(t("polygonMenu.confirmDelete"))) {
       deleteMutation.mutate(id);
     }
   };
@@ -102,9 +104,9 @@ const PolygonMenu = () => {
   // ✅ حذف مجموعة عناصر
   const handleBatchDelete = () => {
     if (selectedIds.length === 0)
-      return toast.warning("من فضلك اختر على الأقل سياج واحد ❗");
+      return toast.warning(t("polygonMenu.selectAtLeastOne"));
 
-    if (confirm("هل أنت متأكد من حذف الأسياج المحددة؟")) {
+    if (confirm(t("polygonMenu.confirmBatchDelete"))) {
       destroyMutation.mutate(selectedIds);
     }
   };
@@ -148,7 +150,7 @@ const PolygonMenu = () => {
 
   const handleShowAll = () => {
     if (!fences?.items || fences.items.length === 0) {
-      return toast.warning("لا توجد أسياج لعرضها ❗");
+      return toast.warning(t("polygonMenu.noFencesToShow"));
     }
 
     const event = new CustomEvent("show-all-polygons", {
@@ -195,7 +197,7 @@ const PolygonMenu = () => {
         >
           {/* ✅ العنوان + زر الإغلاق */}
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-lg">Geo-Fence Management</h3>
+            <h3 className="font-semibold text-lg">{t("polygonMenu.title")}</h3>
             <button
               onClick={handleClose}
               className="text-gray-500 hover:text-red-500 text-lg font-bold"
@@ -207,7 +209,7 @@ const PolygonMenu = () => {
           {/* باقي المحتوى بدون تغيير */}
           {/* Draw Fence */}
           <div className="flex items-center gap-2">
-            <label className="font-medium">Draw Fence:</label>
+            <label className="font-medium">{t("polygonMenu.drawFence")}</label>
             <div className="flex gap-2">
               <button
                 onClick={() => handleSelect("circle")}
@@ -236,7 +238,7 @@ const PolygonMenu = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search by name"
+              placeholder={t("polygonMenu.searchByName")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2.5 pr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm 
@@ -251,7 +253,7 @@ const PolygonMenu = () => {
             </div>
           ) : filteredFences?.length === 0 ? (
             <div className="py-8 text-center text-gray-600 font-semibold">
-              لا يوجد سياجات
+              {t("polygonMenu.noFences")}
             </div>
           ) : (
             <>
@@ -262,7 +264,7 @@ const PolygonMenu = () => {
                     className="hover:underline cursor-pointer text-mainColor"
                     onClick={handleShowAll}
                   >
-                    Show All
+                    {t("polygonMenu.showAll")}
                   </button>
                   <div className="flex gap-3">
                     <button
@@ -271,8 +273,8 @@ const PolygonMenu = () => {
                       disabled={destroyMutation.isPending}
                     >
                       {destroyMutation.isPending
-                        ? "جاري الحذف..."
-                        : "Batch Delete"}
+                        ? t("polygonMenu.deleting")
+                        : t("polygonMenu.batchDelete")}
                     </button>
                   </div>
                 </div>
@@ -291,8 +293,8 @@ const PolygonMenu = () => {
                           onChange={handleSelectAll}
                         />
                       </th>
-                      <th>Name</th>
-                      <th>Operate</th>
+                      <th>{t("polygonMenu.name")}</th>
+                      <th>{t("polygonMenu.operate")}</th>
                     </tr>
                   </thead>
                   <tbody>

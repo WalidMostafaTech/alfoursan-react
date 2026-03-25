@@ -7,8 +7,10 @@ import SupportBtn from "../../../components/common/SupportBtn";
 import NotificationBtn from "../../../components/common/NotificationBtn";
 import { Link } from "react-router-dom";
 import { CgHomeAlt } from "react-icons/cg";
+import { useTranslation } from "react-i18next";
 
 const MapActions = ({ setViewState }) => {
+  const { t } = useTranslation();
   const { provider: mapProvider } = useSelector((state) => state.map);
 
   const BACK_URL = window.__BACK_URL__;
@@ -31,7 +33,7 @@ const MapActions = ({ setViewState }) => {
             });
             window.dispatchEvent(event);
           } else {
-            alert("الرسم متاح في خريطة Google فقط ✅");
+            alert(t("mapActions.drawingGoogleOnly"));
           }
         }}
       />

@@ -1,6 +1,8 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 const Filters = ({ cars, activeFilter, setActiveFilter }) => {
+  const { t } = useTranslation();
   const filterTypes = useMemo(() => {
     const total = cars?.length || 0;
     let online = 0;
@@ -43,7 +45,7 @@ const Filters = ({ cars, activeFilter, setActiveFilter }) => {
               : "text-gray-600 hover:bg-mainColor/10 hover:text-mainColor"
           }`}
         >
-          {type.label} ({type.value})
+          {t(`filters.${type.label}`)} ({type.value})
         </button>
       ))}
     </div>

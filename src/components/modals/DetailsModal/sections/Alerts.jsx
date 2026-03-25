@@ -3,15 +3,17 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import FormBtn from "../../../../components/form/FormBtn";
 import { updateDialogAlert } from "../../../../services/monitorServices";
+import { useTranslation } from "react-i18next";
 
 const Alerts = ({ deviceSettings, refetch }) => {
+  const { t } = useTranslation();
+
   const alerts = deviceSettings?.device;
   const deviceId = deviceSettings?.device?.id;
 
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
-    // نحفظ القيم الحالية في الـ state عند تحميل البيانات
     setFormData({
       alert_speed_limit: alerts.alert_speed_limit || 0,
       alert_speed_limit_value: alerts.alert_speed_limit_value || "",
@@ -28,31 +30,28 @@ const Alerts = ({ deviceSettings, refetch }) => {
   }, [alerts]);
 
   const alertsList = [
-    { label: "تنبيه حد السرعة", key: "alert_speed_limit" },
-    { label: "تنبيه انقطاع الاتصال", key: "alert_offline" },
-    { label: "تحذير القيادة المتهورة", key: "alert_restricted_driving" },
-    { label: "تنبيه الجهد المنخفض", key: "alert_low_voltage" },
-    { label: "عتبة الراحة", key: "alert_rest_threshold" },
-    { label: "Idle Speed alert", key: "alert_idle_speed" },
-    { label: "تنبيه القيادة بسبب التعب", key: "alert_fatigue_driving" },
-    { label: "ACC OFF", key: "alert_acc_off" },
-    { label: "ACC ON", key: "alert_acc_on" },
-    // { label: "حكم غير متصل بالإنترنت", key: "alert_offline_judgment" },
+    { label: t("alerts.speedLimit"), key: "alert_speed_limit" },
+    { label: t("alerts.offline"), key: "alert_offline" },
+    { label: t("alerts.restrictedDriving"), key: "alert_restricted_driving" },
+    { label: t("alerts.lowVoltage"), key: "alert_low_voltage" },
+    { label: t("alerts.restThreshold"), key: "alert_rest_threshold" },
+    { label: t("alerts.idleSpeed"), key: "alert_idle_speed" },
+    { label: t("alerts.fatigueDriving"), key: "alert_fatigue_driving" },
+    { label: t("alerts.accOff"), key: "alert_acc_off" },
+    { label: t("alerts.accOn"), key: "alert_acc_on" },
   ];
 
-  // ✅ Mutation للتحديث
   const { mutate, isPending } = useMutation({
     mutationFn: () => updateDialogAlert(deviceId, formData),
     onSuccess: () => {
-      toast.success("تم تحديث إعدادات التنبيهات بنجاح ✅");
-      refetch?.(); // لإعادة تحميل البيانات بعد التحديث
+      toast.success(t("alerts.successMessage"));
+      refetch?.();
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message);
     },
   });
 
-  // ✅ لما المستخدم يغيّر checkbox
   const handleToggle = (key) => {
     setFormData((prev) => ({
       ...prev,
@@ -60,7 +59,6 @@ const Alerts = ({ deviceSettings, refetch }) => {
     }));
   };
 
-  // ✅ لما المستخدم يغيّر قيمة input
   const handleInputChange = (key, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -68,14 +66,12 @@ const Alerts = ({ deviceSettings, refetch }) => {
     }));
   };
 
-  // ✅ عند الضغط على زر التحديث
   const handleSubmit = () => {
     mutate();
   };
 
   return (
     <section dir="rtl">
-      {/* ✅ السويتشات */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-4">
         {alertsList.map((item, index) => (
           <div key={index} className="flex flex-col gap-1">
@@ -91,23 +87,25 @@ const Alerts = ({ deviceSettings, refetch }) => {
               </span>
             </label>
 
-            {/* ✅ input الحد الأقصى للسرعة يظهر فقط عند تفعيل alert_speed_limit */}
-            {item.key === "alert_speed_limit" && formData.alert_speed_limit === 1 && (
-              <input
-                type="number"
-                min="0"
-                placeholder="الحد الأقصى (كم/س)"
-                className="input input-bordered input-sm w-full mt-1 text-xs"
-                value={formData.alert_speed_limit_value || ""}
-                onChange={(e) => handleInputChange("alert_speed_limit_value", e.target.value)}
-              />
-            )}
+            {item.key === "alert_speed_limit" &&
+              formData.alert_speed_limit === 1 && (
+                <input
+                  type="number"
+                  min="0"
+                  placeholder={t("alerts.maxSpeedPlaceholder")}
+                  className="input input-bordered input-sm w-full mt-1 text-xs"
+                  value={formData.alert_speed_limit_value || ""}
+                  onChange={(e) =>
+                    handleInputChange("alert_speed_limit_value", e.target.value)
+                  }
+                />
+              )}
           </div>
         ))}
       </div>
 
       <FormBtn
-        title="تحديث اعدادات التنبيهات"
+        title={t("alerts.updateBtn")}
         loading={isPending}
         onClick={handleSubmit}
       />

@@ -1,7 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { IoSearchOutline } from "react-icons/io5";
+import { useTranslation } from "react-i18next";
 
 const Search = ({ cars, handleSelectCar }) => {
+  const { t } = useTranslation();
   const [searchKey, setSearchKey] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -81,7 +83,7 @@ const Search = ({ cars, handleSelectCar }) => {
       <div className="flex items-center rounded-xl bg-mainColor/10 p-1">
         <input
           type="text"
-          placeholder="Search ..."
+          placeholder={t("search.placeholder")}
           value={searchKey}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 150)}
@@ -136,7 +138,7 @@ const Search = ({ cars, handleSelectCar }) => {
       {/* في حالة مفيش نتائج */}
       {isFocused && searchKey && filteredCars.length === 0 && (
         <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-200 p-3 text-center text-sm text-gray-500 z-50">
-          No results found
+          {t("search.noResults")}
         </div>
       )}
     </div>

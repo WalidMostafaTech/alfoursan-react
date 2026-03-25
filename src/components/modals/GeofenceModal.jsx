@@ -9,8 +9,10 @@ import {
   updateFence,
 } from "../../services/fencesServices";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const GeoFenceModal = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { geoFenceModal } = useSelector((state) => state.modals);
   const { fenceData, mission } = geoFenceModal;
@@ -34,10 +36,10 @@ const GeoFenceModal = () => {
     onSuccess: () => {
       const message =
         mission === "edit"
-          ? "تم تعديل السياج الجغرافي بنجاح ✅"
+          ? t("geofenceModal.editSuccess")
           : mission === "copy"
-          ? "تم نسخ السياج الجغرافي بنجاح ✅"
-          : "تمت إضافة السياج الجغرافي بنجاح ✅";
+          ? t("geofenceModal.copySuccess")
+          : t("geofenceModal.addSuccess");
 
       toast.success(message);
       closeModal();
@@ -95,25 +97,25 @@ const GeoFenceModal = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-bold">
             {mission === "edit"
-              ? "تعديل السياج الجغرافي"
+              ? t("geofenceModal.editGeofence")
               : mission === "copy"
-              ? "نسخ السياج الجغرافي"
-              : "إضافة سياج جغرافي"}
+              ? t("geofenceModal.copyGeofence")
+              : t("geofenceModal.addGeofence")}
           </h2>
         </div>
 
         {/* اسم السياج */}
         <MainInput
           id="name"
-          label="اسم السياج"
-          placeholder="اسم السياج"
+          label={t("geofenceModal.fenceName")}
+          placeholder={t("geofenceModal.fenceNamePlaceholder")}
           value={formData.name}
           onChange={(e) => handleChange("name", e.target.value)}
         />
 
         {fenceData.type === "circle" && (
           <label className="block text-sm">
-            نصف القطر:{" "}
+            {t("geofenceModal.radius")}: {" "}
             <span className="text-mainColor font-bold">
               {formData.radius || fenceData.radius}
             </span>
@@ -131,7 +133,7 @@ const GeoFenceModal = () => {
                 handleChange("notify_on_enter", !formData.notify_on_enter)
               }
             />
-            الدخول
+            {t("geofenceModal.enter")}
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -142,7 +144,7 @@ const GeoFenceModal = () => {
                 handleChange("notify_on_exit", !formData.notify_on_exit)
               }
             />
-            الخروج
+            {t("geofenceModal.exit")}
           </label>
         </div>
 
@@ -156,7 +158,7 @@ const GeoFenceModal = () => {
               handleChange("speed_limit_enabled", !formData.speed_limit_enabled)
             }
           />
-          تفعيل حد السرعة
+          {t("geofenceModal.enableSpeedLimit")}
         </label>
 
         {/* إدخال حد السرعة */}
@@ -164,8 +166,8 @@ const GeoFenceModal = () => {
           <MainInput
             type="number"
             id="speed_limit"
-            label="حد السرعة"
-            placeholder="5 - 1000"
+            label={t("geofenceModal.speedLimit")}
+            placeholder={t("geofenceModal.speedLimitPlaceholder")}
             value={formData.speed_limit}
             onChange={(e) =>
               handleChange("speed_limit", Number(e.target.value))
@@ -176,14 +178,14 @@ const GeoFenceModal = () => {
         {/* الأزرار */}
         <div className="flex justify-end gap-2">
           <button className="btn btn-ghost btn-sm" onClick={closeModal}>
-            إلغاء
+            {t("geofenceModal.cancel")}
           </button>
           <button
             className="btn btn-primary btn-sm"
             onClick={handleConfirm}
             disabled={isPending}
           >
-            {isPending ? "جاري الحفظ..." : "تأكيد"}
+            {isPending ? t("geofenceModal.saving") : t("geofenceModal.confirm")}
           </button>
         </div>
       </div>

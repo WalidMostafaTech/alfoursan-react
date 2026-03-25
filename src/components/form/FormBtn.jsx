@@ -1,11 +1,15 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+
 const FormBtn = ({
-  title = "Submit",
+  title = "form.submit",
   disabled,
   loading,
   onClick = () => {},
   type = "submit",
   variant = "primary",
 }) => {
+  const { t } = useTranslation();
   const isDisabled = disabled || loading;
   return (
     <button
@@ -18,11 +22,11 @@ const FormBtn = ({
     >
       {loading ? (
         <>
-          جار التحميل ...
+          {t("form.loading")}
           <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ms-2"></span>
         </>
       ) : (
-        title
+        t(title)
       )}
     </button>
   );

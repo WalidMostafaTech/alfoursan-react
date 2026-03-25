@@ -11,9 +11,11 @@ import Loader from "../../../../components/Loading/Loader";
 import { getCarStatus } from "../../../../utils/getCarStatus";
 import { Link } from "react-router-dom";
 import { MdOutlinePowerSettingsNew } from "react-icons/md";
+import { useTranslation } from "react-i18next";
 
 const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { status, color } = useMemo(() => getCarStatus(car), [car]);
 
   const lat = car?.position?.lat;
@@ -34,7 +36,7 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
         <span className="flex items-center gap-1.5 flex-1 min-w-0">
           <span
             className="text-[12px]"
-            title={car?.ignition_on == null ? "غير معروف" : car?.ignition_on ? "تشغيل" : "إيقاف"}
+            title={car?.ignition_on == null ? t("carsList.ignitionUnknown") : car?.ignition_on ? t("carsList.ignitionOn") : t("carsList.ignitionOff")}
             style={{ color: car?.ignition_on ? "#22c55e" : car?.ignition_on === false ? "#ef4444" : "#9ca3af" }}
           >
             <MdOutlinePowerSettingsNew />
@@ -63,7 +65,7 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
                 dispatch(openDetailsModal({ section: "", id: car.id }))
               }
             >
-              Details
+              {t("carsList.details")}
             </DropdownMenu.Item>
             <DropdownMenu.Item asChild>
               <a
@@ -72,7 +74,7 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
                 rel="noreferrer"
                 className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor text-sm"
               >
-                Tracking
+                {t("carsList.tracking")}
               </a>
             </DropdownMenu.Item>
             <DropdownMenu.Item asChild>
@@ -82,7 +84,7 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
                 rel="noreferrer"
                 className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor text-sm"
               >
-                Playback
+                {t("carsList.playback")}
               </Link>
             </DropdownMenu.Item>
             <DropdownMenu.Item
@@ -91,13 +93,13 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
                 dispatch(openDetailsModal({ section: "command", id: car.id }))
               }
             >
-              Command
+              {t("carsList.command")}
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor text-sm"
               onSelect={() => dispatch(openPolygonMenu())}
             >
-              Fence
+              {t("carsList.fence")}
             </DropdownMenu.Item>
             {typeof lat === "number" && typeof lng === "number" && (
               <DropdownMenu.Item asChild>
@@ -107,7 +109,7 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
                   rel="noreferrer"
                   className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor text-sm"
                 >
-                  Street View
+                  {t("carsList.streetView")}
                 </a>
               </DropdownMenu.Item>
             )}
@@ -118,14 +120,14 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
                 rel="noreferrer"
                 className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor text-sm"
               >
-                Reports
+                {t("carsList.reports")}
               </a>
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="p-1 cursor-pointer hover:bg-mainColor/10 hover:text-mainColor text-sm"
               onClick={() => dispatch(openShareModal(car.serial_number))}
             >
-              Share
+              {t("carsList.share")}
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>

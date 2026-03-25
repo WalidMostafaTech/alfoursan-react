@@ -5,6 +5,7 @@ import Search from "./sections/Search";
 import Filters from "./sections/Filters";
 import CarsList from "./sections/CarsList";
 import Actions from "./sections/Actions";
+import { useTranslation } from "react-i18next";
 
 const SideMenu = ({
   cars,
@@ -19,6 +20,7 @@ const SideMenu = ({
   activeBranchId,
   setActiveBranchId,
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -58,7 +60,7 @@ const SideMenu = ({
               value={activeBranchId}
               onChange={(e) => setActiveBranchId(e.target.value)}
             >
-              <option value="">كل الفروع</option>
+              <option value="">{t("sideMenu.allBranches")}</option>
               {(branches || []).map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}

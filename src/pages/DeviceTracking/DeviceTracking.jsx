@@ -8,12 +8,14 @@ import { getTrackingDevice } from "../../services/monitorServices";
 import useCarSocket from "../../hooks/useCarSocket";
 import { carPath } from "../../services/carPath";
 import { getCarStatus } from "../../utils/getCarStatus";
+import { useTranslation } from "react-i18next";
 
 const containerStyle = { width: "100%", height: "100vh" };
 
 const getCarColor = (car) => getCarStatus(car).color;
 
 const DeviceTracking = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const deviceId = useMemo(() => Number(id), [id]);
 
@@ -72,7 +74,7 @@ const DeviceTracking = () => {
         status?.last_voltage_unit === "mv"
           ? `${(Number(status?.last_voltage) / 1000).toFixed(2)} V`
           : status?.last_voltage ?? device?.voltageLevel,
-      address: device.address || "جارٍ التحديد...",
+      address: device.address || t("deviceTracking.determiningAddress"),
       tracking_url: device.tracking_url,
       report_url: device.report_url,
     };
@@ -222,11 +224,11 @@ const DeviceTracking = () => {
     });
   }, [isLoaded, position?.lat, position?.lng]);
 
-  if (loadError) return <div>فشل تحميل الخريطة</div>;
+  if (loadError) return <div>{t("deviceTracking.mapLoadFailed")}</div>;
   if (!isLoaded) return <LoadingPage />;
   if (isLoading) return <LoadingPage />;
-  if (isError || !data) return <div className="p-4">فشل تحميل بيانات الجهاز</div>;
-  if (!position) return <div className="p-4">لا يوجد موقع متاح لهذا الجهاز حاليًا</div>;
+  if (isError || !data) return <div className="p-4">{t("deviceTracking.deviceDataLoadFailed")}</div>;
+  if (!position) return <div className="p-4">{t("deviceTracking.noLocationAvailable")}</div>;
 
   return (
     <div className="relative">

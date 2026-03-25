@@ -2,16 +2,18 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { MdLayers } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { setMapType } from "../../store/mapSlice";
+import { useTranslation } from "react-i18next";
 
 const MapTypes = ({ onChange }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { mapType } = useSelector((state) => state.map);
 
   const mapTypes = [
-    { label: "خريطة عادية", value: "roadmap" },
-    { label: "قمر صناعي", value: "satellite" },
-    { label: "تضاريس", value: "terrain" },
-    { label: "هجين", value: "hybrid" },
+    { label: t("mapTypes.roadmap"), value: "roadmap" },
+    { label: t("mapTypes.satellite"), value: "satellite" },
+    { label: t("mapTypes.terrain"), value: "terrain" },
+    { label: t("mapTypes.hybrid"), value: "hybrid" },
   ];
 
   const handleMapTypeChange = (type) => {

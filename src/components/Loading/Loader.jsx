@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+
 const Loader = () => {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center gap-4 bg-white p-4">
       <div className="flex gap-2">
@@ -8,7 +12,7 @@ const Loader = () => {
       </div>
 
       <h2 className="font-semibold text-mainColor tracking-wide animate-pulse">
-        Loading...
+        {t("loader.loading")}
       </h2>
     </div>
   );

@@ -2,8 +2,10 @@ import { useState } from "react";
 import { FaAngleRight } from "react-icons/fa";
 import { CiEdit } from "react-icons/ci";
 import ChangeSpeedLimitModal from "../../../components/modals/ChangeSpeedLimitModal";
+import { useTranslation } from "react-i18next";
 
 const TraceColor = ({ speedLimits, setSpeedLimits, defaultSpeedLimit }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
   const [openModal, setOpenModal] = useState(false);
 
@@ -26,14 +28,14 @@ const TraceColor = ({ speedLimits, setSpeedLimits, defaultSpeedLimit }) => {
           </button>
 
           <div className="flex items-center justify-between p-4">
-            <h3 className="text-lg font-semibold">Trace Color</h3>
+            <h3 className="text-lg font-semibold">{t("traceColor.title")}</h3>
 
             <p
               onClick={() => setOpenModal(true)}
               className="text-mainColor font-semibold hover:underline cursor-pointer flex items-center gap-1"
             >
               <CiEdit className="text-xl" />
-              Customize
+              {t("traceColor.customize")}
             </p>
           </div>
 

@@ -3,12 +3,14 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { clearCommandResponse } from "../../../../store/modalsSlice";
+import { useTranslation } from "react-i18next";
 
 import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
 import { sendCommand } from "../../../../services/monitorServices";
 
 const Command = ({ deviceID, deviceSettings, refetch }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { commandResponse } = useSelector((state) => state.modals);
   const [activeCommand, setActiveCommand] = useState(0);
@@ -23,23 +25,23 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
     commandResponse?.imei === deviceImei;
 
   const commandTabs = [
-    { label: "Remote opening door", isNew: false },
-    { label: "Engine Control", isNew: false },
-    { label: "Query parameter configuration", isNew: false },
-    { label: "Query latitude and longitude", isNew: false },
-    { label: "Query software version", isNew: false },
-    { label: "Check Status", isNew: false },
-    { label: "Set SOS Number", isNew: true },
-    { label: "Delete SOS Number", isNew: true },
-    { label: "Set Center Number", isNew: true },
-    { label: "Delete Center Number", isNew: true },
-    { label: "Vibration Alarm", isNew: true },
-    { label: "Power Alarm", isNew: true },
-    { label: "ACC Alarm", isNew: true },
-    { label: "Driving Behavior", isNew: true },
-    { label: "Door & AC Control", isNew: true },
+    { label: t("command.remoteOpeningDoor"), isNew: false },
+    { label: t("command.engineControl"), isNew: false },
+    { label: t("command.queryParameterConfig"), isNew: false },
+    { label: t("command.queryLatitudeLongitude"), isNew: false },
+    { label: t("command.querySoftwareVersion"), isNew: false },
+    { label: t("command.checkStatus"), isNew: false },
+    { label: t("command.setSosNumber"), isNew: true },
+    { label: t("command.deleteSosNumber"), isNew: true },
+    { label: t("command.setCenterNumber"), isNew: true },
+    { label: t("command.deleteCenterNumber"), isNew: true },
+    { label: t("command.vibrationAlarm"), isNew: true },
+    { label: t("command.powerAlarm"), isNew: true },
+    { label: t("command.accAlarm"), isNew: true },
+    { label: t("command.drivingBehavior"), isNew: true },
+    { label: t("command.doorAcControl"), isNew: true },
     // { label: "GSM Jamming", isNew: true },
-    { label: "Customized Command", isNew: false },
+    { label: t("command.customizedCommand"), isNew: false },
   ];
 
   const commands = [
@@ -327,7 +329,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
   const { mutate, isPending } = useMutation({
     mutationFn: sendCommand,
     onSuccess: () => {
-      toast.success("✅ Command sent successfully!");
+      toast.success(t("command.commandSentSuccess"));
       setSelectedCommand("");
       // مسح أي استجابة سابقة وبدء انتظار الاستجابة
       dispatch(clearCommandResponse());
@@ -358,7 +360,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
 
     // تحقق من الإدخال
     if (!commandValue) {
-      toast.warn("⚠️ Please select or enter a command first");
+      toast.warn(t("command.selectCommandFirst"));
       return;
     }
 
@@ -387,7 +389,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
             {cmd.label}
             {cmd.isNew && (
               <span className="bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
-                NEW
+                {t("command.new")}
               </span>
             )}
           </button>
@@ -408,9 +410,9 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
               <MainInput
                 type="select"
                 id="command"
-                label="الأوامر"
+                label={t("command.commands")}
                 options={[
-                  { value: "", label: "اختر الأمر..." },
+                  { value: "", label: t("command.selectCommand") },
                   ...commands[activeCommand].selectOptions,
                 ]}
                 value={selectedCommand}
@@ -430,8 +432,8 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
           {commands[activeCommand].type === "customized" && (
             <MainInput
               id="command"
-              label="الأوامر"
-              placeholder="اكتب الأمر المخصص هنا..."
+              label={t("command.commands")}
+              placeholder={t("command.writeCustomCommand")}
               value={selectedCommand}
               onChange={(e) => setSelectedCommand(e.target.value)}
             />
@@ -449,27 +451,27 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                 <div className="grid grid-cols-1 gap-2">
                   <MainInput
                     id="sos_phone_1"
-                    label="SOS Phone 1"
+                    label={t("command.sosPhone1")}
                     placeholder="13122012031"
                     value={getBuilderValue().phone1 || ""}
                     onChange={(e) => setBuilderValue({ phone1: e.target.value })}
                   />
                   <MainInput
                     id="sos_phone_2"
-                    label="SOS Phone 2 (اختياري)"
+                    label={t("command.sosPhone2")}
                     placeholder="13122012032"
                     value={getBuilderValue().phone2 || ""}
                     onChange={(e) => setBuilderValue({ phone2: e.target.value })}
                   />
                   <MainInput
                     id="sos_phone_3"
-                    label="SOS Phone 3 (اختياري)"
+                    label={t("command.sosPhone3")}
                     placeholder="13122012033"
                     value={getBuilderValue().phone3 || ""}
                     onChange={(e) => setBuilderValue({ phone3: e.target.value })}
                   />
                   <div className="text-xs text-gray-500">
-                    سيتم الإرسال بصيغة: <span className="font-mono">SOS,A,phone1[,phone2][,phone3]#</span>
+                    {t("command.willBeSentAs")} <span className="font-mono">SOS,A,phone1[,phone2][,phone3]#</span>
                   </div>
                 </div>
               )}
@@ -479,25 +481,25 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                   <MainInput
                     type="select"
                     id="sos_delete_mode"
-                    label="طريقة الحذف"
+                    label={t("command.deleteMethod")}
                     options={[
-                      { value: "seq", label: "بالترتيب (Sequence Number)" },
-                      { value: "phone", label: "برقم الهاتف" },
+                      { value: "seq", label: t("command.bySequence") },
+                      { value: "phone", label: t("command.byPhone") },
                     ]}
                     value={getBuilderValue().mode || "seq"}
                     onChange={(e) => setBuilderValue({ mode: e.target.value })}
                   />
                   <MainInput
                     id="sos_delete_values"
-                    label={getBuilderValue().mode === "phone" ? "أرقام الهاتف (مفصولة بفواصل)" : "أرقام التسلسل (مفصولة بفواصل)"}
-                    placeholder={getBuilderValue().mode === "phone" ? "13122012031,13122012032" : "1,2,3"}
+                    label={getBuilderValue().mode === "phone" ? t("command.phoneNumbers") : t("command.sequenceNumbers")}
+                    placeholder={getBuilderValue().mode === "phone" ? t("command.examplePhoneNumbers") : t("command.exampleSequenceNumbers")}
                     value={getBuilderValue().values || ""}
                     onChange={(e) => setBuilderValue({ values: e.target.value })}
                   />
                   <div className="text-xs text-gray-500">
-                    سيتم الإرسال بصيغة:{" "}
+                    {t("command.willBeSentAs")}{" "}
                     <span className="font-mono">
-                      SOS,D,{getBuilderValue().mode === "phone" ? "phone1[,phone2][,phone3]" : "seq1[,seq2][,seq3]"}#
+                      SOS,D,{getBuilderValue().mode === "phone" ? t("command.phone1") : t("command.sequence1")},{getBuilderValue().mode === "phone" ? t("command.phone2") : t("command.sequence2")},{getBuilderValue().mode === "phone" ? t("command.phone3") : t("command.sequence3")}#
                     </span>
                   </div>
                 </div>
@@ -507,13 +509,13 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                 <div className="space-y-2">
                   <MainInput
                     id="center_phone"
-                    label="Center Phone Number"
+                    label={t("command.centerPhoneNumber")}
                     placeholder="13122012031"
                     value={getBuilderValue().phone || ""}
                     onChange={(e) => setBuilderValue({ phone: e.target.value })}
                   />
                   <div className="text-xs text-gray-500">
-                    سيتم الإرسال بصيغة: <span className="font-mono">CENTER,A,phone#</span>
+                    {t("command.willBeSentAs")} <span className="font-mono">CENTER,A,phone#</span>
                   </div>
                 </div>
               )}
@@ -532,10 +534,10 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-blue-700 text-sm mb-1">
-                    في انتظار الاستجابة...
+                    {t("command.waitingForResponse")}
                   </h4>
                   <p className="text-gray-600 text-xs">
-                    جاري انتظار استجابة الجهاز للأمر المرسل
+                    {t("command.waitingForDeviceResponse")}
                   </p>
                 </div>
               </div>
@@ -565,7 +567,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                       />
                     </svg>
                     <h4 className="font-bold text-green-700 text-sm">
-                      استجابة الأمر
+                      {t("command.commandResponse")}
                     </h4>
                   </div>
                   <p className="text-gray-800 text-sm break-all font-mono bg-white/50 p-2 rounded border border-green-200">
@@ -578,7 +580,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                     setWaitingForResponse(false);
                   }}
                   className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
-                  aria-label="إغلاق"
+                  aria-label={t("command.close")}
                 >
                   <svg
                     className="w-5 h-5"
@@ -599,7 +601,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
           )}
 
           <FormBtn
-            title={"Send Command"}
+            title={t("command.sendCommand")}
             variant="success"
             loading={isPending}
           />

@@ -4,6 +4,7 @@ import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { store } from "./store/store.js";
 import { Provider } from "react-redux";
+import "./i18n";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,10 +16,14 @@ const queryClient = new QueryClient({
   },
 });
 
+const lang = window.__LANG__ || "ar";
+document.documentElement.lang = lang;
+document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+
 createRoot(document.getElementById("root")).render(
   <QueryClientProvider client={queryClient}>
     <Provider store={store}>
       <AppRouter />
     </Provider>
-  </QueryClientProvider>
+  </QueryClientProvider>,
 );
