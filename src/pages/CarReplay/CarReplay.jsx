@@ -40,7 +40,7 @@ const getPointColor = (speed, speedLimits) => {
   return "green";
 };
 
-// مسافة تقريبية (بالدرجات) من نقطة إلى خط (A-B) باستخدام equirectangular approximation
+// Approximate distance (in degrees) from point to line (A-B) using equirectangular approximation
 const pointToSegmentDistanceSq = (p, a, b) => {
   const latRad = ((a.lat + b.lat) / 2) * (Math.PI / 180);
   const cosLat = Math.cos(latRad) || 1;
@@ -140,7 +140,7 @@ const buildPolylineSegmentsByColor = (points, speedLimits) => {
       continue;
     }
 
-    // اللون اتغير: احفظ المسار وابدأ جديد مع نقطة وصل
+    // Color changed: save path and start new with connecting point
     if (currentPath.length > 0) {
       segments[currentColor].push(currentPath);
     }
@@ -190,7 +190,7 @@ const getBoundsDiag = (points) => {
   return Math.sqrt(dx * dx + dy * dy);
 };
 
-// ✅ haversine distance in meters (lightweight, for spike filtering)
+// haversine distance in meters (lightweight, for spike filtering)
 const haversineMeters = (lat1, lng1, lat2, lng2) => {
   const R = 6371000;
   const toRad = (x) => (x * Math.PI) / 180;
@@ -320,7 +320,7 @@ const simplifySegmentsToMaxPoints = (rawSegments, points, maxTotalPoints) => {
     red: rawSegments.red.map((p) => simplifyPathRdp(p, eps)),
   });
 
-  // ابحث عن epsilon مناسب (binary search)
+  // Find appropriate epsilon (binary search)
   let low = 0;
   let high = diag;
   let best = rawSegments;
@@ -389,14 +389,14 @@ const CarReplay = () => {
   const pointsRaw = replayData?.data || [];
   const meta = replayData?.meta;
 
-  // ✅ إزالة القفزات غير المنطقية (GPS spikes) + تنظيف البيانات
+  // Remove GPS spikes + data cleaning
   const points = useMemo(() => {
     if (!pointsRaw?.length) return [];
 
-    const MAX_SPEED_KMH = 250; // سقف منطقي للفصل بين النقاط
-    const MIN_DT_SEC = 5; // أقل زمن نعتمد عليه لحساب سرعة بين نقطتين
-    const MAX_JUMP_METERS_NO_TIME = 10000; // لو مفيش وقت: تجاهل قفزة > 10km
-    const MAX_JUMP_METERS = 20000; // حماية إضافية لو timestamps كبيرة لكن القفزة غير منطقية
+    const MAX_SPEED_KMH = 250;
+    const MIN_DT_SEC = 5;
+    const MAX_JUMP_METERS_NO_TIME = 10000;
+    const MAX_JUMP_METERS = 20000;
 
     const out = [];
     let prev = null;
@@ -412,7 +412,7 @@ const CarReplay = () => {
       const lng = Number(p?.longitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
 
-      // (0,0) غالبًا نقطة خاطئة
+      // (0,0) is often an incorrect point
       if (Math.abs(lat) < 0.0001 && Math.abs(lng) < 0.0001) continue;
 
       const normalized = { ...p, latitude: lat, longitude: lng };
@@ -428,7 +428,7 @@ const CarReplay = () => {
       const t1 = p?.date ? parseMs(p.date) : null;
       const dtSec = t0 != null && t1 != null ? (t1 - t0) / 1000 : null;
 
-      // لو نفس النقطة تقريبًا: احفظها (مهمة للثبات/الوقوف)
+      // If approximately the same point: keep it (important for stationary/stop)
       if (distM < 2) {
         out.push(normalized);
         prev = normalized;
@@ -437,10 +437,10 @@ const CarReplay = () => {
 
       // Spike detection
       if (dtSec != null && dtSec > 0) {
-        // قفزة ضخمة بغض النظر عن الزمن
+        // Huge jump regardless of time
         if (distM > MAX_JUMP_METERS) continue;
         if (dtSec < MIN_DT_SEC && distM > 1000) {
-          // قفزة كبيرة في زمن صغير جدًا
+          // Large jump in very short time
           continue;
         }
         const impliedSpeed = (distM / dtSec) * 3.6;
@@ -464,7 +464,7 @@ const CarReplay = () => {
   });
 
   const MAX_REPLAY_POINTS = 9000;
-  // ✅ نقطة واحدة "مصدر" للحركة + للرسم (لتجنب اختلاف المسار عند تبسيط polyline فقط)
+  // Single "source" point for movement + drawing (to avoid path discrepancy when simplifying polyline only)
   const replayPoints = useMemo(
     () => simplifyPointsToMax(points, MAX_REPLAY_POINTS),
     [points],
@@ -482,7 +482,7 @@ const CarReplay = () => {
   const lastPanToRef = useRef(0);
   const lastUserMapInteractionAtRef = useRef(0);
 
-  // ✅ حركة ناعمة (time-based) بين النقاط
+  // Smooth movement (time-based) between points
   const [renderPosition, setRenderPosition] = useState(null);
   const [renderDirection, setRenderDirection] = useState(0);
   const [renderDistanceKm, setRenderDistanceKm] = useState(0);
@@ -529,20 +529,20 @@ const CarReplay = () => {
       const t1 = b?.date ? parseMs(b.date) : null;
       const dtDevice = t0 != null && t1 != null ? t1 - t0 : null;
 
-      // ✅ مدة متوقعة للحركة من المسافة والسرعة (أكثر واقعية عند وجود gaps كبيرة في البيانات)
+      // Expected duration for movement from distance and speed (more realistic when there are large gaps in data)
       const vKmh = Math.max(Number(a?.speed) || Number(b?.speed) || 20, 5);
       const vMs = vKmh / 3.6;
       const travelMs = (distM / Math.max(vMs, 0.1)) * 1000;
 
       let dt = travelMs;
       if (dtDevice != null && Number.isFinite(dtDevice) && dtDevice > 0) {
-        // لو dt من الجهاز منطقي وقريب من مدة الحركة، استخدمه
-        // لكن لو dt كبير جدًا مقارنة بالحركة (مثلاً الجهاز كان ساكت/فجوة)، استخدم مدة الحركة بدل ما العربية “تزحف” أو “تقفز”
-        const GAP_FACTOR = 4; // إذا الزمن أكبر من 4x زمن الحركة نعتبره gap
+        // If dt from device is logical and close to movement duration, use it
+        // But if dt is very large compared to movement (e.g., device was silent/gap), use movement duration to avoid car "crawling" or "jumping"
+        const GAP_FACTOR = 4;
         dt = dtDevice > travelMs * GAP_FACTOR ? travelMs : dtDevice;
       }
 
-      // ✅ clamp خفيف فقط لتجنب 0ms/قيم غير منطقية، بدون سقف صغير يعمل "teleport"
+      // Light clamp only to avoid 0ms/illogical values, no small cap that would cause "teleport"
       out[i] = Math.max(120, Math.min(10 * 60 * 1000, dt));
     }
     return out;
@@ -623,7 +623,7 @@ const CarReplay = () => {
     setEndAddress("");
   }, [replayPoints]);
 
-  // تحديد نقطة البداية أول مرة فقط
+  // Set starting point only once
   useEffect(() => {
     if (replayPoints.length > 0) {
       setInitialCenter({
@@ -633,7 +633,7 @@ const CarReplay = () => {
     }
   }, [replayPoints]);
 
-  // ✅ لو تم تنظيف نقاط كثيرة، حافظ على index داخل الحدود
+  // If many points were cleaned, keep index within bounds
   useEffect(() => {
     if (replayPoints.length === 0) {
       if (currentIndex !== 0) setCurrentIndex(0);
@@ -680,7 +680,7 @@ const CarReplay = () => {
     setRenderDirection(b);
   }, [replayPoints, distanceKmByIndex]);
 
-  // ✅ محرك التشغيل (time-based) باستخدام requestAnimationFrame
+  // Time-based movement engine using requestAnimationFrame
   useEffect(() => {
     if (!isPlaying) return;
     if (replayPoints.length < 2) return;
@@ -689,7 +689,7 @@ const CarReplay = () => {
     lastFrameMsRef.current = performance.now();
 
     const step = (now) => {
-      // ✅ حماية: لو التبويب كان متوقف/lag، لا تسمح بقفزات كبيرة في فريم واحد
+      // Protection: if tab was paused/lagging, don't allow large jumps in a single frame
       const dt = Math.min(50, now - lastFrameMsRef.current);
       lastFrameMsRef.current = now;
 
@@ -714,7 +714,7 @@ const CarReplay = () => {
         idx += 1;
         idxChanged = true;
         advanced += 1;
-        // ✅ حماية إضافية: لا تتخطى عدد كبير من القطع في فريم واحد (يسبب خلل دوران/قفزات)
+        // Additional protection: don't skip too many segments in one frame (causes rotation/jump issues)
         if (advanced > 20) {
           prog = 0;
           break;
@@ -773,8 +773,8 @@ const CarReplay = () => {
             const recentlyInteracted =
               tNow - lastUserMapInteractionAtRef.current < 1500;
 
-            // ✅ شرطك: لو العربية خرجت من الشاشة -> لازم نرجّع التمركز عليها
-            // نحترم تفاعل المستخدم لفترة قصيرة، وبعدها نرجع التمركز تلقائيًا.
+            // Your condition: if car goes out of screen -> must re-center on it
+            // Respect user interaction for a short period, then re-center automatically.
             if (!recentlyInteracted || followRef.current) {
               if (tNow - lastPanToRef.current > 200) {
                 lastPanToRef.current = tNow;
@@ -836,7 +836,8 @@ const CarReplay = () => {
       lng: Number(tripStats.end.longitude),
     };
 
-    if (!Number.isFinite(startLoc.lat) || !Number.isFinite(startLoc.lng)) return;
+    if (!Number.isFinite(startLoc.lat) || !Number.isFinite(startLoc.lng))
+      return;
     if (!Number.isFinite(endLoc.lat) || !Number.isFinite(endLoc.lng)) return;
 
     setIsSummaryGeocoding(true);
@@ -920,13 +921,13 @@ const CarReplay = () => {
 
   const MAX_PARKING_MARKERS = 200;
 
-  // ✅ Polylines حسب اللون (بنفس نقاط التشغيل) لتفادي اختلاف المسار
+  // Polylines by color (using the same playback points) to avoid path discrepancy
   const polylineSegments = useMemo(() => {
     if (replayPoints.length === 0) return { green: [], yellow: [], red: [] };
     return buildPolylineSegmentsByColor(replayPoints, speedLimits);
   }, [replayPoints, speedLimits]);
 
-  // ✅ تحسين: نقاط الوقوف بدون نسخ كل points + مع حد أقصى
+  // Optimization: stop points without copying all points + with maximum limit
   const parkingMarkers = useMemo(() => {
     if (replayPoints.length === 0) return [];
     const markers = [];
@@ -940,7 +941,7 @@ const CarReplay = () => {
         inStop = true;
         stopStartIdx = i;
       } else if (!isStop && inStop) {
-        // نهاية الوقوف: خذ نقطة وسطية لتمثيل الوقوف
+        // End of stop: take midpoint to represent the stop
         const mid = Math.floor((stopStartIdx + i - 1) / 2);
         markers.push({
           index: mid,
@@ -956,7 +957,7 @@ const CarReplay = () => {
     return markers;
   }, [replayPoints]);
 
-  // ✅ تحسين: حفظ نقاط البداية والنهاية
+  // Optimization: save start and end points
   const startEndMarkers = useMemo(() => {
     if (replayPoints.length === 0) return null;
 
@@ -1002,7 +1003,9 @@ const CarReplay = () => {
   };
 
   const speedKmh = Math.max(0, Math.round(Number(currentPoint?.speed) || 0));
-  const speedKmhDisplay = Math.max(0, Number(currentPoint?.speed) || 0).toFixed(2);
+  const speedKmhDisplay = Math.max(0, Number(currentPoint?.speed) || 0).toFixed(
+    2,
+  );
 
   return (
     <div className="relative">
@@ -1015,10 +1018,10 @@ const CarReplay = () => {
         zoom={replayPoints.length > 0 ? 16 : 6}
         mapTypeId={mapType}
       >
-        {/* ✅ المسار الكامل - محسّن */}
+        {/* Full path - optimized */}
         {replayPoints.length > 0 && (
           <>
-            {/* رسم المسارات الخضراء */}
+            {/* Draw green paths */}
             {polylineSegments.green.map((path, index) => (
               <Polyline
                 key={`green-${index}`}
@@ -1031,7 +1034,7 @@ const CarReplay = () => {
               />
             ))}
 
-            {/* رسم المسارات الصفراء */}
+            {/* Draw yellow paths */}
             {polylineSegments.yellow.map((path, index) => (
               <Polyline
                 key={`yellow-${index}`}
@@ -1044,7 +1047,7 @@ const CarReplay = () => {
               />
             ))}
 
-            {/* رسم المسارات الحمراء */}
+            {/* Draw red paths */}
             {polylineSegments.red.map((path, index) => (
               <Polyline
                 key={`red-${index}`}
@@ -1057,7 +1060,7 @@ const CarReplay = () => {
               />
             ))}
 
-            {/* ✅ نقطة البداية */}
+            {/* Start point */}
             {startEndMarkers && (
               <>
                 <Marker
@@ -1078,7 +1081,7 @@ const CarReplay = () => {
                   }}
                 />
 
-                {/* ✅ نقطة النهاية */}
+                {/* End point */}
                 <Marker
                   position={startEndMarkers.end}
                   label={{
@@ -1099,7 +1102,7 @@ const CarReplay = () => {
               </>
             )}
 
-            {/* ✅ نقاط الوقوف - محسّنة */}
+            {/* Stop points - optimized */}
             {parkingMarkers.map((point) => (
               <Marker
                 key={point.index}
@@ -1126,7 +1129,7 @@ const CarReplay = () => {
           </>
         )}
 
-        {/* العربية */}
+        {/* Car */}
         {replayPoints.length > 0 && renderPosition && (
           <Marker
             position={renderPosition}
@@ -1148,7 +1151,9 @@ const CarReplay = () => {
                   <div className="rounded-2xl bg-gradient-to-br from-mainColor/10 via-white to-indigo-50 border border-slate-100 shadow-lg overflow-hidden">
                     <div className="px-4 py-3 flex items-center justify-between bg-white/70 backdrop-blur border-b border-slate-100">
                       <div>
-                        <p className="text-[11px] text-slate-500">سيارة</p>
+                        <p className="text-[11px] text-slate-500">
+                          {t("carReplay.car")}
+                        </p>
                         <h3 className="text-lg font-bold text-slate-900">
                           {meta?.name}
                         </h3>
@@ -1165,7 +1170,7 @@ const CarReplay = () => {
                       <div className="rounded-xl border border-slate-100 bg-white/80 px-3 py-2">
                         <div className="flex items-center gap-1 text-slate-500">
                           <IoCalendarSharp size={14} />
-                          الوقت
+                          {t("carReplay.time")}
                         </div>
                         <div className="mt-1 font-semibold text-slate-800">
                           {formatDate(currentPoint.date)}
@@ -1174,7 +1179,7 @@ const CarReplay = () => {
                       <div className="rounded-xl border border-slate-100 bg-white/80 px-3 py-2">
                         <div className="flex items-center gap-1 text-slate-500">
                           <GiPathDistance size={14} />
-                          المسافة
+                          {t("carReplay.distance")}
                         </div>
                         <div className="mt-1 font-semibold text-slate-800">
                           {(Number(renderDistanceKm) || 0).toFixed(6)} km
@@ -1183,7 +1188,7 @@ const CarReplay = () => {
                       <div className="rounded-xl border border-slate-100 bg-white/80 px-3 py-2 col-span-2">
                         <div className="flex items-center gap-1 text-slate-500">
                           <IoMdLocate size={14} />
-                          الإحداثيات
+                          {t("carReplay.coordinates")}
                         </div>
                         <div className="mt-1 font-semibold text-slate-800">
                           {renderPosition?.lat?.toFixed(6)},
@@ -1195,20 +1200,22 @@ const CarReplay = () => {
                     <div className="px-4 pb-4">
                       <div className="rounded-xl border border-slate-100 bg-white/90 px-3 py-2 text-xs">
                         <div className="flex items-center justify-between">
-                          <div className="text-slate-500">المكان</div>
+                          <div className="text-slate-500">
+                            {t("carReplay.location")}
+                          </div>
                           <button
                             type="button"
                             onClick={handleFetchAddress}
                             className="text-[11px] text-mainColor hover:underline"
                             disabled={isGeocoding}
                           >
-                            تحديث العنوان
+                            {t("carReplay.updateAddress")}
                           </button>
                         </div>
                         <div className="mt-2 text-slate-700 leading-snug min-h-[18px]">
                           {isGeocoding
-                            ? "جاري جلب العنوان..."
-                            : address || "غير متاح"}
+                            ? t("carReplay.fetchingAddress")
+                            : address || t("carReplay.notAvailable")}
                         </div>
                         <a
                           href={`https://www.google.com/maps?q=${renderPosition?.lat},${renderPosition?.lng}`}
@@ -1216,7 +1223,7 @@ const CarReplay = () => {
                           rel="noreferrer"
                           className="inline-flex items-center gap-1 mt-2 text-mainColor hover:underline"
                         >
-                          فتح في Google Maps
+                          {t("carReplay.openInGoogleMaps")}
                         </a>
                       </div>
                     </div>
@@ -1253,13 +1260,13 @@ const CarReplay = () => {
           className={`btn btn-sm btn-circle shadow bg-white border border-gray-200 hover:bg-gray-50 ${
             followCar ? "text-mainColor" : "text-gray-600"
           }`}
-          title="الانتقال لمكان السيارة"
+          title={t("carReplay.recenter")}
         >
           <FaCrosshairs />
         </button>
       </div>
 
-      {/* ✅ مؤشر السرعة */}
+      {/* Speed indicator */}
       {replayPoints.length > 0 && (
         <div className="absolute top-32 left-4 z-20">
           <div className="bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2">
@@ -1282,7 +1289,7 @@ const CarReplay = () => {
       ) : replayPoints.length === 0 ? (
         <div className="absolute w-full max-w-4xl bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-full px-8 py-6 flex items-center justify-center">
           <h2 className="text-lg md:text-xl font-semibold text-gray-700">
-            لا يوجد بيانات لعرضها في هذه الفترة
+            {t("carReplay.noData")}
           </h2>
         </div>
       ) : (
@@ -1301,7 +1308,9 @@ const CarReplay = () => {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-bold text-mainColor">ملخص الرحلة</h3>
+              <h3 className="text-lg font-bold text-mainColor">
+                {t("carReplay.tripSummary")}
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowTripSummary(false)}
@@ -1318,16 +1327,18 @@ const CarReplay = () => {
                 className="text-mainColor hover:underline"
                 disabled={isSummaryGeocoding}
               >
-                تحديث العناوين
+                {t("carReplay.updateAddresses")}
               </button>
               {isSummaryGeocoding ? (
-                <span className="text-gray-400 ms-2">جاري الجلب...</span>
+                <span className="text-gray-400 ms-2">
+                  {t("carReplay.fetching")}
+                </span>
               ) : null}
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm text-gray-700">
               <div>
-                <div className="text-gray-500">من</div>
+                <div className="text-gray-500">{t("carReplay.from")}</div>
                 <div className="font-medium">
                   {tripStats.startTime ? formatDate(tripStats.startTime) : "-"}
                 </div>
@@ -1340,11 +1351,11 @@ const CarReplay = () => {
                   rel="noreferrer"
                   className="text-xs text-mainColor hover:underline"
                 >
-                  فتح في Google Maps
+                  {t("carReplay.openInGoogleMaps")}
                 </a>
               </div>
               <div>
-                <div className="text-gray-500">إلى</div>
+                <div className="text-gray-500">{t("carReplay.to")}</div>
                 <div className="font-medium">
                   {tripStats.endTime ? formatDate(tripStats.endTime) : "-"}
                 </div>
@@ -1357,11 +1368,11 @@ const CarReplay = () => {
                   rel="noreferrer"
                   className="text-xs text-mainColor hover:underline"
                 >
-                  فتح في Google Maps
+                  {t("carReplay.openInGoogleMaps")}
                 </a>
               </div>
               <div>
-                <div className="text-gray-500">المدة</div>
+                <div className="text-gray-500">{t("carReplay.duration")}</div>
                 <div className="font-medium">
                   {Math.floor(tripStats.durationSec / 3600)}h{" "}
                   {Math.floor((tripStats.durationSec % 3600) / 60)}m{" "}
@@ -1369,19 +1380,19 @@ const CarReplay = () => {
                 </div>
               </div>
               <div>
-                <div className="text-gray-500">المسافة</div>
+                <div className="text-gray-500">{t("carReplay.distance")}</div>
                 <div className="font-medium">
                   {tripStats.totalDistanceKm.toFixed(3)} km
                 </div>
               </div>
               <div>
-                <div className="text-gray-500">متوسط السرعة</div>
+                <div className="text-gray-500">{t("carReplay.avgSpeed")}</div>
                 <div className="font-medium">
                   {tripStats.avgSpeedByTime.toFixed(2)} km/h
                 </div>
               </div>
               <div>
-                <div className="text-gray-500">أعلى سرعة</div>
+                <div className="text-gray-500">{t("carReplay.maxSpeed")}</div>
                 <div className="font-medium">
                   {tripStats.maxSpeed.toFixed(2)} km/h
                 </div>
@@ -1389,7 +1400,7 @@ const CarReplay = () => {
             </div>
 
             <div className="mt-4 text-xs text-gray-500">
-              المسافة والسرعات محسوبة من نقاط المسار.
+              {t("carReplay.note")}
             </div>
           </div>
         </div>

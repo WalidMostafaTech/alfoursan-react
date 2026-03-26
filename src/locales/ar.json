@@ -282,6 +282,17 @@
     "googleMaps": "خرائط جوجل",
     "mapbox": "Mapbox"
   },
+  "membership": {
+    "tableHeaders": {
+      "clientName": "اسم العميل",
+      "account": "الحساب",
+      "contact": "جهة الاتصال",
+      "phoneNumber": "رقم الهاتف",
+      "package": "الباقة",
+      "subscriptionStart": "بداية الاشتراك",
+      "subscriptionEnd": "نهاية الاشتراك"
+    }
+  },
   "previousCommands": {
     "deleteSuccess": " تم حذف الأمر بنجاح",
     "confirmDelete": "هل أنت متأكد من حذف هذا الأمر؟",
@@ -370,5 +381,76 @@
   },
   "deviceNamePopup": {
     "noName": "بدون اسم"
+  },
+
+  "polygonMenu": {
+    "title": "إدارة السياج الجغرافي",
+    "drawFence": "رسم سياج",
+    "searchByName": "ابحث بالاسم...",
+    "noFences": "لا يوجد سياجات",
+    "showAll": "عرض الكل",
+    "batchDelete": "حذف المحدد",
+    "deleting": "جارٍ الحذف...",
+    "name": "الاسم",
+    "operate": "الإجراءات",
+    "deleteSuccess": "تم حذف السياج بنجاح",
+    "batchDeleteSuccess": "تم حذف العناصر المحددة بنجاح",
+    "confirmDelete": "هل أنت متأكد من حذف هذا السياج؟",
+    "confirmBatchDelete": "هل أنت متأكد من حذف العناصر المحددة؟",
+    "selectAtLeastOne": "يجب اختيار عنصر واحد على الأقل",
+    "noFencesToShow": "لا يوجد سياجات لعرضها على الخريطة"
+  },
+  "maintenance": {
+    "title": "الصيانة حسب المسافة",
+    "addMaintenance": "+ إضافة صيانة",
+    "cancel": "إلغاء",
+    "deviceName": "اسم الجهاز",
+    "plannedTime": "الوقت المحدد",
+    "type": "النوع",
+    "comprehensive": "صيانة شاملة",
+    "mileage": "الصيانة حسب المسافة",
+    "date": "الصيانة حسب التاريخ",
+    "plannedMiles": "المسافة المحددة",
+    "notifications": "الإشعارات",
+    "maintenanceReminder": "تذكير بالصيانة",
+    "endUserReminder": "تذكير المستخدم النهائي",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ...",
+    "addSuccess": "تمت إضافة الصيانة بنجاح ✅",
+    "deleteSuccess": "تم حذف الصيانة بنجاح 🗑️",
+    "confirmDelete": "هل أنت متأكد من حذف هذا السجل؟",
+    "deleting": "جارٍ الحذف...",
+    "noRecords": "لا توجد سجلات صيانة",
+    "tableHeaders": {
+      "number": "#",
+      "type": "النوع",
+      "plannedTime": "الوقت المحدد",
+      "plannedMiles": "المسافة المحددة",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    }
+  },
+  "carReplay": {
+    "max30DaysWarning": "الحد الأقصى 30 يومًا مسموح به",
+    "car": "سيارة",
+    "time": "الوقت",
+    "distance": "المسافة",
+    "coordinates": "الإحداثيات",
+    "location": "المكان",
+    "updateAddress": "تحديث العنوان",
+    "fetchingAddress": "جاري جلب العنوان...",
+    "notAvailable": "غير متاح",
+    "openInGoogleMaps": "فتح في Google Maps",
+    "recenter": "الانتقال لمكان السيارة",
+    "noData": "لا يوجد بيانات لعرضها في هذه الفترة",
+    "tripSummary": "ملخص الرحلة",
+    "updateAddresses": "تحديث العناوين",
+    "fetching": "جاري الجلب...",
+    "from": "من",
+    "to": "إلى",
+    "duration": "المدة",
+    "avgSpeed": "متوسط السرعة",
+    "maxSpeed": "أعلى سرعة",
+    "note": "المسافة والسرعات محسوبة من نقاط المسار."
   }
 }
