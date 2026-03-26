@@ -296,6 +296,7 @@
   "previousCommands": {
     "deleteSuccess": " تم حذف الأمر بنجاح",
     "confirmDelete": "هل أنت متأكد من حذف هذا الأمر؟",
+    "delete": "حذف",
     "deleting": "جاري الحذف...",
     "tableHeaders": {
       "number": "رقم",
@@ -416,10 +417,11 @@
     "endUserReminder": "تذكير المستخدم النهائي",
     "save": "حفظ",
     "saving": "جارٍ الحفظ...",
-    "addSuccess": "تمت إضافة الصيانة بنجاح ✅",
-    "deleteSuccess": "تم حذف الصيانة بنجاح 🗑️",
+    "addSuccess": "تمت إضافة الصيانة بنجاح ",
+    "deleteSuccess": "تم حذف الصيانة بنجاح ",
     "confirmDelete": "هل أنت متأكد من حذف هذا السجل؟",
     "deleting": "جارٍ الحذف...",
+    "delete": "حذف",
     "noRecords": "لا توجد سجلات صيانة",
     "tableHeaders": {
       "number": "#",

@@ -174,6 +174,8 @@ const PolygonMenu = () => {
     }
   };
 
+  const lang = window.__LANG__ || "ar";
+
   return (
     <DropdownMenu.Root open={polygonMenu.show} onOpenChange={handleOpenChange}>
       {/* زر الفتح */}
@@ -194,6 +196,7 @@ const PolygonMenu = () => {
           className="bg-white shadow-xl rounded-xl w-80 p-4 z-50 space-y-4"
           // ❌ اشيل الـ preventDefault
           onPointerDownOutside={(e) => e.stopPropagation()}
+          dir={lang === "ar" ? "rtl" : "ltr"}
         >
           {/* ✅ العنوان + زر الإغلاق */}
           <div className="flex items-center justify-between">
@@ -281,7 +284,7 @@ const PolygonMenu = () => {
               )}
 
               {/* Table */}
-              <div className="overflow-y-auto max-h-96 rounded-md">
+              <div className="overflow-y-auto max-h-52! rounded-md">
                 <table className="table table-zebra w-full text-xs">
                   <thead>
                     <tr>

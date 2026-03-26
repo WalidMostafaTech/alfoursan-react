@@ -82,10 +82,11 @@
     "endUserReminder": "End User Reminder",
     "save": "Save",
     "saving": "Saving...",
-    "addSuccess": "Maintenance added successfully ✅",
-    "deleteSuccess": "Maintenance deleted successfully 🗑️",
+    "addSuccess": "Maintenance added successfully",
+    "deleteSuccess": "Maintenance deleted successfully",
     "confirmDelete": "Are you sure you want to delete this record?",
     "deleting": "Deleting...",
+    "delete": "Delete",
     "noRecords": "No maintenance records available",
     "tableHeaders": {
       "number": "#",
@@ -111,6 +112,7 @@
     "deleteSuccess": "✅ Command deleted successfully",
     "confirmDelete": "Are you sure you want to delete this command?",
     "deleting": "Deleting...",
+    "delete": "Delete",
     "tableHeaders": {
       "number": "No.",
       "commandName": "Command name",

@@ -125,7 +125,7 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
   };
 
   return (
-    <section dir="rtl" className="space-y-4">
+    <section className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <MainInput
           id="deviceName"
@@ -133,13 +133,18 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
           value={deviceSettings?.device?.name || ""}
           disabled
         />
-        <MainInput id="type" label={t("specificTask.type")} value={t("specificTask.engineStop")} disabled />
+        <MainInput
+          id="type"
+          label={t("specificTask.type")}
+          value={t("specificTask.engineStop")}
+          disabled
+        />
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
           {/* ✅ نوع التنفيذ */}
-          <div className="form-control w-full max-w-xs" dir="rtl">
+          <div className="form-control w-full max-w-xs">
             <label className="label">
               <span className="label-text text-sm font-semibold text-gray-700">
                 {t("specificTask.executionType")}
@@ -155,7 +160,9 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
                   checked={executionType === "everyday"}
                   onChange={() => handleExecutionTypeChange("everyday")}
                 />
-                <span className="text-gray-700 font-medium text-sm">{t("specificTask.daily")}</span>
+                <span className="text-gray-700 font-medium text-sm">
+                  {t("specificTask.daily")}
+                </span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -166,7 +173,9 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
                   checked={executionType === "date_range"}
                   onChange={() => handleExecutionTypeChange("date_range")}
                 />
-                <span className="text-gray-700 font-medium text-sm">{t("specificTask.dateRange")}</span>
+                <span className="text-gray-700 font-medium text-sm">
+                  {t("specificTask.dateRange")}
+                </span>
               </label>
             </div>
           </div>
@@ -174,7 +183,9 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
           {/* ✅ تفعيل المهمة */}
           <div>
             <label className="flex items-center gap-2 mt-4">
-              <span className="text-gray-700 font-medium text-sm">{t("specificTask.enableTask")} :</span>
+              <span className="text-gray-700 font-medium text-sm">
+                {t("specificTask.enableTask")} :
+              </span>
               <input
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
@@ -221,7 +232,11 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
           />
         </div>
 
-        <FormBtn title={t("specificTask.confirm")} variant="success" disabled={isPending} />
+        <FormBtn
+          title={t("specificTask.confirm")}
+          variant="success"
+          disabled={isPending}
+        />
       </form>
     </section>
   );

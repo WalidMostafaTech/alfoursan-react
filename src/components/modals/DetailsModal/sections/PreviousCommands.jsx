@@ -47,14 +47,30 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
       <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm text-xs">
         <thead className="bg-mainColor/10 text-mainColor">
           <tr>
-            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.number")}</th>
-            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.commandName")}</th>
-            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.commandContent")}</th>
-            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.status")}</th>
-            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.sendTime")}</th>
-            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.replyContent")}</th>
-            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.responseTime")}</th>
-            <th className="py-2 px-2 text-left">{t("previousCommands.tableHeaders.operate")}</th>
+            <th className="py-2 px-2 text-start">
+              {t("previousCommands.tableHeaders.number")}
+            </th>
+            <th className="py-2 px-2 text-start">
+              {t("previousCommands.tableHeaders.commandName")}
+            </th>
+            <th className="py-2 px-2 text-start">
+              {t("previousCommands.tableHeaders.commandContent")}
+            </th>
+            <th className="py-2 px-2 text-start">
+              {t("previousCommands.tableHeaders.status")}
+            </th>
+            <th className="py-2 px-2 text-start">
+              {t("previousCommands.tableHeaders.sendTime")}
+            </th>
+            <th className="py-2 px-2 text-start">
+              {t("previousCommands.tableHeaders.replyContent")}
+            </th>
+            <th className="py-2 px-2 text-start">
+              {t("previousCommands.tableHeaders.responseTime")}
+            </th>
+            <th className="py-2 px-2 text-start">
+              {t("previousCommands.tableHeaders.operate")}
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
@@ -75,8 +91,8 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
                   cmd.status === "Success"
                     ? "text-green-600"
                     : cmd.status === "Failed"
-                    ? "text-red-600"
-                    : "text-yellow-500"
+                      ? "text-red-600"
+                      : "text-yellow-500"
                 }`}
               >
                 {cmd.status || ""}
@@ -100,7 +116,9 @@ const PreviousCommands = ({ deviceSettings, refetch }) => {
                       : "bg-red-600 hover:bg-red-700"
                   }`}
                 >
-                  {isPending ? t("previousCommands.deleting") : t("previousCommands.deleteSuccess")}
+                  {isPending
+                    ? t("previousCommands.deleting")
+                    : t("previousCommands.delete")}
                 </button>
               </td>
             </tr>

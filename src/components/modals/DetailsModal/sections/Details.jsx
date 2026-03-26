@@ -61,8 +61,12 @@ const Details = ({ deviceSettings, refetch }) => {
         if (res?.device?.id) {
           window.dispatchEvent(
             new CustomEvent("device-updated", {
-              detail: { device: res.device, device_id: res.device_id, imei: res.imei },
-            })
+              detail: {
+                device: res.device,
+                device_id: res.device_id,
+                imei: res.imei,
+              },
+            }),
           );
         }
       } catch {
@@ -110,7 +114,7 @@ const Details = ({ deviceSettings, refetch }) => {
     dataToSend.append("carnum", formData.carnum);
     dataToSend.append(
       "fuel_consumption_per_100km",
-      formData.fuel_consumption_per_100km
+      formData.fuel_consumption_per_100km,
     );
     dataToSend.append("contact_phone", formData.contact_phone);
     dataToSend.append("contact_person", formData.contact_person);
@@ -217,12 +221,14 @@ const Details = ({ deviceSettings, refetch }) => {
             {/* ✅ رفع الصورة العادي */}
             <div>
               <div className="flex items-center gap-3">
-                <MainInput
-                  id="image"
-                  type="file"
-                  label={t("details.carImage")}
-                  onChange={handleImageChange}
-                />
+                <div className="flex-1">
+                  <MainInput
+                    id="image"
+                    type="file"
+                    label={t("details.carImage")}
+                    onChange={handleImageChange}
+                  />
+                </div>
                 {preview && (
                   <div className="relative">
                     <img

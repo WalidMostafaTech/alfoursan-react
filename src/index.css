@@ -15,6 +15,22 @@
 
 body {
   font-family: "Cairo", sans-serif;
+
+  /*  */
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-mainColor) transparent;
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-mainColor);
+    border-radius: 3px;
+  }
 }
 
 /* fix hover in mobile */
@@ -92,6 +108,22 @@ body {
     li {
       margin-inline-start: 1rem;
     }
+  }
+}
+
+.custom_scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-mainColor) transparent;
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-mainColor);
+    border-radius: 3px;
   }
 }
 

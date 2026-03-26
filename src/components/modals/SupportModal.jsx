@@ -16,7 +16,7 @@ const SupportModal = () => {
   });
 
   return (
-    <dialog open className="modal detailsModal" dir="rtl">
+    <dialog open className="modal detailsModal">
       <div className="modal-box max-w-2xl max-h-[90%] pt-12 mt-10 relative top-0 text-center">
         <button
           className="btn btn-md btn-circle btn-ghost absolute right-2 top-2"

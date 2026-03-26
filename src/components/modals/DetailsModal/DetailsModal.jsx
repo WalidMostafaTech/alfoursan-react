@@ -53,19 +53,19 @@ const DetailsModal = () => {
   };
 
   return (
-    <dialog open className="modal items-start detailsModal" dir="rtl">
+    <dialog open className="modal items-start detailsModal">
       {/*  model to top */}
-      <div className="modal-box w-[96vw] max-w-6xl max-h-[92vh] pt-9 p-3 md:p-4 mt-3 relative top-0 overflow-y-auto">
+      <div className="modal-box w-[96vw] max-w-6xl pt-6! p-3 md:p-4 mt-3 relative">
         {/* زر الإغلاق */}
         <button
           onClick={onClose}
-          className="btn btn-md btn-circle btn-ghost absolute left-2 top-2 z-10 bg-red-900 text-white"
+          className="btn btn-xs btn-circle btn-ghost absolute end-2 top-2 z-10 bg-primary text-white"
         >
           ✕
         </button>
 
         {/* 🔹 شريط التبويبات */}
-        <div className="border-b border-gray-200 mb-3 flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="border-b border-gray-200 flex items-center gap-2 overflow-x-auto pb-1">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -85,7 +85,7 @@ const DetailsModal = () => {
         </div>
 
         {/* 🔹 محتوى التبويب الحالي */}
-        <div className="mt-3">
+        <div className="p-4 max-h-[75vh] overflow-y-auto">
           {isLoading ? (
             <Loader />
           ) : (
@@ -123,7 +123,9 @@ const DetailsModal = () => {
                 <Alerts deviceSettings={deviceSettings} refetch={refetch} />
               )}
 
-              {activeTab === "maintenance" && <Maintenance deviceID={id} deviceSettings={deviceSettings} />}
+              {activeTab === "maintenance" && (
+                <Maintenance deviceID={id} deviceSettings={deviceSettings} />
+              )}
               {activeTab === "specificTask" && (
                 <SpecificTask
                   deviceSettings={deviceSettings}

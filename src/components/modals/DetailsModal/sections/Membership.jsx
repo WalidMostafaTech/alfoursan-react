@@ -9,13 +9,13 @@ const Membership = ({ deviceSettings }) => {
       <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <thead className="bg-mainColor/10 text-mainColor">
           <tr className="text-xs">
-            <th className="py-3 px-4 text-right">{t("membership.tableHeaders.clientName")}</th>
-            <th className="py-3 px-4 text-right">{t("membership.tableHeaders.account")}</th>
-            <th className="py-3 px-4 text-right">{t("membership.tableHeaders.contact")}</th>
-            <th className="py-3 px-4 text-right">{t("membership.tableHeaders.phoneNumber")}</th>
-            <th className="py-3 px-4 text-right">{t("membership.tableHeaders.package")}</th>
-            <th className="py-3 px-4 text-right">{t("membership.tableHeaders.subscriptionStart")}</th>
-            <th className="py-3 px-4 text-right">{t("membership.tableHeaders.subscriptionEnd")}</th>
+            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.clientName")}</th>
+            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.account")}</th>
+            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.contact")}</th>
+            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.phoneNumber")}</th>
+            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.package")}</th>
+            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.subscriptionStart")}</th>
+            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.subscriptionEnd")}</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">

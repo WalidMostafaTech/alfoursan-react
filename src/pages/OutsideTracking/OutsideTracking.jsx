@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { GoogleMap, InfoWindow, Marker, useLoadScript } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  InfoWindow,
+  Marker,
+  useLoadScript,
+} from "@react-google-maps/api";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import CarPopup from "../../components/common/CarPopup";
 import useCarSocket from "../../hooks/useCarSocket";
-import { getOutsideTracking, sendCommand } from "../../services/monitorServices";
+import {
+  getOutsideTracking,
+  sendCommand,
+} from "../../services/monitorServices";
 import { toast } from "react-toastify";
 import { carPath } from "../../services/carPath";
 import { getCarStatus } from "../../utils/getCarStatus";
@@ -37,7 +45,10 @@ const OutsideTracking = () => {
   const lastGeocodeAtRef = useRef(0);
   const lastAddressPosRef = useRef(null);
   const [mapRef, setMapRef] = useState(null);
-  const [initialCenter, setInitialCenter] = useState({ lat: 23.8859, lng: 45.0792 });
+  const [initialCenter, setInitialCenter] = useState({
+    lat: 23.8859,
+    lng: 45.0792,
+  });
   const [showInfo, setShowInfo] = useState(false);
   const [showCommandDialog, setShowCommandDialog] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState("");
@@ -167,11 +178,17 @@ const OutsideTracking = () => {
     const tick = (now) => {
       const { start, end, t0, dur } = animRef.current;
       const t = Math.min(1, (now - t0) / dur);
-      const next = { lat: lerp(start.lat, end.lat, t), lng: lerp(start.lng, end.lng, t) };
+      const next = {
+        lat: lerp(start.lat, end.lat, t),
+        lng: lerp(start.lng, end.lng, t),
+      };
       setRenderPos(next);
 
       if (mapRef) {
-        if (now - lastPanCheckRef.current > 250 && !isInSafeBounds(mapRef, next, 0.2)) {
+        if (
+          now - lastPanCheckRef.current > 250 &&
+          !isInSafeBounds(mapRef, next, 0.2)
+        ) {
           lastPanCheckRef.current = now;
           mapRef.panTo(next);
         }
@@ -188,7 +205,6 @@ const OutsideTracking = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position?.lat, position?.lng]);
-
 
   // جلب العنوان (تهدئة + فقط عند تحرك ملحوظ)
   useEffect(() => {
@@ -224,7 +240,7 @@ const OutsideTracking = () => {
         setCars((prev) =>
           prev.length
             ? [{ ...prev[0], address: results[0].formatted_address }]
-            : prev
+            : prev,
         );
       }
     });
@@ -240,22 +256,32 @@ const OutsideTracking = () => {
       setSelectedCommand("");
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || t("outsideTracking.commandSendFailed"));
+      toast.error(
+        error?.response?.data?.message ||
+          t("outsideTracking.commandSendFailed"),
+      );
     },
   });
 
   const handleSendCommand = () => {
     if (isExpired) return toast.warn(t("outsideTracking.linkExpiredWarning"));
     if (!car?.id) return toast.warn(t("outsideTracking.noDeviceWarning"));
-    if (!selectedCommand) return toast.warn(t("outsideTracking.selectCommandWarning"));
+    if (!selectedCommand)
+      return toast.warn(t("outsideTracking.selectCommandWarning"));
     sendOutsideCommand({ device_id: car.id, command: selectedCommand });
   };
 
   if (loadError) return <div>{t("outsideTracking.mapLoadFailed")}</div>;
   if (!isLoaded) return <LoadingPage />;
   if (isLoading) return <LoadingPage />;
-  if (isError || !data) return <div className="p-4">{t("outsideTracking.shareDataLoadFailed")}</div>;
-  if (!position) return <div className="p-4">{t("outsideTracking.noLocationAvailable")}</div>;
+  if (isError || !data)
+    return (
+      <div className="p-4">{t("outsideTracking.shareDataLoadFailed")}</div>
+    );
+  if (!position)
+    return (
+      <div className="p-4">{t("outsideTracking.noLocationAvailable")}</div>
+    );
 
   return (
     <div className="relative">
@@ -268,9 +294,10 @@ const OutsideTracking = () => {
                 ? "bg-red-50 border-red-200 text-red-700"
                 : "bg-white/90 border-gray-200 text-gray-700"
             }`}
-            dir="rtl"
           >
-            {isExpired ? t("outsideTracking.linkExpired") : `${t("outsideTracking.timeLeft")} ${timeLeft}`}
+            {isExpired
+              ? t("outsideTracking.linkExpired")
+              : `${t("outsideTracking.timeLeft")} ${timeLeft}`}
           </div>
         </div>
       )}
@@ -323,7 +350,8 @@ const OutsideTracking = () => {
         <button
           className="btn btn-primary btn-sm rounded-full px-5 shadow-lg"
           onClick={() => {
-            if (isExpired) return toast.warn(t("outsideTracking.linkExpiredWarning"));
+            if (isExpired)
+              return toast.warn(t("outsideTracking.linkExpiredWarning"));
             setShowCommandDialog(true);
           }}
           disabled={isExpired}
@@ -334,15 +362,19 @@ const OutsideTracking = () => {
 
       {/* Dialog الأوامر */}
       {showCommandDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" dir="rtl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowCommandDialog(false)}
           />
           <div className="relative bg-white w-[92vw] max-w-md rounded-2xl shadow-xl p-4">
-            <h3 className="font-bold text-sm mb-3">{t("outsideTracking.sendCommandToDevice")}</h3>
+            <h3 className="font-bold text-sm mb-3">
+              {t("outsideTracking.sendCommandToDevice")}
+            </h3>
 
-            <label className="text-xs text-gray-600">{t("outsideTracking.availableCommands")}</label>
+            <label className="text-xs text-gray-600">
+              {t("outsideTracking.availableCommands")}
+            </label>
             <select
               className="select select-bordered w-full mt-1"
               value={selectedCommand}
@@ -368,7 +400,9 @@ const OutsideTracking = () => {
                 onClick={handleSendCommand}
                 disabled={isSending || !selectedCommand || isExpired}
               >
-                {isSending ? t("outsideTracking.sending") : t("outsideTracking.send")}
+                {isSending
+                  ? t("outsideTracking.sending")
+                  : t("outsideTracking.send")}
               </button>
             </div>
           </div>
@@ -379,5 +413,3 @@ const OutsideTracking = () => {
 };
 
 export default OutsideTracking;
-
-

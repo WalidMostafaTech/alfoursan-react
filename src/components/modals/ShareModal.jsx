@@ -100,7 +100,7 @@ const ShareModal = () => {
 
   return (
     <dialog open className="modal detailsModal">
-      <div className="modal-box max-w-md" dir="rtl">
+      <div className="modal-box max-w-md" >
         {/* Close Button */}
         <button
           onClick={closeModal}
@@ -177,7 +177,7 @@ const ShareModal = () => {
               <label className="label">
                 <span className="label-text font-medium mb-1">{t("shareModal.linkLabel")}</span>
               </label>
-              <div className="join w-full">
+              <div className="flex gap-1 w-full">
                 <div className="flex-1">
                   <MainInput type="text" value={shareLink} readOnly />
                 </div>

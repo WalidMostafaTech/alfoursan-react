@@ -4,7 +4,7 @@
 // /* ===== Alarm Toast UI ===== */
 // const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
 //   return (
-//     <div className="text-sm leading-5 space-y-2 w-full" dir="rtl">
+//     <div className="text-sm leading-5 space-y-2 w-full" >
 //       <p className="font-bold text-mainColor">{alarm}</p>
 //       <p>
 //         السيارة: <b>{carName}</b>
@@ -133,7 +133,7 @@ import { setCommandResponse } from "../store/modalsSlice";
 /* ===== Alarm Toast UI ===== */
 const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
   return (
-    <div className="w-full" dir="rtl">
+    <div className="w-full">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 h-9 w-9 shrink-0 rounded-full border border-red-200 bg-red-50 text-red-700 flex items-center justify-center">
           <svg
@@ -152,15 +152,17 @@ const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-extrabold text-red-700 leading-5">{alarm}</p>
+          <p className="text-sm font-extrabold text-red-700 leading-5">
+            {alarm}
+          </p>
 
           <div className="mt-2 space-y-1 text-xs text-slate-700">
             <p className="truncate">
-              السيارة: <span className="font-bold text-slate-900">{carName}</span>
+              السيارة:{" "}
+              <span className="font-bold text-slate-900">{carName}</span>
             </p>
             <p>
-              السرعة:{" "}
-              <span className="font-bold text-slate-900">{speed}</span>{" "}
+              السرعة: <span className="font-bold text-slate-900">{speed}</span>{" "}
               كم/س
             </p>
             <p className="text-[11px] text-slate-500 break-all">IMEI: {IMEI}</p>
@@ -304,7 +306,8 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         const imei = car?.serial_number;
         if (!imei) return;
         // index map: يجهّز lookup سريع لتحديثات GPS
-        if (!indexByImeiRef.current.has(imei)) indexByImeiRef.current.set(imei, idx);
+        if (!indexByImeiRef.current.has(imei))
+          indexByImeiRef.current.set(imei, idx);
         if (subscribedImeisRef.current.has(imei)) return;
         subscribedImeisRef.current.add(imei);
         ws.send(JSON.stringify({ type: "subscribe", imei }));
@@ -395,17 +398,30 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
             data.data.acc_status ??
             null,
         );
-        const nextMotion = normalizeBool(attrs?.motion ?? data.data.motion ?? null);
-        const nextCharge = normalizeBool(attrs?.charge ?? data.data.charge ?? null);
+        const nextMotion = normalizeBool(
+          attrs?.motion ?? data.data.motion ?? null,
+        );
+        const nextCharge = normalizeBool(
+          attrs?.charge ?? data.data.charge ?? null,
+        );
 
-        log("GPS", { imei, serial, lat, lng, speed: nextSpeed, direction: nextDir, date: dateValue });
+        log("GPS", {
+          imei,
+          serial,
+          lat,
+          lng,
+          speed: nextSpeed,
+          direction: nextDir,
+          date: dateValue,
+        });
 
         setCars((prev) => {
           // ✅ اختَر أول مفتاح يطابق (imei ثم serial)
           const resolveIndex = () => {
             for (const key of matchKeys) {
               let idx = indexByImeiRef.current.get(key);
-              if (idx !== undefined && prev[idx]?.serial_number === key) return { idx, key };
+              if (idx !== undefined && prev[idx]?.serial_number === key)
+                return { idx, key };
               if (idx !== undefined && prev[idx]?.serial_number !== key) {
                 idx = prev.findIndex((c) => c?.serial_number === key);
               } else if (idx === undefined) {
@@ -422,52 +438,53 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
           const { idx, key: matchedKey } = resolveIndex();
 
           const applyUpdate = (car) => {
-              if (!car) return car;
+            if (!car) return car;
             const ignition_on =
               nextIgnition === null ? car.ignition_on : nextIgnition;
             const motion = nextMotion === null ? car.motion : nextMotion;
             const charge = nextCharge === null ? car.charge : nextCharge;
 
-              // ✅ تجاهل تحديثات GPS الأقدم (out-of-order) لتجنب الرجوع للخلف/الوميض
-              const prevMs =
-                car.lastGpsAtMs ??
-                parseTimeMs(car.lastSignelGPS) ??
-                parseTimeMs(car.lastSignel);
-              // ملاحظة: نسمح بـ incomingMs === prevMs لأن بعض البروتوكولات قد تعيد نفس التوقيت
-              // مع تحديثات مختلفة، لكن نرفض الأقدم فقط.
-              // if (incomingMs != null && prevMs != null && incomingMs < prevMs) {
-              //   log("GPS ignored (out-of-order)", { matchedKey, incomingMs, prevMs });
-              //  // return car;
-              // }
+            // ✅ تجاهل تحديثات GPS الأقدم (out-of-order) لتجنب الرجوع للخلف/الوميض
+            const prevMs =
+              car.lastGpsAtMs ??
+              parseTimeMs(car.lastSignelGPS) ??
+              parseTimeMs(car.lastSignel);
+            // ملاحظة: نسمح بـ incomingMs === prevMs لأن بعض البروتوكولات قد تعيد نفس التوقيت
+            // مع تحديثات مختلفة، لكن نرفض الأقدم فقط.
+            // if (incomingMs != null && prevMs != null && incomingMs < prevMs) {
+            //   log("GPS ignored (out-of-order)", { matchedKey, incomingMs, prevMs });
+            //  // return car;
+            // }
 
-              const samePos =
-                car.position?.lat === nextPos.lat && car.position?.lng === nextPos.lng;
-              const sameMeta =
-                (Number(car.speed) || 0) === nextSpeed &&
-                (car.direction ?? 0) === (nextDir ?? 0) &&
+            const samePos =
+              car.position?.lat === nextPos.lat &&
+              car.position?.lng === nextPos.lng;
+            const sameMeta =
+              (Number(car.speed) || 0) === nextSpeed &&
+              (car.direction ?? 0) === (nextDir ?? 0) &&
               (car.status ?? "") === nextStatus &&
               (car.ignition_on ?? null) === ignition_on &&
               (car.motion ?? null) === motion &&
               (car.charge ?? null) === charge;
 
-              // ✅ no-op: لا تعمل rerender لو مفيش تغيير فعلي
-              if (samePos && sameMeta) return car;
+            // ✅ no-op: لا تعمل rerender لو مفيش تغيير فعلي
+            if (samePos && sameMeta) return car;
 
-              return {
-                ...car,
-                position: nextPos,
-                speed: nextSpeed,
-                direction: nextDir,
-                status: nextStatus,
-                ignition_on,
-                motion,
-                charge,
-                lastUpdate: Date.now(),
-                lastSignel: dateValue ?? car.lastSignel,
-                lastSignelGPS: dateValue ?? car.lastSignelGPS,
-                lastGpsAtMs: incomingMs ?? Date.now(),
-              };
+            return {
+              ...car,
+              position: nextPos,
+              speed: nextSpeed,
+              direction: nextDir,
+              status: nextStatus,
+              ignition_on,
+              motion,
+              charge,
+              lastUpdate: Date.now(),
+              lastSignel: dateValue ?? car.lastSignel,
+              lastSignelGPS: dateValue ?? car.lastSignelGPS,
+              lastGpsAtMs: incomingMs ?? Date.now(),
             };
+          };
 
           if (idx < 0) {
             // لم نجد السيارة — هذا أهم log لتشخيص "السيارة لا تتحرك"
@@ -505,10 +522,18 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
             data.data.acc_status ??
             null,
         );
-        const nextMotion = normalizeBool(attrs?.motion ?? data.data.motion ?? null);
-        const nextCharge = normalizeBool(attrs?.charge ?? data.data.charge ?? null);
+        const nextMotion = normalizeBool(
+          attrs?.motion ?? data.data.motion ?? null,
+        );
+        const nextCharge = normalizeBool(
+          attrs?.charge ?? data.data.charge ?? null,
+        );
 
-        if (nextIgnition !== null || nextMotion !== null || nextCharge !== null) {
+        if (
+          nextIgnition !== null ||
+          nextMotion !== null ||
+          nextCharge !== null
+        ) {
           setCars((prev) => {
             const idx = prev.findIndex((c) => c?.serial_number === imei);
             if (idx < 0) return prev;
@@ -575,11 +600,9 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
             className:
               "alarm-toast !bg-white !text-slate-900 !rounded-xl !shadow-xl !border !border-red-200",
             style: { marginBottom: "48px" }, // رفع بسيط عن المكان الحالي
-          }
-        ,  );
+          },
+        );
       }
-
-
 
       /* ===== HEARTBEAT ===== */
       if (data.type === "heartbeat" && data.data?.imei) {
@@ -610,7 +633,8 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
       if (data.type === "device" && (data.data?.imei || data.data?.uniqueId)) {
         const imei = (data.data.imei ?? data.data.uniqueId ?? "").toString();
         const status = data.data.status ?? data.data.device_status ?? null; // 'online' | 'offline'
-        const lastUpdate = data.data.lastUpdate ?? data.data.device_lastUpdate ?? null;
+        const lastUpdate =
+          data.data.lastUpdate ?? data.data.device_lastUpdate ?? null;
 
         setCars((prev) => {
           const idx = prev.findIndex((c) => c?.serial_number === imei);
@@ -619,7 +643,11 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
           if (!existing) return prev;
 
           const nextOffline =
-            status === "offline" ? true : status === "online" ? false : existing.isOffline;
+            status === "offline"
+              ? true
+              : status === "online"
+                ? false
+                : existing.isOffline;
 
           const next = prev.slice();
           next[idx] = {
@@ -630,7 +658,8 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
             isOffline: nextOffline,
             isInactive: false,
             // لو ما عنده lastSignel قبل كده، خليه يتحدث من device.lastUpdate
-            lastSignel: existing.lastSignel ?? lastUpdate ?? existing.lastSignel,
+            lastSignel:
+              existing.lastSignel ?? lastUpdate ?? existing.lastSignel,
             lastUpdate: Date.now(),
           };
           return next;
@@ -638,29 +667,35 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
       }
 
       /* ===== COMMAND RESPONSE ===== */
-      if (data.type === "command_response" && data.data?.response && data.data?.imei) {
+      if (
+        data.type === "command_response" &&
+        data.data?.response &&
+        data.data?.imei
+      ) {
         const response = data.data.response;
         const imei = data.data.imei;
-        
+
         // التحقق من أن Modal مفتوح وأن IMEI يطابق الجهاز المفتوح
         const currentModal = detailsModalRef.current;
         const isModalOpen = currentModal?.show;
         const modalDeviceId = currentModal?.id;
-        const modalDevice = carsRef.current.find((car) => car.id === modalDeviceId);
+        const modalDevice = carsRef.current.find(
+          (car) => car.id === modalDeviceId,
+        );
         const modalImei = modalDevice?.serial_number;
-        
+
         const isMatchingDevice = isModalOpen && modalImei === imei;
-        
+
         // حفظ الاستجابة في Redux
         dispatch(setCommandResponse({ response, imei }));
-        
+
         // إذا كان Modal مغلق أو الجهاز غير مطابق، عرض toast
         if (!isMatchingDevice) {
           const car = carsRef.current.find((c) => c.serial_number === imei);
           const carName = car?.name || car?.car_number || "غير معروف";
-          
+
           toast.success(
-            <div className="text-sm leading-5 space-y-1 w-full" dir="rtl">
+            <div className="text-sm leading-5 space-y-1 w-full">
               <p className="font-bold text-mainColor">✅ استجابة الأمر</p>
               <p className="text-gray-700 break-all">{response}</p>
               <p className="text-xs text-gray-500">
@@ -670,11 +705,10 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
             {
               position: "bottom-right",
               autoClose: 8000,
-            }
+            },
           );
         }
       }
-
     };
 
     return () => {
@@ -698,7 +732,8 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
     (carsRef.current || []).forEach((car, idx) => {
       const imei = car?.serial_number;
       if (!imei) return;
-      if (!indexByImeiRef.current.has(imei)) indexByImeiRef.current.set(imei, idx);
+      if (!indexByImeiRef.current.has(imei))
+        indexByImeiRef.current.set(imei, idx);
       if (subscribedImeisRef.current.has(imei)) return;
       subscribedImeisRef.current.add(imei);
       ws.send(JSON.stringify({ type: "subscribe", imei }));

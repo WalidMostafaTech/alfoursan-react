@@ -338,7 +338,7 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
   };
 
   return (
-    <section className="flex" dir="rtl">
+    <section className="flex" >
       {/* ✅ القائمة اليمنى */}
       <aside className="flex flex-col p-4 gap-2 max-h-[60vh] overflow-y-auto">
         {commandTabs.map((cmd, index) => (
@@ -405,7 +405,7 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
           )}
 
           {commands[activeCommand].type === "sos" && (
-            <div className="space-y-4" dir="rtl">
+            <div className="space-y-4" >
               <p className="text-gray-600 bg-red-50 border border-red-200 p-3 rounded-lg text-xs leading-relaxed whitespace-pre-line">
                 💡 {commands[activeCommand].content}
               </p>
@@ -537,7 +537,7 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
           {waitingForResponse && !isResponseForThisDevice && (
             <div
               className="mb-4 p-4 bg-linear-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500 rounded-lg shadow-md animate-fade-in-up"
-              dir="rtl"
+              
             >
               <div className="flex items-center gap-3">
                 <div className="shrink-0">
@@ -559,7 +559,7 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
           {isResponseForThisDevice && (
             <div
               className="mb-4 p-4 bg-linear-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 rounded-lg shadow-md animate-fade-in-up"
-              dir="rtl"
+              
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">

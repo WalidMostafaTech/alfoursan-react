@@ -92,7 +92,7 @@ const GeoFenceModal = () => {
   };
 
   return (
-    <dialog open className="modal detailsModal" dir="rtl">
+    <dialog open className="modal detailsModal" >
       <div className="modal-box max-w-md space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-bold">

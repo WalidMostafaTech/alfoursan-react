@@ -141,9 +141,9 @@ const AssociateDevice = () => {
 
   return (
     <dialog open className="modal items-start detailsModal">
-      <div className="modal-box max-w-5xl p-0 mt-10" dir="rtl">
+      <div className="modal-box max-w-5xl p-0 mt-10">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-300">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300">
           <h3 className="text-lg font-semibold">{t("associateDevice.title")}</h3>
           <button
             onClick={closeModal}
@@ -235,7 +235,7 @@ const AssociateDevice = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-[40vh]">
               <table className="table text-xs">
                 <thead className="bg-gray-100">
                   <tr>

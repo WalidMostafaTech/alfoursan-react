@@ -373,14 +373,15 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
   };
 
   return (
-    <section className="flex" dir="rtl">
+    <section className="flex gap-2">
       {/* ✅ القائمة اليمنى */}
       <aside className="flex flex-col p-4 gap-2 max-h-[60vh] overflow-y-auto">
         {commandTabs.map((cmd, index) => (
           <button
             key={index}
             onClick={() => setActiveCommand(index)}
-            className={`px-3 py-2 text-sm text-start rounded transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+            className={`px-3 py-2 text-sm text-start rounded transition-all whitespace-nowrap cursor-pointer
+            flex items-center gap-2 ${
               activeCommand === index
                 ? "text-mainColor border-e-4 border-mainColor bg-mainColor/10"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
@@ -526,7 +527,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
           {waitingForResponse && !isResponseForThisDevice && (
             <div
               className="mb-4 p-4 bg-linear-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500 rounded-lg shadow-md animate-fade-in-up"
-              dir="rtl"
+              
             >
               <div className="flex items-center gap-3">
                 <div className="shrink-0">
@@ -548,7 +549,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
           {isResponseForThisDevice && (
             <div
               className="mb-4 p-4 bg-linear-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 rounded-lg shadow-md animate-fade-in-up"
-              dir="rtl"
+              
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">

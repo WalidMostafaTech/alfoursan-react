@@ -102,9 +102,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className={`btn btn-sm ${
-            isOpen
-              ? "btn-ghost text-gray-600"
-              : "btn-primary"
+            isOpen ? "btn-ghost text-gray-600" : "btn-primary"
           }`}
         >
           {isOpen ? t("maintenance.cancel") : t("maintenance.addMaintenance")}
@@ -147,7 +145,10 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
                 value={formData.type}
                 onChange={handleChange}
                 options={[
-                  { value: "comprehensive", label: t("maintenance.comprehensive") },
+                  {
+                    value: "comprehensive",
+                    label: t("maintenance.comprehensive"),
+                  },
                   { value: "mileage", label: t("maintenance.mileage") },
                   { value: "date", label: t("maintenance.date") },
                 ]}
@@ -161,7 +162,7 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
               />
 
               {/* ✅ إشعارات */}
-              <div className="form-control w-full max-w-xs" dir="rtl">
+              <div className="form-control w-full max-w-xs">
                 <label className="label">
                   <span className="label-text text-sm font-bold text-gray-700">
                     {t("maintenance.notifications")}
@@ -199,7 +200,9 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
             </div>
 
             <FormBtn
-              title={isPending ? t("maintenance.saving") : t("maintenance.save")}
+              title={
+                isPending ? t("maintenance.saving") : t("maintenance.save")
+              }
               variant="success"
               disabled={isPending}
             />
@@ -212,12 +215,24 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
         <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm text-xs">
           <thead className="bg-mainColor/10 text-mainColor">
             <tr>
-              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.number")}</th>
-              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.type")}</th>
-              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.plannedTime")}</th>
-              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.plannedMiles")}</th>
-              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.status")}</th>
-              <th className="py-2 px-2 text-right">{t("maintenance.tableHeaders.actions")}</th>
+              <th className="py-2 px-2 text-start">
+                {t("maintenance.tableHeaders.number")}
+              </th>
+              <th className="py-2 px-2 text-start">
+                {t("maintenance.tableHeaders.type")}
+              </th>
+              <th className="py-2 px-2 text-start">
+                {t("maintenance.tableHeaders.plannedTime")}
+              </th>
+              <th className="py-2 px-2 text-start">
+                {t("maintenance.tableHeaders.plannedMiles")}
+              </th>
+              <th className="py-2 px-2 text-start">
+                {t("maintenance.tableHeaders.status")}
+              </th>
+              <th className="py-2 px-2 text-start">
+                {t("maintenance.tableHeaders.actions")}
+              </th>
             </tr>
           </thead>
 
@@ -239,8 +254,8 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
                       item.status === "completed"
                         ? "text-green-600"
                         : item.status === "pending"
-                        ? "text-yellow-500"
-                        : "text-gray-600"
+                          ? "text-yellow-500"
+                          : "text-gray-600"
                     }`}
                   >
                     {item.status || "-"}
@@ -251,7 +266,9 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
                       onClick={() => handleDelete(item.id)}
                       disabled={isDeleting}
                     >
-                      {isDeleting ? t("maintenance.deleting") : t("maintenance.deleteSuccess")}
+                      {isDeleting
+                        ? t("maintenance.deleting")
+                        : t("maintenance.delete")}
                     </button>
                   </td>
                 </tr>

@@ -122,7 +122,6 @@ const CarPopup = ({ car, showActions = true }) => {
   return (
     <div
       className="bg-gradient-to-br from-white via-slate-50 to-white rounded-2xl shadow-xl border border-slate-200/70 w-[520px] max-w-[98vw] overflow-hidden"
-      dir="rtl"
     >
       <div className="px-4 py-2 flex items-center justify-between gap-3 bg-white/70 backdrop-blur border-b border-slate-100">
         <div className="min-w-0">
@@ -166,7 +165,8 @@ const CarPopup = ({ car, showActions = true }) => {
           href={`https://www.google.com/maps/search/?api=1&query=${car.position.lat},${car.position.lng}`}
           target="_blank"
           rel="noreferrer"
-          className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-1 hover:bg-slate-100 transition"
+          className="flex items-start gap-2 rounded-xl border border-slate-100 
+          bg-slate-50 px-3 py-1 hover:bg-slate-100 transition w-fit"
         >
           <span className="text-mainColor text-base mt-0.5">
             <FaMapMarkerAlt />

@@ -71,7 +71,7 @@ const Alerts = ({ deviceSettings, refetch }) => {
   };
 
   return (
-    <section dir="rtl">
+    <section>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-4">
         {alertsList.map((item, index) => (
           <div key={index} className="flex flex-col gap-1">
