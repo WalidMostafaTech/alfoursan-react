@@ -258,7 +258,20 @@
     "cluster": "Cluster"
   },
   "mapActions": {
-    "drawingGoogleOnly": "Drawing is only available on Google map ✅"
+    "drawingGoogleOnly": "Drawing is only available on Google map ✅",
+    "alarmPoolTitle": "Alarm log",
+    "alarmPoolClear": "Clear all",
+    "alarmPoolEmpty": "No alarms in this session",
+    "alarmPoolKmh": "km/h"
+  },
+  "alarmToast": {
+    "car": "Car",
+    "speed": "Speed",
+    "kmh": "km/h",
+    "goToMap": "Show on map",
+    "copyName": "Copy vehicle name",
+    "copyImei": "Copy IMEI",
+    "close": "Close"
   },
   "shareModal": {
     "title": "Share Tracking Link",
@@ -358,6 +371,7 @@
     "setSosNumber": "Set SOS Number",
     "deleteSosNumber": "Delete SOS Number",
     "setCenterNumber": "Set Center Number",
+    "deleteCenterNumber": "Delete Center Number",
     "vibrationAlarm": "Vibration Alarm",
     "powerAlarm": "Power Alarm",
     "accAlarm": "ACC Alarm",
@@ -370,6 +384,11 @@
     "writeCustomCommand": "Write custom command here...",
     "sendCommand": "Send Command",
     "commandSentSuccess": "✅ Command sent successfully!",
+    "sendCommandErrorGeneric": "Could not send the command. Please try again.",
+    "sendCommandErrorNetwork": "Network error or blocked request (check connection or CORS).",
+    "sendCommandErrorTimeout": "The request timed out. Please try again.",
+    "sendCommandErrorInvalidResponse": "The server returned an invalid response (not JSON). You may need to sign in again or contact support.",
+    "sendCommandErrorRedirect": "The request was redirected. Please refresh the page or sign in again.",
     "selectCommandFirst": "⚠️ Please select or enter a command first",
     "waitingForResponse": "Waiting for response...",
     "waitingForDeviceResponse": "Waiting for device response to sent command",

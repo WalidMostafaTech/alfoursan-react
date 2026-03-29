@@ -71,6 +71,8 @@ const TenantDashboard = () => {
   const [activeBranchId, setActiveBranchId] = useState("");
   const dispatch = useDispatch();
   const lastGeocodeAtRef = useRef(new Map());
+  /** يُحدَّث من handleSelectCar — لاستدعائه من useCarSocket دون تغيير ترتيب الـ hooks */
+  const handleSelectCarRef = useRef(null);
 
   const mapDeviceToCar = useCallback((d) => {
     const lat = parseFloat(d.latitude);
@@ -254,10 +256,15 @@ const TenantDashboard = () => {
     }
   };
 
+  const onAlarmSelectCarFromSocket = useCallback((car, shouldZoom) => {
+    handleSelectCarRef.current?.(car, shouldZoom);
+  }, []);
+
   // 🔌 WebSocket hook لتحديث العربيات (اتصال ثابت بدون socketRefresh)
   useCarSocket(cars, setCars, isInit, {
     debug: true,
     tag: "TenantDashboard",
+    onAlarmSelectCar: onAlarmSelectCarFromSocket,
   });
 
   // 🧭 تحديث العنوان عند تحرك العربية
@@ -359,6 +366,10 @@ const TenantDashboard = () => {
     },
     [dispatch, mapProvider]
   );
+
+  useEffect(() => {
+    handleSelectCarRef.current = handleSelectCar;
+  }, [handleSelectCar]);
 
   if (loadError) return <div>{t("tenantDashboard.mapLoadError")}</div>;
   if (!isLoaded && mapProvider === "google") return <LoadingPage />;

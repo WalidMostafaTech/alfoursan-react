@@ -9,6 +9,7 @@ import useCarSocket from "../../hooks/useCarSocket";
 import { carPath } from "../../services/carPath";
 import { getCarStatus } from "../../utils/getCarStatus";
 import { useTranslation } from "react-i18next";
+import AlarmPoolBtn from "../../components/common/AlarmPoolBtn";
 
 const containerStyle = { width: "100%", height: "100vh" };
 
@@ -232,6 +233,9 @@ const DeviceTracking = () => {
 
   return (
     <div className="relative">
+      <div className="absolute top-3 start-3 z-20">
+        <AlarmPoolBtn />
+      </div>
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={initialCenter}

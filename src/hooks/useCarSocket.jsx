@@ -127,46 +127,145 @@
 
 import { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { setCommandResponse } from "../store/modalsSlice";
+import { pushAlarmEntry } from "../utils/alarmPool";
+import { copyToClipboard } from "../utils/copyToClipboard";
 
 /* ===== Alarm Toast UI ===== */
-const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
-  return (
-    <div className="w-full">
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 h-9 w-9 shrink-0 rounded-full border border-red-200 bg-red-50 text-red-700 flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-5 w-5"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M9.401 3.003c1.155-2 4.043-2 5.198 0l7.17 12.414c1.154 2-.288 4.5-2.599 4.5H4.83c-2.31 0-3.753-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
+const AlarmToast = ({
+  carName,
+  speed,
+  alarm,
+  IMEI,
+  showGoToMap,
+  onGoToMap,
+  onClose,
+}) => {
+  const { t } = useTranslation();
 
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-extrabold text-red-700 leading-5">
+  return (
+    <div className="w-full max-w-[min(100vw-2rem,360px)]" dir="rtl">
+      <div className="relative rounded-2xl border border-red-200/90 bg-white shadow-lg shadow-red-900/5 overflow-hidden">
+        {typeof onClose === "function" ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-2 end-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-600 shadow-md hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-mainColor/40"
+            aria-label={t("alarmToast.close")}
+            title={t("alarmToast.close")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        ) : null}
+
+        {/* رأس التنبيه */}
+        <div className="flex items-start gap-3 px-3 pt-3 pb-2 pe-11 bg-linear-to-l from-red-50/80 to-white">
+          <div className="h-11 w-11 shrink-0 rounded-xl bg-red-100 text-red-700 flex items-center justify-center ring-2 ring-red-200/60">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-6 w-6"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.401 3.003c1.155-2 4.043-2 5.198 0l7.17 12.414c1.154 2-.288 4.5-2.599 4.5H4.83c-2.31 0-3.753-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <p className="min-w-0 flex-1 text-sm font-extrabold text-red-900 leading-snug pt-0.5 border-s-[3px] border-red-400 ps-2">
             {alarm}
           </p>
+        </div>
 
-          <div className="mt-2 space-y-1 text-xs text-slate-700">
-            <p className="truncate">
-              السيارة:{" "}
-              <span className="font-bold text-slate-900">{carName}</span>
-            </p>
-            <p>
-              السرعة: <span className="font-bold text-slate-900">{speed}</span>{" "}
-              كم/س
-            </p>
-            <p className="text-[11px] text-slate-500 break-all">IMEI: {IMEI}</p>
+        {/* بيانات */}
+        <div className="px-3 pb-2 space-y-2">
+          <div className="grid grid-cols-1 gap-2 rounded-xl bg-slate-50 border border-slate-100/80 px-3 py-2.5 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-slate-500 shrink-0">{t("alarmToast.car")}</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="font-bold text-slate-900 truncate">{carName}</span>
+                <button
+                  type="button"
+                  className="shrink-0 p-1 rounded-md text-mainColor hover:bg-mainColor/10"
+                  title={t("alarmToast.copyName")}
+                  aria-label={t("alarmToast.copyName")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyToClipboard(carName);
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-slate-700">
+              <span className="text-slate-500">{t("alarmToast.speed")}</span>
+              <span className="font-semibold tabular-nums text-slate-900">
+                {speed} {t("alarmToast.kmh")}
+              </span>
+            </div>
+            <div className="flex items-start justify-between gap-2 pt-1 border-t border-slate-200/80">
+              <span className="text-slate-500 shrink-0 pt-0.5">IMEI</span>
+              <div className="flex items-start gap-1 min-w-0 flex-1 justify-end">
+                <span className="text-[11px] font-mono text-slate-700 break-all text-end leading-snug">
+                  {IMEI}
+                </span>
+                <button
+                  type="button"
+                  className="shrink-0 p-1 rounded-md text-mainColor hover:bg-mainColor/10"
+                  title={t("alarmToast.copyImei")}
+                  aria-label={t("alarmToast.copyImei")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyToClipboard(IMEI);
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
+
+          {showGoToMap ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onGoToMap?.();
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-mainColor text-white text-sm font-bold py-2.5 px-3 shadow-md shadow-mainColor/25 hover:brightness-110 active:scale-[0.99] transition-all"
+            >
+              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {t("alarmToast.goToMap")}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
@@ -178,6 +277,7 @@ const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
 // - enabled: لتفعيل/إيقاف السوكت يدويًا (مثلاً لإعادة تشغيل دورية)
 // - resetKey: تغيير القيمة يجبر الـ hook يعمل disconnect ثم reconnect
 // - onStatusChange: callback لاستقبال حالة السوكت (للـ loaders/health UI)
+// - onAlarmSelectCar: (car, shouldZoom) => void — مثلاً الانتقال للسيارة على الخريطة من تنبيه الإنذار
 const useCarSocket = (cars, setCars, isInit, options = {}) => {
   const dispatch = useDispatch();
   const { notificationSound } = useSelector((state) => state.map);
@@ -185,6 +285,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
   const enabled = options?.enabled ?? true;
   const resetKey = options?.resetKey ?? 0;
   const onStatusChange = options?.onStatusChange;
+  const onAlarmSelectCar = options?.onAlarmSelectCar;
   const debug = options?.debug ?? false;
   const tag = options?.tag ?? "CarSocket";
 
@@ -192,6 +293,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
 
   const notificationSoundRef = useRef(notificationSound);
   const detailsModalRef = useRef(detailsModal);
+  const onAlarmSelectCarRef = useRef(onAlarmSelectCar);
   const wsRef = useRef(null);
   const subscribedImeisRef = useRef(new Set());
   const indexByImeiRef = useRef(new Map());
@@ -208,6 +310,10 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
   useEffect(() => {
     onStatusRef.current = onStatusChange;
   }, [onStatusChange]);
+
+  useEffect(() => {
+    onAlarmSelectCarRef.current = onAlarmSelectCar;
+  }, [onAlarmSelectCar]);
 
   const emitStatus = (status, extra = {}) => {
     try {
@@ -558,48 +664,53 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
           alarmAudioRef.current.play().catch(() => {});
         }
 
+        const alarmCarName = car?.name || car?.car_number || "غير معروف";
+        const alarmText = data.data.alarmTextAr || "غير معروف";
+        const alarmSpeed = data.data.speed || 0;
+        const alarmDate =
+          data.data.date != null ? String(data.data.date) : "";
+
+        pushAlarmEntry({
+          imei,
+          carName: alarmCarName,
+          alarmText: alarmText,
+          speed: alarmSpeed,
+          date: alarmDate,
+        });
+
+        const alarmToastId = `alarm-toast-${Date.now()}-${String(imei).replace(/\W/g, "")}`;
+
         toast(
           <AlarmToast
-            carName={car?.name || "غير معروف"}
-            speed={data.data.speed || 0}
-            alarm={data.data.alarmTextAr || "غير معروف"}
+            carName={alarmCarName}
+            speed={alarmSpeed}
+            alarm={alarmText}
             IMEI={imei}
+            showGoToMap={typeof onAlarmSelectCarRef.current === "function"}
+            onGoToMap={() => {
+              const fn = onAlarmSelectCarRef.current;
+              if (!fn) return;
+              const c = carsRef.current.find(
+                (x) => String(x?.serial_number) === String(imei),
+              );
+              if (c) fn(c, true);
+            }}
+            onClose={() => toast.dismiss(alarmToastId)}
           />,
           {
+            toastId: alarmToastId,
+            containerId: "alarm-stack",
             position: "bottom-right",
-            autoClose: 5000, // ✅ رجعنا الإغلاق التلقائي
-            closeOnClick: true,
-            draggable: true,
+            autoClose: 15000,
+            closeOnClick: false,
+            draggable: false,
             hideProgressBar: false,
             icon: false,
-            closeButton: ({ closeToast }) => (
-              <button
-                type="button"
-                onClick={closeToast}
-                aria-label="إغلاق"
-                className="opacity-100! text-slate-500 hover:text-slate-900 transition-colors
-                  rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-mainColor/40
-                   left-0 absolute z-10 top-5"
-                style={{ marginInlineStart: "8px" }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="h-5 w-5"
-                  aria-hidden="true"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            ),
+            closeButton: false,
             className:
-              "alarm-toast !bg-white !text-slate-900 !rounded-xl !shadow-xl !border !border-red-200",
-            style: { marginBottom: "48px" }, // رفع بسيط عن المكان الحالي
+              "alarm-toast !relative !overflow-visible !bg-transparent !shadow-none !p-0 !mb-0 !min-h-0 !rounded-2xl [&_.Toastify__toast-body]:!p-0 [&_.Toastify__toast-body]:!m-0 [&_.Toastify__toast-body]:!overflow-visible",
+            bodyClassName: "!p-3 !ps-3 !pe-3",
+            style: { marginBottom: "48px" },
           },
         );
       }

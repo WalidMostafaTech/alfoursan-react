@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
 import { sendCommand } from "../../../../services/monitorServices";
+import { getApiErrorMessage } from "../../../../utils/getApiErrorMessage";
 
 const Command = ({ deviceID, deviceSettings, refetch }) => {
   const { t } = useTranslation();
@@ -338,7 +339,8 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
     },
     onError: (error) => {
       console.error(error);
-      toast.error(error?.response?.data?.message);
+      const message = getApiErrorMessage(error, t);
+      toast.error(message);
       setWaitingForResponse(false);
     },
   });

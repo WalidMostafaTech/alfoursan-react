@@ -1247,12 +1247,12 @@ const CarReplay = () => {
       />
 
       <div className="absolute top-[15%] right-3 z-20 space-y-2 flex flex-col items-center">
-        <Link
-          to={BACK_URL}
+        <a
+          hrefLang={BACK_URL}
           className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100"
         >
           <CgHomeAlt className="text-xl text-gray-700" />
-        </Link>
+        </a>
         <MapTypes onChange={setMapType} />
         <button
           type="button"

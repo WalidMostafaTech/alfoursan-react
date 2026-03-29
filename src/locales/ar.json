@@ -103,7 +103,20 @@
     "cluster": "تجميع"
   },
   "mapActions": {
-    "drawingGoogleOnly": "الرسم متاح في خريطة Google فقط ✅"
+    "drawingGoogleOnly": "الرسم متاح في خريطة Google فقط ✅",
+    "alarmPoolTitle": "سجل التنبيهات",
+    "alarmPoolClear": "مسح الكل",
+    "alarmPoolEmpty": "لا توجد تنبيهات في هذه الجلسة",
+    "alarmPoolKmh": "كم/س"
+  },
+  "alarmToast": {
+    "car": "السيارة",
+    "speed": "السرعة",
+    "kmh": "كم/س",
+    "goToMap": "الانتقال للسيارة على الخريطة",
+    "copyName": "نسخ اسم السيارة",
+    "copyImei": "نسخ IMEI",
+    "close": "إغلاق"
   },
   "detailsModal": {
     "tabs": {
@@ -241,6 +254,7 @@
     "checkStatus": "فحص الحالة",
     "setSosNumber": "تعيين رقم SOS",
     "deleteSosNumber": "حذف رقم SOS",
+    "setCenterNumber": "تعيين رقم المركز",
     "deleteCenterNumber": "حذف رقم المركز",
     "vibrationAlarm": "إنذار الاهتزاز",
     "powerAlarm": "إنذار الطاقة",
@@ -254,6 +268,11 @@
     "writeCustomCommand": "اكتب الأمر المخصص هنا...",
     "sendCommand": "إرسال الأمر",
     "commandSentSuccess": " تم إرسال الأمر بنجاح!",
+    "sendCommandErrorGeneric": "تعذر إرسال الأمر. حاول مرة أخرى.",
+    "sendCommandErrorNetwork": "خطأ في الشبكة أو تم حظر الطلب (تحقق من الاتصال أو CORS).",
+    "sendCommandErrorTimeout": "انتهت مهلة الطلب. حاول مرة أخرى.",
+    "sendCommandErrorInvalidResponse": "الخادم أعاد استجابة غير صالحة (ليست JSON). قد تحتاج لتسجيل الدخول مرة أخرى.",
+    "sendCommandErrorRedirect": "تم إعادة توجيه الطلب. حدّث الصفحة أو سجّل الدخول مرة أخرى.",
     "selectCommandFirst": " الرجاء اختيار أو إدخال أمر أولاً",
     "waitingForResponse": "في انتظار الاستجابة...",
     "waitingForDeviceResponse": "جاري انتظار استجابة الجهاز للأمر المرسل",
