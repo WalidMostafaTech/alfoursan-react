@@ -274,6 +274,8 @@
     "sendCommandErrorInvalidResponse": "الخادم أعاد استجابة غير صالحة (ليست JSON). قد تحتاج لتسجيل الدخول مرة أخرى.",
     "sendCommandErrorRedirect": "تم إعادة توجيه الطلب. حدّث الصفحة أو سجّل الدخول مرة أخرى.",
     "selectCommandFirst": " الرجاء اختيار أو إدخال أمر أولاً",
+    "deviceOffline": "الجهاز غير متصل حالياً",
+    "deviceOfflineHint": "الجهاز غير متصل حالياً، لا يمكن إرسال أوامر حتى يعود الاتصال.",
     "waitingForResponse": "في انتظار الاستجابة...",
     "waitingForDeviceResponse": "جاري انتظار استجابة الجهاز للأمر المرسل",
     "commandResponse": "استجابة الأمر",

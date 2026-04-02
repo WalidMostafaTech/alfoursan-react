@@ -24,6 +24,10 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
   const isResponseForThisDevice = 
     commandResponse?.response && 
     commandResponse?.imei === deviceImei;
+  const deviceStatus = deviceSettings?.device?.device_status;
+  const isOffline =
+    deviceSettings?.device?.isOffline ??
+    (deviceStatus ? deviceStatus !== "online" : true);
 
   const commandTabs = [
     { label: t("command.remoteOpeningDoor"), isNew: false },
@@ -348,6 +352,10 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
   // ✅ إرسال البيانات
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isOffline) {
+      toast.warn(t("command.deviceOffline"));
+      return;
+    }
 
     let commandValue = selectedCommand;
 
@@ -402,6 +410,11 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
       {/* ✅ منطقة المحتوى */}
       <div className="flex-1">
         <form className="space-y-4 max-w-xl" onSubmit={handleSubmit}>
+          {isOffline && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+              {t("command.deviceOfflineHint")}
+            </div>
+          )}
           {commands[activeCommand].type === "select" && (
             <>
               {/* ✅ وصف الأمر إن وجد */}
@@ -607,6 +620,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
             title={t("command.sendCommand")}
             variant="success"
             loading={isPending}
+            disabled={isOffline}
           />
         </form>
       </div>
