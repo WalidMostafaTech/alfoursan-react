@@ -1,189 +1,44 @@
-// import { useEffect } from "react";
-// import { toast } from "react-toastify";
-
-// /* ===== Alarm Toast UI ===== */
-// const AlarmToast = ({ carName, speed, alarm, IMEI }) => {
-//   return (
-//     <div className="text-sm leading-5 space-y-2 w-full" >
-//       <p className="font-bold text-mainColor">{alarm}</p>
-//       <p>
-//         السيارة: <b>{carName}</b>
-//       </p>
-//       <p>
-//         السرعة: <b>{speed} كم/س</b>
-//       </p>
-//       <p> IMEI: {IMEI}</p>
-//     </div>
-//   );
-// };
-
-// /* ===== Hook ===== */
-// const useCarSocket = (cars, setCars, isInit) => {
-//   useEffect(() => {
-//     if (!cars || cars.length === 0) return;
-
-//     const ws = new WebSocket("wss://alfursantracking.com:2053");
-
-//     ws.onopen = () => {
-//       cars.forEach((car) => {
-//         if (car.serial_number) {
-//           ws.send(
-//             JSON.stringify({
-//               type: "subscribe",
-//               imei: car.serial_number,
-//             })
-//           );
-//         }
-//       });
-//     };
-
-//     ws.onmessage = (event) => {
-//       const data = JSON.parse(event.data);
-//       // console.log("📩 WS:", data);
-
-//       /* ===== GPS UPDATE ===== */
-//       if (data.type === "gps" && data.data?.imei) {
-//         const gps = data.data.gps;
-
-//         if (gps?.latitude && gps?.longitude) {
-//           setCars((prev) => {
-//             const updated = prev.map((car) =>
-//               car.serial_number === data.data.imei
-//                 ? {
-//                     ...car,
-//                     position: {
-//                       lat: parseFloat(gps.latitude),
-//                       lng: parseFloat(gps.longitude),
-//                     },
-//                     speed: data.data.speed || 0,
-//                     direction: data.data.direction,
-//                     status: data.data.statusDecoded?.accOn ? "on" : "off",
-//                     lastUpdate: Date.now(),
-//                     lastSignel: data.data.date,
-//                     lastSignelGPS: data.data.date,
-//                   }
-//                 : car
-//             );
-
-//             return [...updated].sort((a, b) => {
-//               const aMoving = a.speed > 0 ? 1 : 0;
-//               const bMoving = b.speed > 0 ? 1 : 0;
-//               return bMoving - aMoving;
-//             });
-//           });
-//         }
-//       }
-
-//       /* ===== ALARM ===== */
-//       if (data.type === "alarm" && data.data?.imei) {
-//         console.warn("🚨 ALARM", data.data);
-//         const imei = data.data.imei;
-
-//         const car = cars.find((c) => c.serial_number === imei);
-
-//         toast(
-//           <AlarmToast
-//             carName={car?.name || car?.car_number || "غير معروف"}
-//             speed={data.data.speed || 0}
-//             alarm={data.data.alarmTextAr || "غير معروف"}
-//             time={data.data.date || "غير معروف"}
-//             IMEI={imei || "غير معروف"}
-//           />,
-//           {
-//             position: "bottom-right",
-//             autoClose: 5000,
-//           }
-//         );
-//       }
-
-//       /* ===== HEARTBEAT ===== */
-//       if (data.type === "heartbeat" && data.data?.imei) {
-//         setCars((prev) =>
-//           prev.map((car) =>
-//             car.serial_number === data.data.imei
-//               ? {
-//                   ...car,
-//                   voltage: data.data.heartbeat.externalVoltage,
-//                 }
-//               : car
-//           )
-//         );
-//       }
-//     };
-
-//     ws.onclose = () => {
-//       console.log("❌ WebSocket closed");
-//     };
-
-//     return () => {
-//       ws.close();
-//     };
-//   }, [isInit]);
-
-//   return null;
-// };
-
-// export default useCarSocket;
+// useCarSocket.jsx — migrated to Sonner
+// npm install sonner
 
 import { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { setCommandResponse } from "../store/modalsSlice";
 import { pushAlarmEntry } from "../utils/alarmPool";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
-/* ===== Alarm Toast UI ===== */
+/* ─────────────────────────────────────────────
+   Alarm Toast UI  (Sonner rich-content version)
+   يُمرَّر كـ JSX مباشرة لـ toast.custom()
+───────────────────────────────────────────── */
 const AlarmToast = ({
+  toastId,
   carName,
   speed,
   alarm,
   IMEI,
   showGoToMap,
   onGoToMap,
-  onClose,
 }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="w-full max-w-[min(100vw-2rem,360px)]" dir="rtl">
-      <div className="relative rounded-2xl border border-red-200/90 bg-white shadow-lg shadow-red-900/5 overflow-hidden">
-        {typeof onClose === "function" ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="absolute top-2 end-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-600 shadow-md hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-mainColor/40"
-            aria-label={t("alarmToast.close")}
-            title={t("alarmToast.close")}
-          >
+    <div
+      className="w-full max-w-[320px]"
+      dir="rtl"
+      style={{ fontFamily: "inherit" }}
+    >
+      <div className="rounded-2xl border border-red-200/90 bg-white shadow-xl shadow-red-900/10 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-2.5 px-3 pt-3 pb-2 bg-gradient-to-l from-red-50/80 to-white">
+          <div className="h-9 w-9 shrink-0 rounded-xl bg-red-100 text-red-600 flex items-center justify-center ring-2 ring-red-200/60">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-        ) : null}
-
-        {/* رأس التنبيه */}
-        <div className="flex items-start gap-3 px-3 pt-3 pb-2 pe-11 bg-linear-to-l from-red-50/80 to-white">
-          <div className="h-11 w-11 shrink-0 rounded-xl bg-red-100 text-red-700 flex items-center justify-center ring-2 ring-red-200/60">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-6 w-6"
-              aria-hidden="true"
+              className="h-5 w-5"
             >
               <path
                 fillRule="evenodd"
@@ -192,96 +47,150 @@ const AlarmToast = ({
               />
             </svg>
           </div>
-          <p className="min-w-0 flex-1 text-sm font-extrabold text-red-900 leading-snug pt-0.5 border-s-[3px] border-red-400 ps-2">
+          <p className="flex-1 min-w-0 text-sm font-extrabold text-red-900 leading-snug border-s-[3px] border-red-400 ps-2 truncate">
             {alarm}
           </p>
+          {/* زر الإغلاق */}
+          <button
+            type="button"
+            onClick={() => toast.dismiss(toastId)}
+            className="shrink-0 h-7 w-7 flex items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
+            aria-label={t("alarmToast.close", "إغلاق")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-3.5 w-3.5"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
         </div>
 
-        {/* بيانات */}
-        <div className="px-3 pb-2 space-y-2">
-          <div className="grid grid-cols-1 gap-2 rounded-xl bg-slate-50 border border-slate-100/80 px-3 py-2.5 text-xs">
+        {/* Body */}
+        <div className="px-3 pb-3 space-y-2">
+          <div className="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2 text-xs space-y-1.5">
+            {/* Car */}
             <div className="flex items-center justify-between gap-2">
-              <span className="text-slate-500 shrink-0">{t("alarmToast.car")}</span>
+              <span className="text-slate-400 shrink-0">
+                {t("alarmToast.car", "السيارة")}
+              </span>
               <div className="flex items-center gap-1 min-w-0">
-                <span className="font-bold text-slate-900 truncate">{carName}</span>
+                <span className="font-bold text-slate-800 truncate">
+                  {carName}
+                </span>
                 <button
                   type="button"
-                  className="shrink-0 p-1 rounded-md text-mainColor hover:bg-mainColor/10"
-                  title={t("alarmToast.copyName")}
-                  aria-label={t("alarmToast.copyName")}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copyToClipboard(carName);
-                  }}
+                  onClick={() => copyToClipboard(carName)}
+                  className="shrink-0 p-0.5 rounded text-slate-400 hover:text-mainColor"
+                  title={t("alarmToast.copyName", "نسخ")}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
                   </svg>
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2 text-slate-700">
-              <span className="text-slate-500">{t("alarmToast.speed")}</span>
-              <span className="font-semibold tabular-nums text-slate-900">
-                {speed} {t("alarmToast.kmh")}
+
+            {/* Speed */}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-slate-400">
+                {t("alarmToast.speed", "السرعة")}
+              </span>
+              <span className="font-semibold tabular-nums text-slate-800">
+                {speed} {t("alarmToast.kmh", "كم/س")}
               </span>
             </div>
-            <div className="flex items-start justify-between gap-2 pt-1 border-t border-slate-200/80">
-              <span className="text-slate-500 shrink-0 pt-0.5">IMEI</span>
-              <div className="flex items-start gap-1 min-w-0 flex-1 justify-end">
-                <span className="text-[11px] font-mono text-slate-700 break-all text-end leading-snug">
+
+            {/* IMEI */}
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/80">
+              <span className="text-slate-400 shrink-0">IMEI</span>
+              <div className="flex items-center gap-1 min-w-0 justify-end">
+                <span className="font-mono text-[11px] text-slate-600 truncate">
                   {IMEI}
                 </span>
                 <button
                   type="button"
-                  className="shrink-0 p-1 rounded-md text-mainColor hover:bg-mainColor/10"
-                  title={t("alarmToast.copyImei")}
-                  aria-label={t("alarmToast.copyImei")}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copyToClipboard(IMEI);
-                  }}
+                  onClick={() => copyToClipboard(IMEI)}
+                  className="shrink-0 p-0.5 rounded text-slate-400 hover:text-mainColor"
+                  title={t("alarmToast.copyImei", "نسخ")}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
                   </svg>
                 </button>
               </div>
             </div>
           </div>
 
-          {showGoToMap ? (
+          {/* Go to map button */}
+          {showGoToMap && (
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onGoToMap?.();
-              }}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-mainColor text-white text-sm font-bold py-2.5 px-3 shadow-md shadow-mainColor/25 hover:brightness-110 active:scale-[0.99] transition-all"
+              onClick={onGoToMap}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-mainColor text-white text-xs font-bold py-2 px-3 shadow shadow-mainColor/20 hover:brightness-110 active:scale-[0.99] transition-all"
             >
-              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                className="w-4 h-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
-              {t("alarmToast.goToMap")}
+              {t("alarmToast.goToMap", "اذهب للخريطة")}
             </button>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-/* ===== Hook ===== */
-// options:
-// - enabled: لتفعيل/إيقاف السوكت يدويًا (مثلاً لإعادة تشغيل دورية)
-// - resetKey: تغيير القيمة يجبر الـ hook يعمل disconnect ثم reconnect
-// - onStatusChange: callback لاستقبال حالة السوكت (للـ loaders/health UI)
-// - onAlarmSelectCar: (car, shouldZoom) => void — مثلاً الانتقال للسيارة على الخريطة من تنبيه الإنذار
+/* ─────────────────────────────────────────────
+   Hook
+───────────────────────────────────────────── */
 const useCarSocket = (cars, setCars, isInit, options = {}) => {
   const dispatch = useDispatch();
   const { notificationSound } = useSelector((state) => state.map);
   const { detailsModal } = useSelector((state) => state.modals);
+
   const enabled = options?.enabled ?? true;
   const resetKey = options?.resetKey ?? 0;
   const onStatusChange = options?.onStatusChange;
@@ -290,7 +199,6 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
   const tag = options?.tag ?? "CarSocket";
 
   const alarmAudioRef = useRef(null);
-
   const notificationSoundRef = useRef(notificationSound);
   const detailsModalRef = useRef(detailsModal);
   const onAlarmSelectCarRef = useRef(onAlarmSelectCar);
@@ -298,46 +206,39 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
   const subscribedImeisRef = useRef(new Set());
   const indexByImeiRef = useRef(new Map());
   const onStatusRef = useRef(onStatusChange);
+  const carsRef = useRef(cars);
 
   useEffect(() => {
     notificationSoundRef.current = notificationSound;
   }, [notificationSound]);
-
   useEffect(() => {
     detailsModalRef.current = detailsModal;
   }, [detailsModal]);
-
   useEffect(() => {
     onStatusRef.current = onStatusChange;
   }, [onStatusChange]);
-
   useEffect(() => {
     onAlarmSelectCarRef.current = onAlarmSelectCar;
   }, [onAlarmSelectCar]);
+  useEffect(() => {
+    carsRef.current = cars;
+  }, [cars]);
 
   const emitStatus = (status, extra = {}) => {
     try {
       onStatusRef.current?.({ status, ...extra });
     } catch {
-      // ignore
+      /* ignore */
     }
   };
 
-  const carsRef = useRef(cars);
-
   const log = (...args) => {
-    if (!debug) return;
-    // eslint-disable-next-line no-console
-    console.log(`[${tag}]`, ...args);
+    if (debug) console.log(`[${tag}]`, ...args);
   };
   const warn = (...args) => {
-    if (!debug) return;
-    // eslint-disable-next-line no-console
-    console.warn(`[${tag}]`, ...args);
+    if (debug) console.warn(`[${tag}]`, ...args);
   };
   const error = (...args) => {
-    // أخطاء السوكت مفيدة حتى لو debug=false
-    // eslint-disable-next-line no-console
     console.error(`[${tag}]`, ...args);
   };
 
@@ -349,8 +250,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
   };
 
   const normalizeBool = (value) => {
-    if (value === null || value === undefined) return null;
-    if (value === "") return null;
+    if (value === null || value === undefined || value === "") return null;
     if (typeof value === "boolean") return value;
     if (typeof value === "string") {
       const v = value.toLowerCase();
@@ -358,34 +258,24 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
       if (v === "off" || v === "false" || v === "0") return false;
       return null;
     }
-    if (typeof value === "number") {
-      if (!Number.isFinite(value)) return null;
-      return value !== 0;
-    }
+    if (typeof value === "number")
+      return Number.isFinite(value) ? value !== 0 : null;
     return !!value;
   };
 
   useEffect(() => {
-    carsRef.current = cars;
-  }, [cars]);
-
-  useEffect(() => {
-    // تجهيز الصوت مرة واحدة
     alarmAudioRef.current = new Audio("/alarm.wav");
     alarmAudioRef.current.volume = 1;
     alarmAudioRef.current.preload = "auto";
   }, []);
 
   useEffect(() => {
-    // ✅ إيقاف السوكت يدويًا (مثلاً أثناء refresh كل 15 دقيقة)
     if (!enabled) {
       emitStatus("disabled");
       const ws = wsRef.current;
       if (ws) {
         try {
           ws.close();
-        } catch {
-          // ignore
         } finally {
           wsRef.current = null;
           subscribedImeisRef.current = new Set();
@@ -400,6 +290,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
 
     emitStatus("connecting");
     log("connecting...", { resetKey });
+
     const ws = new WebSocket("wss://alfursantracking.com:2053");
     wsRef.current = ws;
     subscribedImeisRef.current = new Set();
@@ -411,16 +302,14 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
       (carsRef.current || []).forEach((car, idx) => {
         const imei = car?.serial_number;
         if (!imei) return;
-        // index map: يجهّز lookup سريع لتحديثات GPS
         if (!indexByImeiRef.current.has(imei))
           indexByImeiRef.current.set(imei, idx);
         if (subscribedImeisRef.current.has(imei)) return;
         subscribedImeisRef.current.add(imei);
         ws.send(JSON.stringify({ type: "subscribe", imei }));
-        subscribedCount += 1;
+        subscribedCount++;
         log("subscribe =>", imei);
       });
-      // ✅ "ready": تم فتح الاتصال وبعث الاشتراكات الحالية
       emitStatus("ready", { subscribedCount });
       log("ready", { subscribedCount });
     };
@@ -429,7 +318,6 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
       emitStatus("error");
       error("socket error", e);
     };
-
     ws.onclose = (e) => {
       emitStatus("closed");
       warn("socket closed", { code: e?.code, reason: e?.reason });
@@ -446,36 +334,12 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
 
       log("<= message", data);
 
-      /* ===== GPS ===== */
-      // if (data.type === "gps" && data.data?.imei) {
-      //   const gps = data.data.gps;
-
-      //   if (gps?.latitude && gps?.longitude) {
-      //     setCars((prev) =>
-      //       [
-      //         ...prev.map((car) =>
-      //           car.serial_number === data.data.imei
-      //             ? {
-      //                 ...car,
-      //                 position: { lat: +gps.latitude, lng: +gps.longitude },
-      //                 speed: data.data.speed || 0,
-      //                 status: data.data.statusDecoded?.accOn ? "on" : "off",
-      //                 lastUpdate: Date.now(),
-      //               }
-      //             : car
-      //         ),
-      //       ].sort((a, b) => (b.speed > 0) - (a.speed > 0))
-      //     );
-      //   }
-      // }
-
+      /* ══════════ GPS ══════════ */
       if (data.type === "gps" && (data.data?.imei || data.data?.serial)) {
-        // السيرفر أحيانًا يبعث imei + serial معًا (مثل: imei=3539..., serial=10b2)
         const imei = data.data.imei ?? null;
         const serial = data.data.serial ?? null;
         const matchKeys = [imei, serial].filter(Boolean);
 
-        // ✅ دعم أكثر من شكل للـ payload (أحيانًا gps تكون داخل data.data.gps وأحيانًا مباشرة)
         const gps = data.data.gps ?? data.data;
         const latRaw = gps?.latitude ?? gps?.lat;
         const lngRaw = gps?.longitude ?? gps?.lng;
@@ -487,11 +351,11 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
 
         const dateValue = data.data.date ?? gps?.date ?? null;
         const incomingMs = parseTimeMs(dateValue);
-
         const nextPos = { lat, lng };
         const nextSpeed = Number(data.data.speed ?? gps?.speed ?? 0) || 0;
         const nextDir = data.data.direction ?? gps?.direction;
         const nextStatus = data.data.statusDecoded?.accOn ? "on" : "off";
+
         const attrs =
           data.data.attributes ??
           data.data.traccar_raw?.attributes ??
@@ -522,17 +386,12 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         });
 
         setCars((prev) => {
-          // ✅ اختَر أول مفتاح يطابق (imei ثم serial)
           const resolveIndex = () => {
             for (const key of matchKeys) {
               let idx = indexByImeiRef.current.get(key);
               if (idx !== undefined && prev[idx]?.serial_number === key)
                 return { idx, key };
-              if (idx !== undefined && prev[idx]?.serial_number !== key) {
-                idx = prev.findIndex((c) => c?.serial_number === key);
-              } else if (idx === undefined) {
-                idx = prev.findIndex((c) => c?.serial_number === key);
-              }
+              idx = prev.findIndex((c) => c?.serial_number === key);
               if (idx >= 0) {
                 indexByImeiRef.current.set(key, idx);
                 return { idx, key };
@@ -550,18 +409,6 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
             const motion = nextMotion === null ? car.motion : nextMotion;
             const charge = nextCharge === null ? car.charge : nextCharge;
 
-            // ✅ تجاهل تحديثات GPS الأقدم (out-of-order) لتجنب الرجوع للخلف/الوميض
-            const prevMs =
-              car.lastGpsAtMs ??
-              parseTimeMs(car.lastSignelGPS) ??
-              parseTimeMs(car.lastSignel);
-            // ملاحظة: نسمح بـ incomingMs === prevMs لأن بعض البروتوكولات قد تعيد نفس التوقيت
-            // مع تحديثات مختلفة، لكن نرفض الأقدم فقط.
-            // if (incomingMs != null && prevMs != null && incomingMs < prevMs) {
-            //   log("GPS ignored (out-of-order)", { matchedKey, incomingMs, prevMs });
-            //  // return car;
-            // }
-
             const samePos =
               car.position?.lat === nextPos.lat &&
               car.position?.lng === nextPos.lng;
@@ -573,7 +420,6 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
               (car.motion ?? null) === motion &&
               (car.charge ?? null) === charge;
 
-            // ✅ no-op: لا تعمل rerender لو مفيش تغيير فعلي
             if (samePos && sameMeta) return car;
 
             return {
@@ -593,8 +439,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
           };
 
           if (idx < 0) {
-            // لم نجد السيارة — هذا أهم log لتشخيص "السيارة لا تتحرك"
-            warn("GPS for unknown device (no matching serial_number)", {
+            warn("GPS for unknown device", {
               matchKeys,
               availableCount: prev?.length || 0,
             });
@@ -612,10 +457,11 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         });
       }
 
-      /* ===== ALARM ===== */
+      /* ══════════ ALARM ══════════ */
       if (data.type === "alarm" && data.data?.imei) {
         const imei = data.data.imei;
         const car = carsRef.current.find((c) => c.serial_number === imei);
+
         const attrs =
           data.data.attributes ??
           data.data.traccar_raw?.attributes ??
@@ -658,7 +504,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
           });
         }
 
-        // 🔥 شغّل الصوت فقط لو ref.current = true
+        // 🔔 صوت
         if (notificationSoundRef.current && alarmAudioRef.current) {
           alarmAudioRef.current.currentTime = 0;
           alarmAudioRef.current.play().catch(() => {});
@@ -667,63 +513,55 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         const alarmCarName = car?.name || car?.car_number || "غير معروف";
         const alarmText = data.data.alarmTextAr || "غير معروف";
         const alarmSpeed = data.data.speed || 0;
-        const alarmDate =
-          data.data.date != null ? String(data.data.date) : "";
+        const alarmDate = data.data.date != null ? String(data.data.date) : "";
 
         pushAlarmEntry({
           imei,
           carName: alarmCarName,
-          alarmText: alarmText,
+          alarmText,
           speed: alarmSpeed,
           date: alarmDate,
         });
 
-        const alarmToastId = `alarm-toast-${Date.now()}-${String(imei).replace(/\W/g, "")}`;
+        // ✅ Sonner toast.custom() بدل react-toastify
+        const alarmToastId = `alarm-${Date.now()}-${String(imei).replace(/\W/g, "")}`;
 
-        toast(
-          <AlarmToast
-            carName={alarmCarName}
-            speed={alarmSpeed}
-            alarm={alarmText}
-            IMEI={imei}
-            showGoToMap={typeof onAlarmSelectCarRef.current === "function"}
-            onGoToMap={() => {
-              const fn = onAlarmSelectCarRef.current;
-              if (!fn) return;
-              const c = carsRef.current.find(
-                (x) => String(x?.serial_number) === String(imei),
-              );
-              if (c) fn(c, true);
-            }}
-            onClose={() => toast.dismiss(alarmToastId)}
-          />,
+        toast.custom(
+          (t) => (
+            <AlarmToast
+              toastId={t}
+              carName={alarmCarName}
+              speed={alarmSpeed}
+              alarm={alarmText}
+              IMEI={imei}
+              showGoToMap={typeof onAlarmSelectCarRef.current === "function"}
+              onGoToMap={() => {
+                const fn = onAlarmSelectCarRef.current;
+                if (!fn) return;
+                const c = carsRef.current.find(
+                  (x) => String(x?.serial_number) === String(imei),
+                );
+                if (c) fn(c, true);
+                toast.dismiss(alarmToastId);
+              }}
+            />
+          ),
           {
-            toastId: alarmToastId,
-            containerId: "alarm-stack",
+            id: alarmToastId,
+            duration: 15000,
+            // ✅ كل إشعار يظهر فوق السابق (stack) بدل ما يملى الشاشة
             position: "bottom-right",
-            autoClose: 15000,
-            closeOnClick: false,
-            draggable: false,
-            hideProgressBar: false,
-            icon: false,
-            closeButton: false,
-            className:
-              "alarm-toast !relative !overflow-visible !bg-transparent !shadow-none !p-0 !mb-0 !min-h-0 !rounded-2xl [&_.Toastify__toast-body]:!p-0 [&_.Toastify__toast-body]:!m-0 [&_.Toastify__toast-body]:!overflow-visible",
-            bodyClassName: "!p-3 !ps-3 !pe-3",
-            style: { marginBottom: "48px" },
           },
         );
       }
 
-      /* ===== HEARTBEAT ===== */
+      /* ══════════ HEARTBEAT ══════════ */
       if (data.type === "heartbeat" && data.data?.imei) {
         setCars((prev) => {
           const key = data.data.imei;
           let idx = indexByImeiRef.current.get(key);
-          if (idx !== undefined && prev[idx]?.serial_number !== key) {
-            idx = prev.findIndex((c) => c?.serial_number === key);
-            if (idx >= 0) indexByImeiRef.current.set(key, idx);
-          }
+          if (idx !== undefined && prev[idx]?.serial_number !== key)
+            idx = undefined;
           if (idx === undefined) {
             idx = prev.findIndex((c) => c?.serial_number === key);
             if (idx >= 0) indexByImeiRef.current.set(key, idx);
@@ -740,10 +578,10 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         });
       }
 
-      /* ===== DEVICE STATUS (Traccar devices[] updates) ===== */
+      /* ══════════ DEVICE STATUS ══════════ */
       if (data.type === "device" && (data.data?.imei || data.data?.uniqueId)) {
         const imei = (data.data.imei ?? data.data.uniqueId ?? "").toString();
-        const status = data.data.status ?? data.data.device_status ?? null; // 'online' | 'offline'
+        const status = data.data.status ?? data.data.device_status ?? null;
         const lastUpdate =
           data.data.lastUpdate ?? data.data.device_lastUpdate ?? null;
 
@@ -765,10 +603,8 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
             ...existing,
             device_status: status ?? existing.device_status,
             device_lastUpdate: lastUpdate ?? existing.device_lastUpdate,
-            // ✅ ربط Offline/Online من السوكت (بدون 4 ساعات)
             isOffline: nextOffline,
             isInactive: false,
-            // لو ما عنده lastSignel قبل كده، خليه يتحدث من device.lastUpdate
             lastSignel:
               existing.lastSignel ?? lastUpdate ?? existing.lastSignel,
             lastUpdate: Date.now(),
@@ -777,7 +613,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         });
       }
 
-      /* ===== COMMAND RESPONSE ===== */
+      /* ══════════ COMMAND RESPONSE ══════════ */
       if (
         data.type === "command_response" &&
         data.data?.response &&
@@ -786,7 +622,6 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         const response = data.data.response;
         const imei = data.data.imei;
 
-        // التحقق من أن Modal مفتوح وأن IMEI يطابق الجهاز المفتوح
         const currentModal = detailsModalRef.current;
         const isModalOpen = currentModal?.show;
         const modalDeviceId = currentModal?.id;
@@ -794,30 +629,20 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
           (car) => car.id === modalDeviceId,
         );
         const modalImei = modalDevice?.serial_number;
-
         const isMatchingDevice = isModalOpen && modalImei === imei;
 
-        // حفظ الاستجابة في Redux
         dispatch(setCommandResponse({ response, imei }));
 
-        // إذا كان Modal مغلق أو الجهاز غير مطابق، عرض toast
         if (!isMatchingDevice) {
           const car = carsRef.current.find((c) => c.serial_number === imei);
           const carName = car?.name || car?.car_number || "غير معروف";
 
-          toast.success(
-            <div className="text-sm leading-5 space-y-1 w-full">
-              <p className="font-bold text-mainColor">✅ استجابة الأمر</p>
-              <p className="text-gray-700 break-all">{response}</p>
-              <p className="text-xs text-gray-500">
-                السيارة: {carName} | IMEI: {imei}
-              </p>
-            </div>,
-            {
-              position: "bottom-right",
-              autoClose: 8000,
-            },
-          );
+          // ✅ Sonner success toast
+          toast.success(`${carName}: ${response}`, {
+            description: `IMEI: ${imei}`,
+            duration: 8000,
+            position: "bottom-right",
+          });
         }
       }
     };
@@ -835,7 +660,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
     };
   }, [isInit, enabled, resetKey]);
 
-  // لو الأجهزة اتغيرت بعد فتح الـ socket (مثلاً بعد full=1)، اشترك في IMEIs الجديدة بدون reconnect
+  // اشتراك في IMEIs الجديدة بدون reconnect
   useEffect(() => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;

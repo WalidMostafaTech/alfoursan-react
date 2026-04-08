@@ -375,7 +375,7 @@ const TenantDashboard = () => {
   if (!isLoaded && mapProvider === "google") return <LoadingPage />;
 
   return (
-    <section className="w-screen h-screen relative">
+    <section className="w-screen h-screen relative overflow-hidden">
       <SideMenu
         cars={cars}
         carsByBranch={carsByBranch}

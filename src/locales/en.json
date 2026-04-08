@@ -322,7 +322,8 @@
     "attachSuccess": "Devices attached successfully",
     "deleteSuccess": "Devices deleted successfully",
     "attachDeviceSuccess": "Device attached successfully",
-    "total": "Total"
+    "total": "Total",
+    "filter": "Filter"
   },
   "replayFilter": {
     "device": "Device",

@@ -42,7 +42,7 @@ const SideMenu = ({
           isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
         }`}
       >
-        <div className="bg-white h-full w-full rounded-2xl shadow-xl p-4 flex flex-col space-y-3 relative">
+        <div className="bg-white h-full w-full rounded-2xl shadow-xl p-4 flex flex-col space-y-3 relative overflow-hidden">
           {/* زر الإغلاق */}
           <button
             onClick={() => setIsOpen(false)}
@@ -51,7 +51,10 @@ const SideMenu = ({
             <IoMdClose size={22} />
           </button>
 
-          <Search cars={carsByBranch ?? cars} handleSelectCar={handleSelectCar} />
+          <Search
+            cars={carsByBranch ?? cars}
+            handleSelectCar={handleSelectCar}
+          />
 
           {/* الفروع */}
           <div className="w-full">

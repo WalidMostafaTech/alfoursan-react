@@ -206,7 +206,8 @@
     "attachSuccess": "تم ربط الأجهزة بنجاح",
     "deleteSuccess": "تم حذف الأجهزة بنجاح",
     "attachDeviceSuccess": "تم ربط الجهاز بنجاح",
-    "total": "الكل"
+    "total": "الكل",
+    "filter": "فلتره"
   },
   "replayFilter": {
     "device": "الجهاز",

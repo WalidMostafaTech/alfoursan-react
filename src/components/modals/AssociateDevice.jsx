@@ -20,30 +20,38 @@ const AssociateDevice = () => {
 
   const { associateDeviceModal } = useSelector((state) => state.modals);
 
+  // ✅ قيم الـ inputs (بتتغير مع كل كتابة أو تغيير select)
   const [status, setStatus] = useState("all");
-  const [searchStatus, setSearchStatus] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // ✅ القيم اللي بتتبعت للـ API بس لما تضغط زرار البحث
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: "all",
+    q: "",
+  });
 
   const [selectedDevices, setSelectedDevices] = useState([]);
   const [page, setPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
 
+  // ✅ امسح الـ selectedDevices لما تتغير الصفحة
   useEffect(() => {
-    const delay = setTimeout(() => {
-      setSearchStatus(searchQuery); // هعمل trigger للـ useQuery
-      setPage(1); // رجع الصفحة لـ 1 كل مرة فيه بحث جديد
-    }, 500); // بعد 500ms من آخر كتابة
-
-    return () => clearTimeout(delay); // تنظيف الـ timeout لو المستخدم كتب تاني
-  }, [searchQuery]);
+    setSelectedDevices([]);
+  }, [page]);
 
   const {
     data: fenceDevices = {},
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["fenceDevices", associateDeviceModal.id, searchStatus, page],
+    // ✅ الـ queryKey بيتبع appliedFilters بس - مش بيتغير إلا لما تضغط البحث
+    queryKey: ["fenceDevices", associateDeviceModal.id, appliedFilters, page],
     queryFn: () =>
-      getFenceDevices(associateDeviceModal.id, status, searchStatus, page),
+      getFenceDevices(
+        associateDeviceModal.id,
+        appliedFilters.status,
+        appliedFilters.q,
+        page,
+      ),
     enabled: !!associateDeviceModal.id,
   });
 
@@ -78,13 +86,19 @@ const AssociateDevice = () => {
     },
   });
 
-  const handleAttachDevice = async (deviceId) => {
+  // ✅ بيتحقق من الـ membership ويعمل attach أو detach بناءً عليه
+  const handleToggleDevice = async (device) => {
     try {
-      await addDeviceToFence(associateDeviceModal.id, [deviceId]);
-      toast.success(t("associateDevice.attachDeviceSuccess"));
+      if (device.membership === "attached") {
+        await removeDeviceFromFence(associateDeviceModal.id, [device.id]);
+        toast.success(t("associateDevice.deleteSuccess"));
+      } else {
+        await addDeviceToFence(associateDeviceModal.id, [device.id]);
+        toast.success(t("associateDevice.attachDeviceSuccess"));
+      }
       refetch();
     } catch (error) {
-      console.error("Error attaching device:", error);
+      console.error("Error toggling device:", error);
       toast.error(error?.response?.data?.message);
     }
   };
@@ -97,10 +111,11 @@ const AssociateDevice = () => {
     setSelectedDevices((prev) =>
       prev.includes(deviceId)
         ? prev.filter((id) => id !== deviceId)
-        : [...prev, deviceId]
+        : [...prev, deviceId],
     );
   };
 
+  // ✅ مش بيتحدد لو devices فاضي
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       setSelectedDevices(devices.map((d) => d.id));
@@ -109,10 +124,16 @@ const AssociateDevice = () => {
     }
   };
 
+  // ✅ زرار البحث هو اللي بيطبق الفلتر بس
+  const handleApplyFilters = () => {
+    setAppliedFilters({ status, q: searchQuery });
+    setPage(1);
+  };
+
   const getPages = () => {
     if (!pagination?.last_page) return [];
 
-    const current = page; // ✅ بدل pagination.current_page
+    const current = page;
     const last = pagination.last_page;
     const pages = [];
 
@@ -144,7 +165,9 @@ const AssociateDevice = () => {
       <div className="modal-box max-w-5xl p-0 mt-10">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300">
-          <h3 className="text-lg font-semibold">{t("associateDevice.title")}</h3>
+          <h3 className="text-lg font-semibold">
+            {t("associateDevice.title")}
+          </h3>
           <button
             onClick={closeModal}
             className="btn btn-sm btn-circle btn-ghost"
@@ -155,11 +178,12 @@ const AssociateDevice = () => {
 
         {/* Filters */}
         <div className="px-6 py-4 border-b border-gray-300 bg-gray-50">
-          <div className="flex items-center gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="flex items-center gap-2 text-sm">
-              <label className="font-medium">{t("associateDevice.client")}:</label>
-
-              <div className="w-40">
+              <label className="font-medium">
+                {t("associateDevice.client")}:
+              </label>
+              <div className="flex-1">
                 <MainInput
                   type="select"
                   options={[{ label: t("associateDevice.all"), value: "all" }]}
@@ -169,28 +193,34 @@ const AssociateDevice = () => {
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              <label className="font-medium">{t("associateDevice.device")}:</label>
-
-              <div className="w-40">
+              <label className="font-medium">
+                {t("associateDevice.device")}:
+              </label>
+              <div className="flex-1">
                 <MainInput
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
                   placeholder="IMEI"
                 />
               </div>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              <label className="font-medium">{t("associateDevice.status")}:</label>
-
-              <div className="w-40">
+              <label className="font-medium">
+                {t("associateDevice.status")}:
+              </label>
+              <div className="flex-1">
                 <MainInput
                   type="select"
                   options={[
                     { label: t("associateDevice.all"), value: "all" },
                     { label: t("associateDevice.attached"), value: "attached" },
-                    { label: t("associateDevice.notAttached"), value: "not_attached" },
+                    {
+                      label: t("associateDevice.notAttached"),
+                      value: "not_attached",
+                    },
                   ]}
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
@@ -198,10 +228,12 @@ const AssociateDevice = () => {
               </div>
             </div>
 
+            {/* ✅ بس الزرار ده اللي بيبعت للـ API */}
             <button
-              className="btn btn-primary btn-sm mr-auto"
-              onClick={() => setSearchStatus(status)}
+              className="btn btn-primary btn-sm"
+              onClick={handleApplyFilters}
             >
+              {t("associateDevice.filter")}
               <IoSearchOutline size={18} />
             </button>
           </div>
@@ -221,15 +253,23 @@ const AssociateDevice = () => {
                   disabled={selectedDevices.length === 0 || isAdding}
                   onClick={() => addDevices()}
                 >
-                  {isAdding ? t("associateDevice.attaching") : t("associateDevice.attachGroup")}
+                  {isAdding
+                    ? t("associateDevice.attaching")
+                    : t("associateDevice.attachGroup")}
                 </button>
 
                 <button
                   onClick={() => removeDevices()}
-                  className="btn btn-error btn-sm "
+                  className={`btn btn-error btn-sm text-white bg-red-800 border-red-800 ${
+                    selectedDevices.length === 0 || isRemoving
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
                   disabled={selectedDevices.length === 0 || isRemoving}
                 >
-                  {isRemoving ? t("associateDevice.deleting") : t("associateDevice.deleteGroup")}
+                  {isRemoving
+                    ? t("associateDevice.deleting")
+                    : t("associateDevice.deleteGroup")}
                 </button>
               </div>
             </div>
@@ -243,7 +283,10 @@ const AssociateDevice = () => {
                       <input
                         type="checkbox"
                         className="checkbox checkbox-sm checkbox-primary"
-                        checked={selectedDevices.length === devices.length}
+                        checked={
+                          devices.length > 0 &&
+                          selectedDevices.length === devices.length
+                        }
                         onChange={handleSelectAll}
                       />
                     </th>
@@ -280,10 +323,16 @@ const AssociateDevice = () => {
                         <td>{device.membership || "-"}</td>
                         <td>
                           <button
-                            className="text-mainColor font-bold hover:underline cursor-pointer"
-                            onClick={() => handleAttachDevice(device.id)}
+                            className={`font-bold hover:underline cursor-pointer ${
+                              device.membership === "attached"
+                                ? "text-red-600"
+                                : "text-mainColor"
+                            }`}
+                            onClick={() => handleToggleDevice(device)}
                           >
-                            {t("associateDevice.attach")}
+                            {device.membership === "attached"
+                              ? t("associateDevice.detach")
+                              : t("associateDevice.attach")}
                           </button>
                         </td>
                       </tr>
@@ -308,7 +357,6 @@ const AssociateDevice = () => {
               dir="ltr"
             >
               <div className="flex items-center gap-1">
-                {/* Prev */}
                 <button
                   className="btn btn-sm btn-ghost"
                   disabled={page === 1}
@@ -317,7 +365,6 @@ const AssociateDevice = () => {
                   <MdNavigateBefore size={20} />
                 </button>
 
-                {/* Page Numbers */}
                 {getPages().map((p) =>
                   typeof p === "string" ? (
                     <span key={p} className="px-2 text-sm">
@@ -333,10 +380,9 @@ const AssociateDevice = () => {
                     >
                       {p}
                     </button>
-                  )
+                  ),
                 )}
 
-                {/* Next */}
                 <button
                   className="btn btn-sm btn-ghost"
                   disabled={page === pagination.last_page}
@@ -349,7 +395,7 @@ const AssociateDevice = () => {
               </div>
 
               <div className="text-black">
-                {t("associateDevice.total")} : {" "}
+                {t("associateDevice.total")} :{" "}
                 <span className="font-bold text-mainColor">
                   {pagination?.total}
                 </span>

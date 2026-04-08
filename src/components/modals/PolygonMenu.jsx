@@ -1,10 +1,9 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useState } from "react";
-import { FaDrawPolygon, FaCircle, FaSearch } from "react-icons/fa";
-import { PiPolygon } from "react-icons/pi";
+import { FaSearch, FaRegCircle } from "react-icons/fa";
+import { PiPolygon, PiPolygonFill } from "react-icons/pi";
 import { MdDelete, MdContentCopy, MdEdit } from "react-icons/md";
 import { LuSquareSplitHorizontal } from "react-icons/lu";
-import MainInput from "../form/MainInput";
 import { useDispatch, useSelector } from "react-redux";
 import {
   closePolygonMenu,
@@ -213,26 +212,18 @@ const PolygonMenu = () => {
           {/* Draw Fence */}
           <div className="flex items-center gap-2">
             <label className="font-medium">{t("polygonMenu.drawFence")}</label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <button
                 onClick={() => handleSelect("circle")}
-                className={`btn btn-xs ${
-                  drawType === "circle"
-                    ? "btn-primary text-white"
-                    : "btn-outline"
-                }`}
+                className="py-2 px-4 rounded-md border border-gray-400 cursor-pointer text-lg hover:bg-gray-100"
               >
-                <FaCircle className="text-lg" />
+                <FaRegCircle />
               </button>
               <button
                 onClick={() => handleSelect("polygon")}
-                className={`btn btn-xs ${
-                  drawType === "polygon"
-                    ? "btn-primary text-white"
-                    : "btn-outline"
-                }`}
+                className="py-2 px-4 rounded-md border border-gray-400 cursor-pointer text-lg hover:bg-gray-100"
               >
-                <FaDrawPolygon className="text-lg" />
+                <PiPolygonFill />
               </button>
             </div>
           </div>
