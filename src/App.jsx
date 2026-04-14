@@ -7,15 +7,16 @@ function App() {
     <main>
       <Outlet />
 
-      {/* <ToastContainer
+      <ToastContainer
         position="top-right"
         theme="colored"
         autoClose={3000}
         // limit={5}
         limit={3}
-      /> */}
+      />
+
       {/* تنبيهات الإنذار من السوكت: مدة أطول + تكدس أكبر */}
-       <ToastContainer
+      <ToastContainer
         containerId="alarm-stack"
         position="bottom-right"
         theme="colored"
@@ -23,7 +24,7 @@ function App() {
         // limit={12}
         limit={3}
         newestOnTop
-      /> 
+      />
 
       <Toaster
         position="bottom-right"
