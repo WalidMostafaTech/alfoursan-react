@@ -96,9 +96,9 @@ export const getSupport = async () => {
   return data?.data;
 };
 
-export const getReplay = async ({ serial_number, from_time, to_time }) => {
+export const getReplay = async ({ serial_number, from_time, to_time, timezone }) => {
   const { data } = await api.get(`/replay`, {
-    params: { serial_number, from_time, to_time },
+    params: { serial_number, from_time, to_time, timezone },
   });
   return data;
 };

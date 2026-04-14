@@ -8,10 +8,36 @@ import { IoChevronDown } from "react-icons/io5";
 import { IoMdSearch } from "react-icons/io";
 import { useTranslation } from "react-i18next";
 
+const pad2 = (n) => String(n).padStart(2, "0");
+
+// ✅ datetime-local بصيغة محلية (timezone الجهاز) وليس UTC
+const toLocalInputDateTime = (date) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(
+    d.getHours(),
+  )}:${pad2(d.getMinutes())}`;
+};
+
+const toLocalDate = (date) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+};
+
+// ✅ التحويل لصيغة API المطلوبة: YYYY-MM-DD HH:mm:ss
+const toApiDateTime = (localInputValue) => {
+  if (!localInputValue) return "";
+  const [datePart = "", timePartRaw = ""] = String(localInputValue).split("T");
+  const [hh = "00", mm = "00", ss = "00"] = timePartRaw.split(":");
+  return `${datePart} ${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+};
+
 const ReplayFilter = ({ onDateChange, serial_number }) => {
   const { t } = useTranslation();
-  const now = new Date();
-  const today = now.toISOString().slice(0, 16);
+  const today = toLocalInputDateTime(new Date());
+  const endOfToday = `${toLocalDate(new Date())}T23:59`;
+  const clientTimezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Riyadh";
+  const [activePreset, setActivePreset] = useState("");
 
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
@@ -33,28 +59,31 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
       return;
     }
 
-    onDateChange(from, to);
+    setActivePreset("");
+    onDateChange(toApiDateTime(from), toApiDateTime(to), clientTimezone);
   };
 
   // دوال اختصارات التواريخ
   const setYesterday = () => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
-    const y = d.toISOString().split("T")[0];
+    const y = toLocalDate(d);
     const from = `${y}T00:00`;
     const to = `${y}T23:59`;
+    setActivePreset("yesterday");
     setFrom(from);
     setTo(to);
-    onDateChange(from, to);
+    onDateChange(toApiDateTime(from), toApiDateTime(to), clientTimezone);
   };
 
   const setToday = () => {
-    const t = new Date().toISOString().split("T")[0];
+    const t = toLocalDate(new Date());
     const from = `${t}T00:00`;
     const to = today; // اللي عرّفته فوق بالـ slice(0, 16)
+    setActivePreset("today");
     setFrom(from);
     setTo(to);
-    onDateChange(from, to);
+    onDateChange(toApiDateTime(from), toApiDateTime(to), clientTimezone);
   };
 
   const setThisWeek = () => {
@@ -63,12 +92,17 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
     const start = new Date(now);
     start.setDate(now.getDate() - dayOfWeek);
 
-    const weekStart = `${start.toISOString().split("T")[0]}T00:00`;
+    const weekStart = `${toLocalDate(start)}T00:00`;
     const weekEnd = today;
 
+    setActivePreset("thisWeek");
     setFrom(weekStart);
     setTo(weekEnd);
-    onDateChange(weekStart, weekEnd);
+    onDateChange(
+      toApiDateTime(weekStart),
+      toApiDateTime(weekEnd),
+      clientTimezone,
+    );
   };
 
   const setLastWeek = () => {
@@ -81,12 +115,17 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
     const start = new Date(end);
     start.setDate(end.getDate() - 6);
 
-    const lastWeekStart = `${start.toISOString().split("T")[0]}T00:00`;
-    const lastWeekEnd = `${end.toISOString().split("T")[0]}T23:59`;
+    const lastWeekStart = `${toLocalDate(start)}T00:00`;
+    const lastWeekEnd = `${toLocalDate(end)}T23:59`;
 
+    setActivePreset("lastWeek");
     setFrom(lastWeekStart);
     setTo(lastWeekEnd);
-    onDateChange(lastWeekStart, lastWeekEnd);
+    onDateChange(
+      toApiDateTime(lastWeekStart),
+      toApiDateTime(lastWeekEnd),
+      clientTimezone,
+    );
   };
 
   const [search, setSearch] = useState("");
@@ -192,7 +231,10 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
             type="datetime-local"
             value={from}
             max={today}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={(e) => {
+              setActivePreset("");
+              setFrom(e.target.value);
+            }}
           />
         </div>
 
@@ -205,8 +247,11 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
             id="to"
             type="datetime-local"
             value={to}
-            max={today}
-            onChange={(e) => setTo(e.target.value)}
+            max={endOfToday}
+            onChange={(e) => {
+              setActivePreset("");
+              setTo(e.target.value);
+            }}
           />
         </div>
 
@@ -224,7 +269,11 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
         <button
           type="button"
           onClick={setYesterday}
-          className="text-mainColor cursor-pointer hover:underline"
+          className={`px-3 py-1.5 rounded-full text-sm transition-all cursor-pointer border ${
+            activePreset === "yesterday"
+              ? "bg-mainColor text-white border-mainColor shadow-sm"
+              : "bg-white text-mainColor border-mainColor/30 hover:bg-mainColor/10"
+          }`}
         >
           {t("replayFilter.yesterday")}
         </button>
@@ -232,7 +281,11 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
         <button
           type="button"
           onClick={setToday}
-          className="text-mainColor cursor-pointer hover:underline"
+          className={`px-3 py-1.5 rounded-full text-sm transition-all cursor-pointer border ${
+            activePreset === "today"
+              ? "bg-mainColor text-white border-mainColor shadow-sm"
+              : "bg-white text-mainColor border-mainColor/30 hover:bg-mainColor/10"
+          }`}
         >
           {t("replayFilter.today")}
         </button>
@@ -240,7 +293,11 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
         <button
           type="button"
           onClick={setThisWeek}
-          className="text-mainColor cursor-pointer hover:underline"
+          className={`px-3 py-1.5 rounded-full text-sm transition-all cursor-pointer border ${
+            activePreset === "thisWeek"
+              ? "bg-mainColor text-white border-mainColor shadow-sm"
+              : "bg-white text-mainColor border-mainColor/30 hover:bg-mainColor/10"
+          }`}
         >
           {t("replayFilter.thisWeek")}
         </button>
@@ -248,7 +305,11 @@ const ReplayFilter = ({ onDateChange, serial_number }) => {
         <button
           type="button"
           onClick={setLastWeek}
-          className="text-mainColor cursor-pointer hover:underline"
+          className={`px-3 py-1.5 rounded-full text-sm transition-all cursor-pointer border ${
+            activePreset === "lastWeek"
+              ? "bg-mainColor text-white border-mainColor shadow-sm"
+              : "bg-white text-mainColor border-mainColor/30 hover:bg-mainColor/10"
+          }`}
         >
           {t("replayFilter.lastWeek")}
         </button>

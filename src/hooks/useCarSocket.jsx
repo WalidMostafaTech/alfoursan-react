@@ -32,7 +32,7 @@ const AlarmToast = ({
     >
       <div className="rounded-2xl border border-red-200/90 bg-white shadow-xl shadow-red-900/10 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-2.5 px-3 pt-3 pb-2 bg-gradient-to-l from-red-50/80 to-white">
+        <div className="flex items-center gap-2.5 px-3 pt-3 pb-2 bg-linear-to-l from-red-50/80 to-white">
           <div className="h-9 w-9 shrink-0 rounded-xl bg-red-100 text-red-600 flex items-center justify-center ring-2 ring-red-200/60">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -361,6 +361,7 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
           data.data.traccar_raw?.attributes ??
           data.data.legacy?.attributes ??
           {};
+        const attrsTypeNum = Number(attrs?.type);
         const nextIgnition = normalizeBool(
           attrs?.ignition ??
             data.data.ignition ??
@@ -374,6 +375,11 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         const nextCharge = normalizeBool(
           attrs?.charge ?? data.data.charge ?? null,
         );
+        // lastSignelGPS يتحدث فقط لنقطة حركة فعلية:
+        // - speed > 2
+        // - attributes.type !== 19
+        const shouldUpdateLastSignelGPS =
+          nextSpeed > 2 && attrsTypeNum !== 19;
 
         log("GPS", {
           imei,
@@ -433,8 +439,12 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
               charge,
               lastUpdate: Date.now(),
               lastSignel: dateValue ?? car.lastSignel,
-              lastSignelGPS: dateValue ?? car.lastSignelGPS,
-              lastGpsAtMs: incomingMs ?? Date.now(),
+              lastSignelGPS: shouldUpdateLastSignelGPS
+                ? dateValue ?? car.lastSignelGPS
+                : car.lastSignelGPS,
+              lastGpsAtMs: shouldUpdateLastSignelGPS
+                ? incomingMs ?? Date.now()
+                : car.lastGpsAtMs,
             };
           };
 

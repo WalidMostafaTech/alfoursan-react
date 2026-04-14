@@ -367,10 +367,13 @@ const CarReplay = () => {
     max: defaultSpeedLimit.max,
   });
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toLocaleDateString("en-CA");
+  const clientTimezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Riyadh";
   const [dateRange, setDateRange] = useState({
     from: today,
     to: today,
+    timezone: clientTimezone,
   });
 
   const {
@@ -384,6 +387,7 @@ const CarReplay = () => {
         serial_number,
         from_time: dateRange.from,
         to_time: dateRange.to,
+        timezone: dateRange.timezone,
       }),
   });
   const pointsRaw = replayData?.data || [];
@@ -972,7 +976,7 @@ const CarReplay = () => {
 
   if (!isLoaded) return <LoadingPage />;
 
-  const handleDateChange = (from, to) => {
+  const handleDateChange = (from, to, timezone = clientTimezone) => {
     const diffDays =
       (new Date(to).getTime() - new Date(from).getTime()) /
       (1000 * 60 * 60 * 24);
@@ -983,8 +987,9 @@ const CarReplay = () => {
 
     setIsPlaying(false);
     setCurrentIndex(0);
+    setShowInfo(false);
 
-    setDateRange({ from, to });
+    setDateRange({ from, to, timezone });
     refetch();
   };
 
@@ -1145,10 +1150,13 @@ const CarReplay = () => {
             }}
             onClick={() => setShowInfo(true)}
           >
-            {showInfo && (
-              <InfoWindow onCloseClick={() => setShowInfo(false)}>
+            {showInfo && renderPosition && (
+              <InfoWindow
+                position={renderPosition}
+                onCloseClick={() => setShowInfo(false)}
+              >
                 <div className="w-[380px]">
-                  <div className="rounded-2xl bg-gradient-to-br from-mainColor/10 via-white to-indigo-50 border border-slate-100 shadow-lg overflow-hidden">
+                  <div className="rounded-2xl bg-linear-to-br from-mainColor/10 via-white to-indigo-50 border border-slate-100 shadow-lg overflow-hidden">
                     <div className="px-4 py-3 flex items-center justify-between bg-white/70 backdrop-blur border-b border-slate-100">
                       <div>
                         <p className="text-[11px] text-slate-500">
@@ -1248,7 +1256,7 @@ const CarReplay = () => {
 
       <div className="absolute top-[15%] right-3 z-20 space-y-2 flex flex-col items-center">
         <a
-          hrefLang={BACK_URL}
+          href={BACK_URL}
           className="bg-white shadow rounded p-2 cursor-pointer hover:bg-gray-100"
         >
           <CgHomeAlt className="text-xl text-gray-700" />

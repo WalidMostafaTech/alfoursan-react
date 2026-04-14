@@ -1,11 +1,23 @@
-// 🧠 Helper: format difference between two times using Saudi time
-const getTimeDiffString = (pastTime) => {
-  const nowSaudi = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" })
-  );
-  const pastSaudi = new Date(pastTime);
+// server values مثل "2026-04-14 14:28:22" بدون timezone:
+// نعاملها كتوقيت السعودية صراحةً لتفادي اختلاف جهاز المستخدم.
+const parseSaudiDate = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) return value;
 
-  let diffMs = nowSaudi - pastSaudi;
+  const str = String(value).trim();
+  // YYYY-MM-DD HH:mm:ss  -> YYYY-MM-DDTHH:mm:ss+03:00
+  if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/.test(str)) {
+    return new Date(str.replace(" ", "T") + "+03:00");
+  }
+  return new Date(str);
+};
+
+// 🧠 Helper: format difference between now and past time
+const getTimeDiffString = (pastTime) => {
+  const past = parseSaudiDate(pastTime);
+  if (!past || Number.isNaN(past.getTime())) return "0m";
+
+  let diffMs = Date.now() - past.getTime();
   if (diffMs < 0) diffMs = 0;
 
   const minutesTotal = Math.floor(diffMs / (1000 * 60));
@@ -24,12 +36,12 @@ const getTimeDiffString = (pastTime) => {
 };
 
 function getTimeDiffDetailed(lastSignelGPS) {
-  const nowRiyadh = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" })
-  );
-  const lastSignalDate = new Date(lastSignelGPS);
+  const lastSignalDate = parseSaudiDate(lastSignelGPS);
+  if (!lastSignalDate || Number.isNaN(lastSignalDate.getTime())) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, hoursSinceLastGPS: 0 };
+  }
 
-  let diffMs = nowRiyadh - lastSignalDate; // الفرق بالميلي ثانية
+  let diffMs = Date.now() - lastSignalDate.getTime(); // الفرق بالميلي ثانية
   if (diffMs < 0) diffMs = 0; // حماية من القيم السالبة
 
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -43,7 +55,7 @@ function getTimeDiffDetailed(lastSignelGPS) {
 
   const seconds = Math.floor(diffMs / 1000);
 
-  const hoursSinceLastGPS = (nowRiyadh - lastSignalDate) / (1000 * 60 * 60);
+  const hoursSinceLastGPS = (Date.now() - lastSignalDate.getTime()) / (1000 * 60 * 60);
 
   return { days, hours, minutes, seconds, hoursSinceLastGPS };
 }
@@ -97,7 +109,7 @@ export const getCarStatus = (car) => {
   if (s <= 1) {
     const sinceSource = lastSignelGPS || lastSignel;
     return {
-      status: sinceSource ? `Static (${getTimeDiffString(sinceSource)})` : "Static",
+      status: sinceSource ? `Static ( ${getTimeDiffString(sinceSource)})` : "Static",
       color: "#3b82f6",
     };
   }
