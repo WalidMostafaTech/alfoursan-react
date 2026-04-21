@@ -89,12 +89,14 @@ export const getCarStatus = (car) => {
 
   // ⏹ Offline (مصدره API.isOffline أو السوكت device.status='offline')
   if (car.isOffline) {
-    const sinceSource = lastSignelGPS || lastSignel || car.device_lastUpdate;
+    const sinceSource = lastSignel || lastSignelGPS  || car.device_lastUpdate;
     return {
       status: sinceSource ? `Offline (${getTimeDiffString(sinceSource)})` : "Offline",
       color: "#ef4444",
     };
   }
+
+
 
   // 🟢 Moving
   const s = Number(speed) || 0;
