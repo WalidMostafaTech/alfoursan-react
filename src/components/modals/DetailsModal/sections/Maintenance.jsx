@@ -14,6 +14,14 @@ import FormBtn from "../../../form/FormBtn";
 
 const Maintenance = ({ deviceID, deviceSettings }) => {
   const { t } = useTranslation();
+
+  if (!deviceID || !deviceSettings)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     type: "mileage",

@@ -2,6 +2,14 @@ import { useTranslation } from "react-i18next";
 
 const Membership = ({ deviceSettings }) => {
   const { t } = useTranslation();
+
+  if (!deviceSettings || !deviceSettings.subscription)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const subscription = deviceSettings?.subscription;
 
   return (
@@ -9,13 +17,27 @@ const Membership = ({ deviceSettings }) => {
       <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <thead className="bg-mainColor/10 text-mainColor">
           <tr className="text-xs">
-            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.clientName")}</th>
-            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.account")}</th>
-            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.contact")}</th>
-            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.phoneNumber")}</th>
-            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.package")}</th>
-            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.subscriptionStart")}</th>
-            <th className="py-3 px-4 text-start">{t("membership.tableHeaders.subscriptionEnd")}</th>
+            <th className="py-3 px-4 text-start">
+              {t("membership.tableHeaders.clientName")}
+            </th>
+            <th className="py-3 px-4 text-start">
+              {t("membership.tableHeaders.account")}
+            </th>
+            <th className="py-3 px-4 text-start">
+              {t("membership.tableHeaders.contact")}
+            </th>
+            <th className="py-3 px-4 text-start">
+              {t("membership.tableHeaders.phoneNumber")}
+            </th>
+            <th className="py-3 px-4 text-start">
+              {t("membership.tableHeaders.package")}
+            </th>
+            <th className="py-3 px-4 text-start">
+              {t("membership.tableHeaders.subscriptionStart")}
+            </th>
+            <th className="py-3 px-4 text-start">
+              {t("membership.tableHeaders.subscriptionEnd")}
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">

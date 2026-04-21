@@ -7,9 +7,19 @@ import { clearCommandResponse } from "../../../../store/modalsSlice";
 import FormBtn from "../../../../components/form/FormBtn";
 import MainInput from "../../../../components/form/MainInput";
 import { sendCommand } from "../../../../services/monitorServices";
+import { useTranslation } from "react-i18next";
 
 const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
+
+  if (!deviceID || !deviceSettings)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const { commandResponse } = useSelector((state) => state.modals);
   const [activeCommand, setActiveCommand] = useState(0);
   const [selectedCommand, setSelectedCommand] = useState("");
@@ -28,12 +38,11 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
     v2: "",
     v3: "",
   });
-  
+
   // التحقق من أن الاستجابة تخص هذا الجهاز
   const deviceImei = deviceSettings?.device?.serial_number;
-  const isResponseForThisDevice = 
-    commandResponse?.response && 
-    commandResponse?.imei === deviceImei;
+  const isResponseForThisDevice =
+    commandResponse?.response && commandResponse?.imei === deviceImei;
 
   const commandTabs = [
     { label: "Remote opening door", isNew: false },
@@ -109,7 +118,10 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
       selectOptions: [
         { value: "SENALM,ON,0#", label: "تفعيل تنبيه الاهتزاز (GPRS فقط)" },
         { value: "SENALM,ON,1#", label: "تفعيل تنبيه الاهتزاز (SMS+GPRS)" },
-        { value: "SENALM,ON,2#", label: "تفعيل تنبيه الاهتزاز (GPRS+SMS+PHONE)" },
+        {
+          value: "SENALM,ON,2#",
+          label: "تفعيل تنبيه الاهتزاز (GPRS+SMS+PHONE)",
+        },
         { value: "SENALM,ON,3#", label: "تفعيل تنبيه الاهتزاز (GPRS+PHONE)" },
         { value: "SENALM,FULL,1#", label: "تفعيل كامل (يعمل حتى مع ACC ON)" },
         { value: "SENALM,OFF#", label: "إيقاف تنبيه الاهتزاز" },
@@ -121,21 +133,35 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
         { value: "SENLEVEL,10#", label: "حساسية الاهتزاز: 10 (أقل حساسية)" },
         { value: "SENLEVEL#", label: "استعلام مستوى حساسية الاهتزاز" },
       ],
-      content: "تنبيه الاهتزاز: يرسل تنبيه عند اكتشاف اهتزاز. OFF=إيقاف، ON=تفعيل (لا يعمل مع ACC ON)، FULL=تفعيل كامل. الحساسية من 1-10 (الأقل = أكثر حساسية).",
+      content:
+        "تنبيه الاهتزاز: يرسل تنبيه عند اكتشاف اهتزاز. OFF=إيقاف، ON=تفعيل (لا يعمل مع ACC ON)، FULL=تفعيل كامل. الحساسية من 1-10 (الأقل = أكثر حساسية).",
       value: null,
     },
     // 7: Power Alarm (NEW)
     {
       type: "select",
       selectOptions: [
-        { value: "POWERALM,ON,0#", label: "تفعيل تنبيه انقطاع الطاقة (GPRS فقط)" },
-        { value: "POWERALM,ON,1#", label: "تفعيل تنبيه انقطاع الطاقة (SMS+GPRS)" },
-        { value: "POWERALM,ON,2#", label: "تفعيل تنبيه انقطاع الطاقة (GPRS+SMS+PHONE)" },
-        { value: "POWERALM,ON,3#", label: "تفعيل تنبيه انقطاع الطاقة (GPRS+PHONE)" },
+        {
+          value: "POWERALM,ON,0#",
+          label: "تفعيل تنبيه انقطاع الطاقة (GPRS فقط)",
+        },
+        {
+          value: "POWERALM,ON,1#",
+          label: "تفعيل تنبيه انقطاع الطاقة (SMS+GPRS)",
+        },
+        {
+          value: "POWERALM,ON,2#",
+          label: "تفعيل تنبيه انقطاع الطاقة (GPRS+SMS+PHONE)",
+        },
+        {
+          value: "POWERALM,ON,3#",
+          label: "تفعيل تنبيه انقطاع الطاقة (GPRS+PHONE)",
+        },
         { value: "POWERALM,OFF#", label: "إيقاف تنبيه انقطاع الطاقة" },
         { value: "POWERALM#", label: "استعلام إعدادات تنبيه انقطاع الطاقة" },
       ],
-      content: "تنبيه انقطاع الطاقة: يرسل تنبيه عند فصل الطاقة الخارجية عن الجهاز. مفعّل افتراضياً.",
+      content:
+        "تنبيه انقطاع الطاقة: يرسل تنبيه عند فصل الطاقة الخارجية عن الجهاز. مفعّل افتراضياً.",
       value: null,
     },
     // 8: ACC Alarm (NEW)
@@ -151,7 +177,8 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
         { value: "ACCALM,OFF#", label: "إيقاف تنبيه ACC" },
         { value: "ACCALM#", label: "استعلام إعدادات تنبيه ACC" },
       ],
-      content: "تنبيه ACC: يرسل تنبيه عند تشغيل/إيقاف المحرك (ACC ON/OFF). B=1: ACC ON، B=2: ACC OFF، B=3: كلاهما.",
+      content:
+        "تنبيه ACC: يرسل تنبيه عند تشغيل/إيقاف المحرك (ACC ON/OFF). B=1: ACC ON، B=2: ACC OFF، B=3: كلاهما.",
       value: null,
     },
     // 9: Driving Behavior (NEW)
@@ -180,7 +207,8 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
         { value: "ECOLLI,0,0#", label: "إيقاف تنبيه التصادم" },
         { value: "ECOLLI#", label: "استعلام إعدادات التصادم" },
       ],
-      content: "تنبيهات سلوك القيادة: التسارع المفاجئ (2-10 م/ث²)، التباطؤ المفاجئ (3-10 م/ث²)، الانعطاف الحاد (3-15 م/ث²)، التصادم (10-25). القيمة الأصغر = حساسية أعلى.",
+      content:
+        "تنبيهات سلوك القيادة: التسارع المفاجئ (2-10 م/ث²)، التباطؤ المفاجئ (3-10 م/ث²)، الانعطاف الحاد (3-15 م/ث²)، التصادم (10-25). القيمة الأصغر = حساسية أعلى.",
       value: null,
     },
     // 10: Door & AC Control (NEW)
@@ -189,7 +217,10 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
       selectOptions: [
         // Extended Function Mode
         { value: "EXTENSIONS,1#", label: "وضع: تنبيه مفتاح التكييف" },
-        { value: "EXTENSIONS,2#", label: "وضع: تنبيه فتح/إغلاق الباب (افتراضي)" },
+        {
+          value: "EXTENSIONS,2#",
+          label: "وضع: تنبيه فتح/إغلاق الباب (افتراضي)",
+        },
         { value: "EXTENSIONS#", label: "استعلام وضع الوظائف الممتدة" },
         // Remote Door
         { value: "CTRDOOR,1#", label: "فتح الباب عن بعد" },
@@ -207,7 +238,8 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
         { value: "ACALM,OFF#", label: "إيقاف تنبيه التكييف" },
         { value: "ACALM#", label: "استعلام إعدادات تنبيه التكييف" },
       ],
-      content: "التحكم بالباب والتكييف: فتح/إغلاق الباب عن بعد، تنبيهات الباب (B=1: فتح، B=2: إغلاق، B=3: كلاهما)، تنبيهات التكييف.",
+      content:
+        "التحكم بالباب والتكييف: فتح/إغلاق الباب عن بعد، تنبيهات الباب (B=1: فتح، B=2: إغلاق، B=3: كلاهما)، تنبيهات التكييف.",
       value: null,
     },
     // 11: GSM Jamming (NEW)
@@ -338,7 +370,7 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
   };
 
   return (
-    <section className="flex" >
+    <section className="flex">
       {/* ✅ القائمة اليمنى */}
       <aside className="flex flex-col p-4 gap-2 max-h-[60vh] overflow-y-auto">
         {commandTabs.map((cmd, index) => (
@@ -405,7 +437,7 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
           )}
 
           {commands[activeCommand].type === "sos" && (
-            <div className="space-y-4" >
+            <div className="space-y-4">
               <p className="text-gray-600 bg-red-50 border border-red-200 p-3 rounded-lg text-xs leading-relaxed whitespace-pre-line">
                 💡 {commands[activeCommand].content}
               </p>
@@ -496,10 +528,17 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
                     <MainInput
                       id="sos_del_1"
                       label={sosDeleteBy === "phone" ? "رقم/1" : "Sequence/1"}
-                      placeholder={sosDeleteBy === "phone" ? "مثال: 13122012031" : "مثال: 2"}
+                      placeholder={
+                        sosDeleteBy === "phone"
+                          ? "مثال: 13122012031"
+                          : "مثال: 2"
+                      }
                       value={sosDeleteValues.v1}
                       onChange={(e) =>
-                        setSosDeleteValues((p) => ({ ...p, v1: e.target.value }))
+                        setSosDeleteValues((p) => ({
+                          ...p,
+                          v1: e.target.value,
+                        }))
                       }
                     />
                     <MainInput
@@ -508,7 +547,10 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
                       placeholder="اختياري"
                       value={sosDeleteValues.v2}
                       onChange={(e) =>
-                        setSosDeleteValues((p) => ({ ...p, v2: e.target.value }))
+                        setSosDeleteValues((p) => ({
+                          ...p,
+                          v2: e.target.value,
+                        }))
                       }
                     />
                     <MainInput
@@ -517,7 +559,10 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
                       placeholder="اختياري"
                       value={sosDeleteValues.v3}
                       onChange={(e) =>
-                        setSosDeleteValues((p) => ({ ...p, v3: e.target.value }))
+                        setSosDeleteValues((p) => ({
+                          ...p,
+                          v3: e.target.value,
+                        }))
                       }
                     />
                   </div>
@@ -525,7 +570,9 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
               )}
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                <p className="text-[11px] text-gray-500 mb-1">سيتم إرسال الأمر التالي:</p>
+                <p className="text-[11px] text-gray-500 mb-1">
+                  سيتم إرسال الأمر التالي:
+                </p>
                 <p className="font-mono text-xs text-gray-800 break-all">
                   {buildSosCommand() || "—"}
                 </p>
@@ -535,10 +582,7 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
 
           {/* ✅ عرض Loader أثناء انتظار الاستجابة */}
           {waitingForResponse && !isResponseForThisDevice && (
-            <div
-              className="mb-4 p-4 bg-linear-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500 rounded-lg shadow-md animate-fade-in-up"
-              
-            >
+            <div className="mb-4 p-4 bg-linear-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500 rounded-lg shadow-md animate-fade-in-up">
               <div className="flex items-center gap-3">
                 <div className="shrink-0">
                   <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -557,10 +601,7 @@ const CommandOLD = ({ deviceID, deviceSettings, refetch }) => {
 
           {/* ✅ عرض استجابة الأمر */}
           {isResponseForThisDevice && (
-            <div
-              className="mb-4 p-4 bg-linear-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 rounded-lg shadow-md animate-fade-in-up"
-              
-            >
+            <div className="mb-4 p-4 bg-linear-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 rounded-lg shadow-md animate-fade-in-up">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">

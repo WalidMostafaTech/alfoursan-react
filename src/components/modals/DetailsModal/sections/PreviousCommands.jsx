@@ -5,6 +5,14 @@ import { deleteCommand } from "../../../../services/monitorServices";
 
 const PreviousCommands = ({ deviceSettings, refetch }) => {
   const { t } = useTranslation();
+
+  if (!deviceSettings || !deviceSettings.commands)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const commands = deviceSettings?.commands || [];
 
   // ✅ دالة تنسيق التاريخ

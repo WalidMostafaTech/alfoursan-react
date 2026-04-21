@@ -9,6 +9,14 @@ import { sendScheduledTask } from "../../../../services/monitorServices";
 
 const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
   const { t } = useTranslation();
+
+  if (!deviceSettings || !deviceSettings.scheduled_task)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const scheduledTask = deviceSettings?.scheduled_task;
 
   const [executionType, setExecutionType] = useState("everyday");

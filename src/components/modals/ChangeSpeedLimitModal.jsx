@@ -11,13 +11,13 @@ const ChangeSpeedLimitModal = ({
   const [mode, setMode] = useState("custom"); // default | custom
 
   const list = [
-    { color: "var(--color-mainGreen)", min: 0, max: defaultSpeedLimit.p1 },
+    { color: "var(--color-mainGreen)", min: 0, max: defaultSpeedLimit?.p1 },
     {
       color: "var(--color-mainYellow)",
-      min: defaultSpeedLimit.p1,
-      max: defaultSpeedLimit.p2,
+      min: defaultSpeedLimit?.p1,
+      max: defaultSpeedLimit?.p2,
     },
-    { color: "var(--color-mainRed)", min: defaultSpeedLimit.p2, max: 180 },
+    { color: "var(--color-mainRed)", min: defaultSpeedLimit?.p2, max: 180 },
   ];
 
   return (
@@ -74,12 +74,12 @@ const ChangeSpeedLimitModal = ({
                     className="relative w-full h-3 rounded-full"
                     style={{
                       background: `linear-gradient(to right,
-                      #1dbf73 0% ${(speedLimits.p1 / speedLimits.max) * 100}%,
-                      #ffd700 ${(speedLimits.p1 / speedLimits.max) * 100}% ${
-                        (speedLimits.p2 / speedLimits.max) * 100
+                      #1dbf73 0% ${(speedLimits?.p1 / speedLimits?.max) * 100}%,
+                      #ffd700 ${(speedLimits?.p1 / speedLimits?.max) * 100}% ${
+                        (speedLimits?.p2 / speedLimits?.max) * 100
                       }%,
                       #ff0000 ${
-                        (speedLimits.p2 / speedLimits.max) * 100
+                        (speedLimits?.p2 / speedLimits?.max) * 100
                       }% 100%)`,
                     }}
                   ></div>
@@ -88,11 +88,11 @@ const ChangeSpeedLimitModal = ({
                   <input
                     type="range"
                     min="0"
-                    max={speedLimits.max}
-                    value={speedLimits.p1}
+                    max={speedLimits?.max}
+                    value={speedLimits?.p1}
                     onChange={(e) => {
                       const val = Number(e.target.value);
-                      if (val < speedLimits.p2)
+                      if (val < speedLimits?.p2)
                         setSpeedLimits((prev) => ({ ...prev, p1: val }));
                     }}
                     className="dual-range thumb-green top-1"
@@ -103,11 +103,11 @@ const ChangeSpeedLimitModal = ({
                   <input
                     type="range"
                     min="0"
-                    max={speedLimits.max}
-                    value={speedLimits.p2}
+                    max={speedLimits?.max}
+                    value={speedLimits?.p2}
                     onChange={(e) => {
                       const val = Number(e.target.value);
-                      if (val > speedLimits.p1)
+                      if (val > speedLimits?.p1)
                         setSpeedLimits((prev) => ({ ...prev, p2: val }));
                     }}
                     className="dual-range thumb-yellow top-1"
@@ -117,9 +117,9 @@ const ChangeSpeedLimitModal = ({
                   {/* Labels */}
                   <div className="flex justify-between mt-2 text-sm px-2">
                     <span>0 km/h</span>
-                    <span>{speedLimits.p1} km/h</span>
-                    <span>{speedLimits.p2} km/h</span>
-                    <span>{speedLimits.max} km/h</span>
+                    <span>{speedLimits?.p1} km/h</span>
+                    <span>{speedLimits?.p2} km/h</span>
+                    <span>{speedLimits?.max} km/h</span>
                   </div>
                 </div>
               </div>

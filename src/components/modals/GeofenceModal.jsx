@@ -18,20 +18,20 @@ const GeoFenceModal = () => {
   const { fenceData, mission } = geoFenceModal;
 
   const [formData, setFormData] = useState({
-    name: fenceData.name || "",
-    notify_on_enter: fenceData.notify_on_enter || false,
-    notify_on_exit: fenceData.notify_on_exit || false,
-    speed_limit_enabled: fenceData.speed_limit_enabled || false,
-    speed_limit: fenceData.speed_limit || "",
-    radius: fenceData.radius || "",
+    name: fenceData?.name || "",
+    notify_on_enter: fenceData?.notify_on_enter || false,
+    notify_on_exit: fenceData?.notify_on_exit || false,
+    speed_limit_enabled: fenceData?.speed_limit_enabled || false,
+    speed_limit: fenceData?.speed_limit || "",
+    radius: fenceData?.radius || "",
   });
 
   // ✅ Mutation ديناميكية حسب المهمة
   const { mutate, isPending } = useMutation({
     mutationFn: async (payload) => {
       if (mission === "add") return await addFences(payload);
-      if (mission === "copy") return await copyFence(fenceData.id, payload); // ✅ copy = addFence ببيانات من Fence موجود
-      if (mission === "edit") return await updateFence(fenceData.id, payload);
+      if (mission === "copy") return await copyFence(fenceData?.id, payload); // ✅ copy = addFence ببيانات من Fence موجود
+      if (mission === "edit") return await updateFence(fenceData?.id, payload);
     },
     onSuccess: () => {
       const message =
@@ -58,7 +58,7 @@ const GeoFenceModal = () => {
   const handleConfirm = () => {
     const basePayload = {
       name: formData.name,
-      type: fenceData.type,
+      type: fenceData?.type,
       notify_on_enter: formData.notify_on_enter ? 1 : 0,
       notify_on_exit: formData.notify_on_exit ? 1 : 0,
       speed_limit_enabled: formData.speed_limit_enabled ? 1 : 0,
@@ -67,16 +67,16 @@ const GeoFenceModal = () => {
 
     let payload = {};
 
-    if (fenceData.type === "circle") {
+    if (fenceData?.type === "circle") {
       payload = {
         ...basePayload,
-        latitude: fenceData.center?.lat || fenceData.latitude,
-        longitude: fenceData.center?.lng || fenceData.longitude,
-        radius: Number(formData.radius || fenceData.radius),
+        latitude: fenceData?.center?.lat || fenceData?.latitude,
+        longitude: fenceData?.center?.lng || fenceData?.longitude,
+        radius: Number(formData.radius || fenceData?.radius),
       };
-    } else if (fenceData.type === "polygon") {
+    } else if (fenceData?.type === "polygon") {
       const coordinates =
-        fenceData.path?.map((p) => [p.lat, p.lng]) || fenceData.coordinates;
+        fenceData?.path?.map((p) => [p.lat, p.lng]) || fenceData?.coordinates;
       payload = {
         ...basePayload,
         coordinates,
@@ -113,11 +113,11 @@ const GeoFenceModal = () => {
           onChange={(e) => handleChange("name", e.target.value)}
         />
 
-        {fenceData.type === "circle" && (
+        {fenceData?.type === "circle" && (
           <label className="block text-sm">
             {t("geofenceModal.radius")}: {" "}
             <span className="text-mainColor font-bold">
-              {formData.radius || fenceData.radius}
+              {formData.radius || fenceData?.radius}
             </span>
           </label>
         )}

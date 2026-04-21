@@ -10,6 +10,16 @@ import { updateDialogCar } from "../../../../services/monitorServices";
 
 const Details = ({ deviceSettings, refetch }) => {
   const { t } = useTranslation();
+
+  const device = deviceSettings?.device;
+
+  if (!device)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const [formData, setFormData] = useState({
     name: "",
     sim_number: "",
@@ -29,23 +39,21 @@ const Details = ({ deviceSettings, refetch }) => {
     { src: "/car-red.svg", value: "bus" },
   ];
 
-  const device = deviceSettings?.device;
-
   // ✅ تحميل بيانات السيارة داخل الفورم
   useEffect(() => {
     if (device) {
       setFormData({
-        name: device.name || "",
-        sim_number: device.sim_number || "",
-        iccid: device.iccid || "",
-        carnum: device.carnum || "",
-        fuel_consumption_per_100km: device.fuel_consumption_per_100km || "",
-        contact_phone: device.contact_phone || "",
-        contact_person: device.contact_person || "",
-        notes: device.notes || "",
+        name: device?.name || "",
+        sim_number: device?.sim_number || "",
+        iccid: device?.iccid || "",
+        carnum: device?.carnum || "",
+        fuel_consumption_per_100km: device?.fuel_consumption_per_100km || "",
+        contact_phone: device?.contact_phone || "",
+        contact_person: device?.contact_person || "",
+        notes: device?.notes || "",
       });
 
-      setPreview(device.image_full_path || "");
+      setPreview(device?.image_full_path || "");
     }
   }, [device]);
 
@@ -123,7 +131,7 @@ const Details = ({ deviceSettings, refetch }) => {
 
     if (image) dataToSend.append("image", image);
 
-    updateCar({ id: device.id, formData: dataToSend });
+    updateCar({ id: device?.id, formData: dataToSend });
   };
 
   return (
@@ -140,31 +148,31 @@ const Details = ({ deviceSettings, refetch }) => {
           <MainInput
             id="importTime"
             label={t("details.importTime")}
-            value={device.imported_at || ""}
+            value={device?.imported_at || ""}
             disabled
           />
           <MainInput
             id="model"
             label={t("details.model")}
-            value={device.device_model?.name_ar || ""}
+            value={device?.device_model?.name_ar || ""}
             disabled
           />
           <MainInput
             id="activationTime"
             label={t("details.activationTime")}
-            value={device.activated_at || ""}
+            value={device?.activated_at || ""}
             disabled
           />
           <MainInput
             id="imei"
             label={t("details.imei")}
-            value={device.serial_number || ""}
+            value={device?.serial_number || ""}
             disabled
           />
           <MainInput
             id="expiryDate"
             label={t("details.expiryDate")}
-            value={device.platform_expiry || ""}
+            value={device?.platform_expiry || ""}
             disabled
           />
           <MainInput

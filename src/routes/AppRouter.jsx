@@ -4,29 +4,35 @@ import App from "../App";
 import LoadingPage from "../components/Loading/LoadingPage";
 
 const Home = React.lazy(() => import("../pages/Home/Home"));
-const TenantDashboard = React.lazy(() =>
-  import("../pages/TenantDashboard/TenantDashboard")
+const TenantDashboard = React.lazy(
+  () => import("../pages/TenantDashboard/TenantDashboard"),
 );
-const CarReplay = React.lazy(() =>
-  import("../pages/CarReplay/CarReplay")
+const CarReplay = React.lazy(() => import("../pages/CarReplay/CarReplay"));
+const DeviceTracking = React.lazy(
+  () => import("../pages/DeviceTracking/DeviceTracking"),
 );
-const DeviceTracking = React.lazy(() =>
-  import("../pages/DeviceTracking/DeviceTracking")
+const OutsideTracking = React.lazy(
+  () => import("../pages/OutsideTracking/OutsideTracking"),
 );
-const OutsideTracking = React.lazy(() =>
-  import("../pages/OutsideTracking/OutsideTracking")
-);
+const NotFound = React.lazy(() => import("../pages/NotFound/NotFound"));
+const ErrorPage = React.lazy(() => import("../pages/ErrorPage/ErrorPage"));
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Home /> },
       { path: "tenant-dashboard/monitoring", element: <TenantDashboard /> },
       { path: "car-replay/:serial_number", element: <CarReplay /> },
-      { path: "tenant-dashboard/tenant/devices/tracking/:id", element: <DeviceTracking /> },
+      {
+        path: "tenant-dashboard/tenant/devices/tracking/:id",
+        element: <DeviceTracking />,
+      },
       { path: "outSide/tracking/:id", element: <OutsideTracking /> },
+
+      { path: "*", element: <NotFound /> },
     ],
   },
 ]);

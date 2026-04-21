@@ -13,17 +13,24 @@ import { getApiErrorMessage } from "../../../../utils/getApiErrorMessage";
 const Command = ({ deviceID, deviceSettings, refetch }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+
+  if (!deviceID || !deviceSettings)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const { commandResponse } = useSelector((state) => state.modals);
   const [activeCommand, setActiveCommand] = useState(0);
   const [selectedCommand, setSelectedCommand] = useState("");
   const [waitingForResponse, setWaitingForResponse] = useState(false);
   const [builderState, setBuilderState] = useState({});
-  
+
   // التحقق من أن الاستجابة تخص هذا الجهاز
   const deviceImei = deviceSettings?.device?.serial_number;
-  const isResponseForThisDevice = 
-    commandResponse?.response && 
-    commandResponse?.imei === deviceImei;
+  const isResponseForThisDevice =
+    commandResponse?.response && commandResponse?.imei === deviceImei;
   const deviceStatus = deviceSettings?.device?.device_status;
   const isOffline =
     deviceSettings?.device?.isOffline ??
@@ -140,7 +147,10 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
       selectOptions: [
         { value: "SENALM,ON,0#", label: "تفعيل تنبيه الاهتزاز (GPRS فقط)" },
         { value: "SENALM,ON,1#", label: "تفعيل تنبيه الاهتزاز (SMS+GPRS)" },
-        { value: "SENALM,ON,2#", label: "تفعيل تنبيه الاهتزاز (GPRS+SMS+PHONE)" },
+        {
+          value: "SENALM,ON,2#",
+          label: "تفعيل تنبيه الاهتزاز (GPRS+SMS+PHONE)",
+        },
         { value: "SENALM,ON,3#", label: "تفعيل تنبيه الاهتزاز (GPRS+PHONE)" },
         { value: "SENALM,FULL,1#", label: "تفعيل كامل (يعمل حتى مع ACC ON)" },
         { value: "SENALM,OFF#", label: "إيقاف تنبيه الاهتزاز" },
@@ -152,21 +162,35 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
         { value: "SENLEVEL,10#", label: "حساسية الاهتزاز: 10 (أقل حساسية)" },
         { value: "SENLEVEL#", label: "استعلام مستوى حساسية الاهتزاز" },
       ],
-      content: "تنبيه الاهتزاز: يرسل تنبيه عند اكتشاف اهتزاز. OFF=إيقاف، ON=تفعيل (لا يعمل مع ACC ON)، FULL=تفعيل كامل. الحساسية من 1-10 (الأقل = أكثر حساسية).",
+      content:
+        "تنبيه الاهتزاز: يرسل تنبيه عند اكتشاف اهتزاز. OFF=إيقاف، ON=تفعيل (لا يعمل مع ACC ON)، FULL=تفعيل كامل. الحساسية من 1-10 (الأقل = أكثر حساسية).",
       value: null,
     },
     // 11: Power Alarm (NEW)
     {
       type: "select",
       selectOptions: [
-        { value: "POWERALM,ON,0#", label: "تفعيل تنبيه انقطاع الطاقة (GPRS فقط)" },
-        { value: "POWERALM,ON,1#", label: "تفعيل تنبيه انقطاع الطاقة (SMS+GPRS)" },
-        { value: "POWERALM,ON,2#", label: "تفعيل تنبيه انقطاع الطاقة (GPRS+SMS+PHONE)" },
-        { value: "POWERALM,ON,3#", label: "تفعيل تنبيه انقطاع الطاقة (GPRS+PHONE)" },
+        {
+          value: "POWERALM,ON,0#",
+          label: "تفعيل تنبيه انقطاع الطاقة (GPRS فقط)",
+        },
+        {
+          value: "POWERALM,ON,1#",
+          label: "تفعيل تنبيه انقطاع الطاقة (SMS+GPRS)",
+        },
+        {
+          value: "POWERALM,ON,2#",
+          label: "تفعيل تنبيه انقطاع الطاقة (GPRS+SMS+PHONE)",
+        },
+        {
+          value: "POWERALM,ON,3#",
+          label: "تفعيل تنبيه انقطاع الطاقة (GPRS+PHONE)",
+        },
         { value: "POWERALM,OFF#", label: "إيقاف تنبيه انقطاع الطاقة" },
         { value: "POWERALM#", label: "استعلام إعدادات تنبيه انقطاع الطاقة" },
       ],
-      content: "تنبيه انقطاع الطاقة: يرسل تنبيه عند فصل الطاقة الخارجية عن الجهاز. مفعّل افتراضياً.",
+      content:
+        "تنبيه انقطاع الطاقة: يرسل تنبيه عند فصل الطاقة الخارجية عن الجهاز. مفعّل افتراضياً.",
       value: null,
     },
     // 12: ACC Alarm (NEW)
@@ -182,7 +206,8 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
         { value: "ACCALM,OFF#", label: "إيقاف تنبيه ACC" },
         { value: "ACCALM#", label: "استعلام إعدادات تنبيه ACC" },
       ],
-      content: "تنبيه ACC: يرسل تنبيه عند تشغيل/إيقاف المحرك (ACC ON/OFF). B=1: ACC ON، B=2: ACC OFF، B=3: كلاهما.",
+      content:
+        "تنبيه ACC: يرسل تنبيه عند تشغيل/إيقاف المحرك (ACC ON/OFF). B=1: ACC ON، B=2: ACC OFF، B=3: كلاهما.",
       value: null,
     },
     // 13: Driving Behavior (NEW)
@@ -211,7 +236,8 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
         { value: "ECOLLI,0,0#", label: "إيقاف تنبيه التصادم" },
         { value: "ECOLLI#", label: "استعلام إعدادات التصادم" },
       ],
-      content: "تنبيهات سلوك القيادة: التسارع المفاجئ (2-10 م/ث²)، التباطؤ المفاجئ (3-10 م/ث²)، الانعطاف الحاد (3-15 م/ث²)، التصادم (10-25). القيمة الأصغر = حساسية أعلى.",
+      content:
+        "تنبيهات سلوك القيادة: التسارع المفاجئ (2-10 م/ث²)، التباطؤ المفاجئ (3-10 م/ث²)، الانعطاف الحاد (3-15 م/ث²)، التصادم (10-25). القيمة الأصغر = حساسية أعلى.",
       value: null,
     },
     // 14: Door & AC Control (NEW)
@@ -220,7 +246,10 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
       selectOptions: [
         // Extended Function Mode
         { value: "EXTENSIONS,1#", label: "وضع: تنبيه مفتاح التكييف" },
-        { value: "EXTENSIONS,2#", label: "وضع: تنبيه فتح/إغلاق الباب (افتراضي)" },
+        {
+          value: "EXTENSIONS,2#",
+          label: "وضع: تنبيه فتح/إغلاق الباب (افتراضي)",
+        },
         { value: "EXTENSIONS#", label: "استعلام وضع الوظائف الممتدة" },
         // Remote Door
         { value: "CTRDOOR,1#", label: "فتح الباب عن بعد" },
@@ -238,7 +267,8 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
         { value: "ACALM,OFF#", label: "إيقاف تنبيه التكييف" },
         { value: "ACALM#", label: "استعلام إعدادات تنبيه التكييف" },
       ],
-      content: "التحكم بالباب والتكييف: فتح/إغلاق الباب عن بعد، تنبيهات الباب (B=1: فتح، B=2: إغلاق، B=3: كلاهما)، تنبيهات التكييف.",
+      content:
+        "التحكم بالباب والتكييف: فتح/إغلاق الباب عن بعد، تنبيهات الباب (B=1: فتح، B=2: إغلاق، B=3: كلاهما)، تنبيهات التكييف.",
       value: null,
     },
     // 11: GSM Jamming (NEW)
@@ -470,24 +500,33 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                     label={t("command.sosPhone1")}
                     placeholder="13122012031"
                     value={getBuilderValue().phone1 || ""}
-                    onChange={(e) => setBuilderValue({ phone1: e.target.value })}
+                    onChange={(e) =>
+                      setBuilderValue({ phone1: e.target.value })
+                    }
                   />
                   <MainInput
                     id="sos_phone_2"
                     label={t("command.sosPhone2")}
                     placeholder="13122012032"
                     value={getBuilderValue().phone2 || ""}
-                    onChange={(e) => setBuilderValue({ phone2: e.target.value })}
+                    onChange={(e) =>
+                      setBuilderValue({ phone2: e.target.value })
+                    }
                   />
                   <MainInput
                     id="sos_phone_3"
                     label={t("command.sosPhone3")}
                     placeholder="13122012033"
                     value={getBuilderValue().phone3 || ""}
-                    onChange={(e) => setBuilderValue({ phone3: e.target.value })}
+                    onChange={(e) =>
+                      setBuilderValue({ phone3: e.target.value })
+                    }
                   />
                   <div className="text-xs text-gray-500">
-                    {t("command.willBeSentAs")} <span className="font-mono">SOS,A,phone1[,phone2][,phone3]#</span>
+                    {t("command.willBeSentAs")}{" "}
+                    <span className="font-mono">
+                      SOS,A,phone1[,phone2][,phone3]#
+                    </span>
                   </div>
                 </div>
               )}
@@ -507,15 +546,37 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                   />
                   <MainInput
                     id="sos_delete_values"
-                    label={getBuilderValue().mode === "phone" ? t("command.phoneNumbers") : t("command.sequenceNumbers")}
-                    placeholder={getBuilderValue().mode === "phone" ? t("command.examplePhoneNumbers") : t("command.exampleSequenceNumbers")}
+                    label={
+                      getBuilderValue().mode === "phone"
+                        ? t("command.phoneNumbers")
+                        : t("command.sequenceNumbers")
+                    }
+                    placeholder={
+                      getBuilderValue().mode === "phone"
+                        ? t("command.examplePhoneNumbers")
+                        : t("command.exampleSequenceNumbers")
+                    }
                     value={getBuilderValue().values || ""}
-                    onChange={(e) => setBuilderValue({ values: e.target.value })}
+                    onChange={(e) =>
+                      setBuilderValue({ values: e.target.value })
+                    }
                   />
                   <div className="text-xs text-gray-500">
                     {t("command.willBeSentAs")}{" "}
                     <span className="font-mono">
-                      SOS,D,{getBuilderValue().mode === "phone" ? t("command.phone1") : t("command.sequence1")},{getBuilderValue().mode === "phone" ? t("command.phone2") : t("command.sequence2")},{getBuilderValue().mode === "phone" ? t("command.phone3") : t("command.sequence3")}#
+                      SOS,D,
+                      {getBuilderValue().mode === "phone"
+                        ? t("command.phone1")
+                        : t("command.sequence1")}
+                      ,
+                      {getBuilderValue().mode === "phone"
+                        ? t("command.phone2")
+                        : t("command.sequence2")}
+                      ,
+                      {getBuilderValue().mode === "phone"
+                        ? t("command.phone3")
+                        : t("command.sequence3")}
+                      #
                     </span>
                   </div>
                 </div>
@@ -531,7 +592,8 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
                     onChange={(e) => setBuilderValue({ phone: e.target.value })}
                   />
                   <div className="text-xs text-gray-500">
-                    {t("command.willBeSentAs")} <span className="font-mono">CENTER,A,phone#</span>
+                    {t("command.willBeSentAs")}{" "}
+                    <span className="font-mono">CENTER,A,phone#</span>
                   </div>
                 </div>
               )}
@@ -540,10 +602,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
 
           {/* ✅ عرض Loader أثناء انتظار الاستجابة */}
           {waitingForResponse && !isResponseForThisDevice && (
-            <div
-              className="mb-4 p-4 bg-linear-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500 rounded-lg shadow-md animate-fade-in-up"
-              
-            >
+            <div className="mb-4 p-4 bg-linear-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500 rounded-lg shadow-md animate-fade-in-up">
               <div className="flex items-center gap-3">
                 <div className="shrink-0">
                   <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -562,10 +621,7 @@ const Command = ({ deviceID, deviceSettings, refetch }) => {
 
           {/* ✅ عرض استجابة الأمر */}
           {isResponseForThisDevice && (
-            <div
-              className="mb-4 p-4 bg-linear-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 rounded-lg shadow-md animate-fade-in-up"
-              
-            >
+            <div className="mb-4 p-4 bg-linear-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 rounded-lg shadow-md animate-fade-in-up">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">

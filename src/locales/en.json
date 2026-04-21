@@ -1,4 +1,6 @@
 {
+  "somethingWentWrong": "Something went wrong. Please try again.",
+
   "carPopup": {
     "wired": "Wired",
     "on": "On",
@@ -492,5 +494,17 @@
     "avgSpeed": "Average Speed",
     "maxSpeed": "Maximum Speed",
     "note": "Distance and speeds are calculated from path points."
+  },
+
+  "NotFound": {
+    "title": "Page Not Found",
+    "goHome": "Go Home"
+  },
+
+  "ErrorPage": {
+    "title": "An unexpected error occurred",
+    "description": "There was a problem loading the page. Please try again later.",
+    "reload": "Reload page",
+    "goHome": "Go to Home"
   }
 }

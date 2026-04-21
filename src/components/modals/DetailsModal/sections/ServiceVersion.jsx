@@ -3,6 +3,14 @@ import { useTranslation } from "react-i18next";
 
 const ServiceVersion = ({ deviceSettings }) => {
   const { t } = useTranslation();
+
+  if (!deviceSettings || !deviceSettings.service_version)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const subscription = deviceSettings?.subscription;
 
   return (

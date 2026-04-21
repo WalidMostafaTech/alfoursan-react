@@ -11,40 +11,47 @@ const Alerts = ({ deviceSettings, refetch }) => {
   const alerts = deviceSettings?.device;
   const deviceId = deviceSettings?.device?.id;
 
+  if (!alerts || !deviceId)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
     setFormData({
-      alert_speed_limit: alerts.alert_speed_limit || 0,
-      alert_speed_limit_value: alerts.alert_speed_limit_value || "",
-      alert_offline: alerts.alert_offline || 0,
-      alert_restricted_driving: alerts.alert_restricted_driving || 0,
-      alert_low_voltage: alerts.alert_low_voltage || 0,
-      alert_rest_threshold: alerts.alert_rest_threshold || 0,
-      alert_idle_speed: alerts.alert_idle_speed || 0,
-      alert_fatigue_driving: alerts.alert_fatigue_driving || 0,
-      alert_acc_off: alerts.alert_acc_off || 0,
-      alert_acc_on: alerts.alert_acc_on || 0,
-      alert_offline_judgment: alerts.alert_offline_judgment || 0,
+      alert_speed_limit: alerts?.alert_speed_limit || 0,
+      alert_speed_limit_value: alerts?.alert_speed_limit_value || "",
+      alert_offline: alerts?.alert_offline || 0,
+      alert_restricted_driving: alerts?.alert_restricted_driving || 0,
+      alert_low_voltage: alerts?.alert_low_voltage || 0,
+      alert_rest_threshold: alerts?.alert_rest_threshold || 0,
+      alert_idle_speed: alerts?.alert_idle_speed || 0,
+      alert_fatigue_driving: alerts?.alert_fatigue_driving || 0,
+      alert_acc_off: alerts?.alert_acc_off || 0,
+      alert_acc_on: alerts?.alert_acc_on || 0,
+      alert_offline_judgment: alerts?.alert_offline_judgment || 0,
     });
   }, [alerts]);
 
   const alertsList = [
-    { label: t("alerts.speedLimit"), key: "alert_speed_limit" },
-    { label: t("alerts.offline"), key: "alert_offline" },
-    { label: t("alerts.restrictedDriving"), key: "alert_restricted_driving" },
-    { label: t("alerts.lowVoltage"), key: "alert_low_voltage" },
-    { label: t("alerts.restThreshold"), key: "alert_rest_threshold" },
-    { label: t("alerts.idleSpeed"), key: "alert_idle_speed" },
-    { label: t("alerts.fatigueDriving"), key: "alert_fatigue_driving" },
-    { label: t("alerts.accOff"), key: "alert_acc_off" },
-    { label: t("alerts.accOn"), key: "alert_acc_on" },
+    { label: t("alerts?.speedLimit"), key: "alert_speed_limit" },
+    { label: t("alerts?.offline"), key: "alert_offline" },
+    { label: t("alerts?.restrictedDriving"), key: "alert_restricted_driving" },
+    { label: t("alerts?.lowVoltage"), key: "alert_low_voltage" },
+    { label: t("alerts?.restThreshold"), key: "alert_rest_threshold" },
+    { label: t("alerts?.idleSpeed"), key: "alert_idle_speed" },
+    { label: t("alerts?.fatigueDriving"), key: "alert_fatigue_driving" },
+    { label: t("alerts?.accOff"), key: "alert_acc_off" },
+    { label: t("alerts?.accOn"), key: "alert_acc_on" },
   ];
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => updateDialogAlert(deviceId, formData),
     onSuccess: () => {
-      toast.success(t("alerts.successMessage"));
+      toast.success(t("alerts?.successMessage"));
       refetch?.();
     },
     onError: (error) => {
@@ -92,7 +99,7 @@ const Alerts = ({ deviceSettings, refetch }) => {
                 <input
                   type="number"
                   min="0"
-                  placeholder={t("alerts.maxSpeedPlaceholder")}
+                  placeholder={t("alerts?.maxSpeedPlaceholder")}
                   className="input input-bordered input-sm w-full mt-1 text-xs"
                   value={formData.alert_speed_limit_value || ""}
                   onChange={(e) =>
@@ -105,7 +112,7 @@ const Alerts = ({ deviceSettings, refetch }) => {
       </div>
 
       <FormBtn
-        title={t("alerts.updateBtn")}
+        title={t("alerts?.updateBtn")}
         loading={isPending}
         onClick={handleSubmit}
       />

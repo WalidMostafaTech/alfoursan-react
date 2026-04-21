@@ -21,8 +21,7 @@ import { useTranslation } from "react-i18next";
 
 // ✅ ثابت خارج الـ component لمنع إعادة تحميل Google Maps
 const libraries = ["drawing", "geometry", "marker"];
-const MAPBOX_TOKEN =
-  "";
+const MAPBOX_TOKEN = "";
 
 // 🧮 دالة حساب المسافة بين نقطتين (كم)
 function haversineDistance(lat1, lng1, lat2, lng2) {
@@ -107,7 +106,8 @@ const TenantDashboard = () => {
     const now = Date.now();
     const merged = [];
     incomingById.forEach((incoming) => {
-      const prev = prevById.get(incoming.id) || prevByImei.get(incoming.serial_number);
+      const prev =
+        prevById.get(incoming.id) || prevByImei.get(incoming.serial_number);
       if (!prev) {
         merged.push(incoming);
         return;
@@ -122,10 +122,15 @@ const TenantDashboard = () => {
         // بيانات الجهاز من API لازم تكسب (اسم/هاتف/صورة/روابط...)
         ...incoming,
         // لكن بيانات التتبع الحديثة من socket ما تتغيرش
-        position: prevIsLive && prev.position ? prev.position : incoming.position,
+        position:
+          prevIsLive && prev.position ? prev.position : incoming.position,
         speed: prevIsLive && prev.speed != null ? prev.speed : incoming.speed,
-        direction: prevIsLive && prev.direction != null ? prev.direction : incoming.direction,
-        status: prevIsLive && prev.status != null ? prev.status : incoming.status,
+        direction:
+          prevIsLive && prev.direction != null
+            ? prev.direction
+            : incoming.direction,
+        status:
+          prevIsLive && prev.status != null ? prev.status : incoming.status,
         lastUpdate: prev.lastUpdate || incoming.lastUpdate,
         lastSignel: prev.lastSignel || incoming.lastSignel,
         lastSignelGPS: prev.lastSignelGPS || incoming.lastSignelGPS,
@@ -145,14 +150,17 @@ const TenantDashboard = () => {
         map.set(String(id), { id: String(id), name: String(name) });
       }
     });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "ar"));
+    return Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, "ar"),
+    );
   }, [cars]);
 
   // سيارات مفلترة بالفرع فقط (تُمرَّر للـ Filters و Search لتعكس الخيارات والأعداد حسب الفرع)
   const carsByBranch = useMemo(() => {
     if (!activeBranchId) return cars || [];
     return (cars || []).filter((car) => {
-      const carBranchId = car?.branch_effective_id != null ? String(car.branch_effective_id) : "";
+      const carBranchId =
+        car?.branch_effective_id != null ? String(car.branch_effective_id) : "";
       return carBranchId === String(activeBranchId);
     });
   }, [cars, activeBranchId]);
@@ -181,9 +189,6 @@ const TenantDashboard = () => {
     if (mapProvider !== "mapbox") return;
     setViewState((v) => (v.zoom === zoom ? v : { ...v, zoom }));
   }, [mapProvider, zoom]);
-
-
-
 
   // ✅ تحميل سكريبت Google Maps مرة واحدة فقط
   const { isLoaded, loadError } = useLoadScript({
@@ -224,7 +229,7 @@ const TenantDashboard = () => {
             ...c,
             ...device,
           };
-        })
+        }),
       );
     };
 
@@ -245,7 +250,7 @@ const TenantDashboard = () => {
   const getMapboxAddress = async (lat, lng, cb) => {
     try {
       const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=ar`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=ar`,
       );
       const data = await res.json();
       if (data.features?.length) cb(data.features[0].place_name);
@@ -270,7 +275,7 @@ const TenantDashboard = () => {
   // 🧭 تحديث العنوان عند تحرك العربية
   const selectedCar = useMemo(
     () => cars.find((c) => c.id === selectedCarId) || null,
-    [cars, selectedCarId]
+    [cars, selectedCarId],
   );
 
   useEffect(() => {
@@ -287,7 +292,7 @@ const TenantDashboard = () => {
         selectedCar.lastAddressPos.lat,
         selectedCar.lastAddressPos.lng,
         lat,
-        lng
+        lng,
       ) > 0.05
     ) {
       // ✅ تهدئة طلبات العنوان (reverse geocoding) عشان ما تأثرش على سلاسة الصفحة
@@ -299,11 +304,16 @@ const TenantDashboard = () => {
       setCars((prev) =>
         (prev || []).map((c) =>
           c?.id === selectedCarId
-            ? c?.lastGeocodeAtMs === now && c?.addressMinIntervalMs === MIN_GEOCODE_INTERVAL_MS
+            ? c?.lastGeocodeAtMs === now &&
+              c?.addressMinIntervalMs === MIN_GEOCODE_INTERVAL_MS
               ? c
-              : { ...c, lastGeocodeAtMs: now, addressMinIntervalMs: MIN_GEOCODE_INTERVAL_MS }
-            : c
-        )
+              : {
+                  ...c,
+                  lastGeocodeAtMs: now,
+                  addressMinIntervalMs: MIN_GEOCODE_INTERVAL_MS,
+                }
+            : c,
+        ),
       );
 
       const updateAddress = (addr) => {
@@ -315,8 +325,8 @@ const TenantDashboard = () => {
                 c.lastAddressPos?.lng === lng
                 ? c
                 : { ...c, address: addr, lastAddressPos: { lat, lng } }
-              : c
-          )
+              : c,
+          ),
         );
       };
       if (mapProvider === "google") getGoogleAddress(lat, lng, updateAddress);
@@ -364,7 +374,7 @@ const TenantDashboard = () => {
 
       setSelectedCarId(car.id);
     },
-    [dispatch, mapProvider]
+    [dispatch, mapProvider],
   );
 
   useEffect(() => {
