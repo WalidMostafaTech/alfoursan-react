@@ -375,11 +375,10 @@ const useCarSocket = (cars, setCars, isInit, options = {}) => {
         const nextCharge = normalizeBool(
           attrs?.charge ?? data.data.charge ?? null,
         );
-        // lastSignelGPS يتحدث فقط لنقطة حركة فعلية:
-        // - speed > 2
-        // - attributes.type !== 19
+        // lastSignelGPS يتوافق مع deviceStatus.last_gps_at (gps-server/deviceStatus.js):
+        // speed > 0 و attributes.type !== 19
         const shouldUpdateLastSignelGPS =
-          nextSpeed > 2 && attrsTypeNum !== 19;
+          nextSpeed > 0 && attrsTypeNum !== 19;
 
         log("GPS", {
           imei,

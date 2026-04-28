@@ -18,6 +18,10 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
   const { t } = useTranslation();
   const { status, color } = useMemo(() => getCarStatus(car), [car]);
 
+  const speedVal = Number(car?.speed) || 0;
+  const ignitionAsMoving = speedVal > 1;
+  const effectiveIgnitionOn = ignitionAsMoving ? true : car?.ignition_on;
+
   const lat = car?.position?.lat;
   const lng = car?.position?.lng;
 
@@ -36,8 +40,16 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
         <span className="flex items-center gap-1.5 flex-1 min-w-0">
           <span
             className="text-[12px]"
-            title={car?.ignition_on == null ? t("carsList.ignitionUnknown") : car?.ignition_on ? t("carsList.ignitionOn") : t("carsList.ignitionOff")}
-            style={{ color: car?.ignition_on ? "#22c55e" : car?.ignition_on === false ? "#ef4444" : "#9ca3af" }}
+            title={
+              effectiveIgnitionOn == null
+                ? t("carsList.ignitionUnknown")
+                : effectiveIgnitionOn
+                  ? t("carsList.ignitionOn")
+                  : t("carsList.ignitionOff")
+            }
+            style={{
+              color: effectiveIgnitionOn ? "#22c55e" : effectiveIgnitionOn === false ? "#ef4444" : "#9ca3af",
+            }}
           >
             <MdOutlinePowerSettingsNew />
           </span>

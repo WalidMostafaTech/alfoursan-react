@@ -106,12 +106,16 @@ export const getCarStatus = (car) => {
       color: "#22c55e",
     };
   }
+  if (s > 0 && s <= 1) {
+    return { status: "Static", color: "#3b82f6" };
+  }
 
-  // 🔵 Static (متصل لكن متوقف) — مدة التوقف من آخر GPS
+  // 🔵 ليس متحركًا (عرض الحركة فقط عندما s > 1). مدة «منذ» فقط من last_gps_at (lastSignelGPS)
+  // التي يحدّثها الخادم عند speed > 0؛ قبلها تكون null فيظهر «ثابت» بدون منذ
   if (s <= 1) {
-    const sinceSource = lastSignelGPS || lastSignel;
+    const sinceSource = lastSignelGPS;
     return {
-      status: sinceSource ? `Static ( ${getTimeDiffString(sinceSource)})` : "Static",
+      status: sinceSource ? `Static (${getTimeDiffString(sinceSource)})` : "Static",
       color: "#3b82f6",
     };
   }
