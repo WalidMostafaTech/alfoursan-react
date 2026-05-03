@@ -11,14 +11,14 @@ import { updateDialogCar } from "../../../../services/monitorServices";
 const Details = ({ deviceSettings, refetch }) => {
   const { t } = useTranslation();
 
-  const device = deviceSettings?.device;
-
-  if (!device)
+  if (!deviceSettings)
     return (
       <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
         {t("somethingWentWrong")}
       </p>
     );
+
+  const device = deviceSettings?.device;
 
   const [formData, setFormData] = useState({
     name: "",

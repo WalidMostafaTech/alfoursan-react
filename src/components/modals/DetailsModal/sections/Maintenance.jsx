@@ -102,7 +102,8 @@ const Maintenance = ({ deviceID, deviceSettings }) => {
         <h2 className="font-semibold tracking-wide">
           {t("maintenance.title")}{" "}
           <span className="bg-sky-600 text-white py-1 px-2 rounded text-sm">
-            {Number(deviceSettings?.device?.km_total).toFixed(2)} km
+            {/* {Number(deviceSettings?.device?.km_total).toFixed(2)} km */}
+            {Number(deviceSettings?.device?.display_km_total).toFixed(2)} km
           </span>
         </h2>
 

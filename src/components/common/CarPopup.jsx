@@ -34,6 +34,7 @@ import { PiPhoneCall, PiPolygon } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { GiPathDistance } from "react-icons/gi";
 
 const CarPopup = ({ car, showActions = true }) => {
   const { t } = useTranslation();
@@ -115,14 +116,16 @@ const CarPopup = ({ car, showActions = true }) => {
     },
     { label: car.contact_person, icon: <FaUser /> },
     { label: car.contact_phone, icon: <PiPhoneCall /> },
+    {
+      label: `${Number(car?.display_km_total).toFixed(2)} km`,
+      icon: <GiPathDistance />,
+    },
   ];
 
   const dispatch = useDispatch();
 
   return (
-    <div
-      className="bg-gradient-to-br from-white via-slate-50 to-white rounded-2xl shadow-xl border border-slate-200/70 w-[520px] max-w-[98vw] overflow-hidden"
-    >
+    <div className="bg-gradient-to-br from-white via-slate-50 to-white rounded-2xl shadow-xl border border-slate-200/70 w-[520px] max-w-[98vw] overflow-hidden">
       <div className="px-4 py-2 flex items-center justify-between gap-3 bg-white/70 backdrop-blur border-b border-slate-100">
         <div className="min-w-0">
           <h4 className="font-bold text-sm text-slate-900 line-clamp-1">

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 const Membership = ({ deviceSettings }) => {
   const { t } = useTranslation();
 
-  if (!deviceSettings || !deviceSettings.subscription)
+  if (!deviceSettings)
     return (
       <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
         {t("somethingWentWrong")}

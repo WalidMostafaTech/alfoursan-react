@@ -37,21 +37,21 @@ const Alerts = ({ deviceSettings, refetch }) => {
   }, [alerts]);
 
   const alertsList = [
-    { label: t("alerts?.speedLimit"), key: "alert_speed_limit" },
-    { label: t("alerts?.offline"), key: "alert_offline" },
-    { label: t("alerts?.restrictedDriving"), key: "alert_restricted_driving" },
-    { label: t("alerts?.lowVoltage"), key: "alert_low_voltage" },
-    { label: t("alerts?.restThreshold"), key: "alert_rest_threshold" },
-    { label: t("alerts?.idleSpeed"), key: "alert_idle_speed" },
-    { label: t("alerts?.fatigueDriving"), key: "alert_fatigue_driving" },
-    { label: t("alerts?.accOff"), key: "alert_acc_off" },
-    { label: t("alerts?.accOn"), key: "alert_acc_on" },
+    { label: t("alerts.speedLimit"), key: "alert_speed_limit" },
+    { label: t("alerts.offline"), key: "alert_offline" },
+    { label: t("alerts.restrictedDriving"), key: "alert_restricted_driving" },
+    { label: t("alerts.lowVoltage"), key: "alert_low_voltage" },
+    { label: t("alerts.restThreshold"), key: "alert_rest_threshold" },
+    { label: t("alerts.idleSpeed"), key: "alert_idle_speed" },
+    { label: t("alerts.fatigueDriving"), key: "alert_fatigue_driving" },
+    { label: t("alerts.accOff"), key: "alert_acc_off" },
+    { label: t("alerts.accOn"), key: "alert_acc_on" },
   ];
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => updateDialogAlert(deviceId, formData),
     onSuccess: () => {
-      toast.success(t("alerts?.successMessage"));
+      toast.success(t("alerts.successMessage"));
       refetch?.();
     },
     onError: (error) => {
@@ -99,7 +99,7 @@ const Alerts = ({ deviceSettings, refetch }) => {
                 <input
                   type="number"
                   min="0"
-                  placeholder={t("alerts?.maxSpeedPlaceholder")}
+                  placeholder={t("alerts.maxSpeedPlaceholder")}
                   className="input input-bordered input-sm w-full mt-1 text-xs"
                   value={formData.alert_speed_limit_value || ""}
                   onChange={(e) =>
@@ -112,7 +112,7 @@ const Alerts = ({ deviceSettings, refetch }) => {
       </div>
 
       <FormBtn
-        title={t("alerts?.updateBtn")}
+        title={t("alerts.updateBtn")}
         loading={isPending}
         onClick={handleSubmit}
       />

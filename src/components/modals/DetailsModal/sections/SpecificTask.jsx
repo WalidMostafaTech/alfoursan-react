@@ -10,15 +10,6 @@ import { sendScheduledTask } from "../../../../services/monitorServices";
 const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
   const { t } = useTranslation();
 
-  if (!deviceSettings || !deviceSettings.scheduled_task)
-    return (
-      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
-        {t("somethingWentWrong")}
-      </p>
-    );
-
-  const scheduledTask = deviceSettings?.scheduled_task;
-
   const [executionType, setExecutionType] = useState("everyday");
   const [formData, setFormData] = useState({
     start_date: "",
@@ -46,25 +37,6 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
     if (!dateString) return "";
     return dateString.split("T")[0]; // ناخد الجزء قبل الـ T
   };
-
-  // ✅ تحميل البيانات الافتراضية من scheduledTask
-  useEffect(() => {
-    if (scheduledTask) {
-      setExecutionType(scheduledTask.execution_type || "everyday");
-      setFormData({
-        // ✅ نحول التاريخ للصيغة اللي يقبلها input[type=date]
-        start_date: formatDate(scheduledTask.start_date),
-        end_date: formatDate(scheduledTask.end_date),
-
-        // ✅ نحول الوقت لصيغة HH:mm
-        start_time: formatToHourMinute(scheduledTask.start_time || ""),
-        end_time: formatToHourMinute(scheduledTask.end_time || ""),
-
-        is_enabled: scheduledTask.is_enabled ? 1 : 0,
-        task_type: scheduledTask.task_type || "cut_off_engine",
-      });
-    }
-  }, [scheduledTask]);
 
   // ✅ Mutation لإرسال المهمة المجدولة
   const { mutate, isPending } = useMutation({
@@ -131,6 +103,34 @@ const SpecificTask = ({ deviceSettings, refetch, deviceID }) => {
 
     mutate(payload);
   };
+
+  if (!deviceSettings)
+    return (
+      <p className="text-center py-2 px-4 my-20 w-fit mx-auto rounded-lg bg-primary text-white">
+        {t("somethingWentWrong")}
+      </p>
+    );
+
+  const scheduledTask = deviceSettings?.scheduled_task;
+
+  // ✅ تحميل البيانات الافتراضية من scheduledTask
+  useEffect(() => {
+    if (scheduledTask) {
+      setExecutionType(scheduledTask.execution_type || "everyday");
+      setFormData({
+        // ✅ نحول التاريخ للصيغة اللي يقبلها input[type=date]
+        start_date: formatDate(scheduledTask.start_date),
+        end_date: formatDate(scheduledTask.end_date),
+
+        // ✅ نحول الوقت لصيغة HH:mm
+        start_time: formatToHourMinute(scheduledTask.start_time || ""),
+        end_time: formatToHourMinute(scheduledTask.end_time || ""),
+
+        is_enabled: scheduledTask.is_enabled ? 1 : 0,
+        task_type: scheduledTask.task_type || "cut_off_engine",
+      });
+    }
+  }, [scheduledTask]);
 
   return (
     <section className="space-y-4">
