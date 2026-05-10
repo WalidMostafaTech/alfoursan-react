@@ -23,7 +23,7 @@ const containerStyle = { width: "100%", height: "100vh" };
 
 const getCarColor = (car) => getCarStatus(car).color;
 
-const formatTimeLeft = (ms) => {
+const formatTimeLeft = (ms, t) => {
   if (ms <= 0) return t("outsideTracking.linkExpired");
   const totalSeconds = Math.floor(ms / 1000);
   const h = Math.floor(totalSeconds / 3600);
@@ -76,7 +76,7 @@ const OutsideTracking = () => {
     return () => clearInterval(t);
   }, []);
   const isExpired = endAt ? now >= endAt : false;
-  const timeLeft = endAt ? formatTimeLeft(endAt - now) : "";
+  const timeLeft = endAt ? formatTimeLeft(endAt - now, t) : "";
 
   // init from API
   useEffect(() => {
