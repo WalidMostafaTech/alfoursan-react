@@ -43,7 +43,12 @@
     "accOn": "ACC ON",
     "maxSpeedPlaceholder": "الحد الأقصى (كم/س)",
     "updateBtn": "تحديث اعدادات التنبيهات",
-    "successMessage": "تم تحديث إعدادات التنبيهات بنجاح ✅"
+    "successMessage": "تم تحديث إعدادات التنبيهات بنجاح ✅",
+    "harshBrake": "التباطؤ المفاجئ",
+    "sharpTurn": "الانعطاف الحاد",
+    "collision": "التصادم",
+    "powerAlarm": "إنذار الطاقة",
+    "vibrationAlarm": "إنذار الاهتزاز"
   },
   "carDriver": {
     "notLinked": "غير مرتبط",

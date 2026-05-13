@@ -61,7 +61,12 @@
     "accOn": "ACC ON",
     "maxSpeedPlaceholder": "Max Speed (km/h)",
     "updateBtn": "Update Alert Settings",
-    "successMessage": "Alert settings updated successfully ✅"
+    "successMessage": "Alert settings updated successfully ✅",
+    "harshBrake": "Harsh Brake",
+    "sharpTurn": "Sharp Turn",
+    "collision": "Collision",
+    "powerAlarm": "Power Alarm",
+    "vibrationAlarm": "Vibration Alarm"
   },
   "mapSwitcher": {
     "googleMaps": "Google Maps",

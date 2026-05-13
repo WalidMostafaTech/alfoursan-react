@@ -5,7 +5,7 @@ import {
   openPolygonMenu,
   openShareModal,
 } from "../../../../store/modalsSlice";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { useDispatch } from "react-redux";
 import Loader from "../../../../components/Loading/Loader";
 import { getCarStatus } from "../../../../utils/getCarStatus";
@@ -13,10 +13,27 @@ import { Link } from "react-router-dom";
 import { MdOutlinePowerSettingsNew } from "react-icons/md";
 import { useTranslation } from "react-i18next";
 
-const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
+const CarRow = memo(function CarRow({
+  car,
+  isSelected,
+  handleSelectCar,
+  selectionTrigger,
+}) {
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { status, color } = useMemo(() => getCarStatus(car), [car]);
+
+  const rowRef = useRef(null);
+
+  useEffect(() => {
+    if (isSelected && rowRef.current) {
+      rowRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  // }, [isSelected]);
+  }, [isSelected, selectionTrigger]);
 
   const speedVal = Number(car?.speed) || 0;
   const ignitionAsMoving = speedVal > 1;
@@ -27,6 +44,7 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
 
   return (
     <div
+      ref={rowRef}
       className="relative flex items-center gap-1 hover:bg-gray-400/10 rounded-lg"
       style={{
         color,
@@ -48,7 +66,11 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
                   : t("carsList.ignitionOff")
             }
             style={{
-              color: effectiveIgnitionOn ? "#22c55e" : effectiveIgnitionOn === false ? "#ef4444" : "#9ca3af",
+              color: effectiveIgnitionOn
+                ? "#22c55e"
+                : effectiveIgnitionOn === false
+                  ? "#ef4444"
+                  : "#9ca3af",
             }}
           >
             <MdOutlinePowerSettingsNew />
@@ -148,7 +170,13 @@ const CarRow = memo(function CarRow({ car, isSelected, handleSelectCar }) {
   );
 });
 
-const CarsList = ({ handleSelectCar, selectedCarId, cars, isFetching }) => {
+const CarsList = ({
+  handleSelectCar,
+  selectedCarId,
+  selectionTrigger,
+  cars,
+  isFetching,
+}) => {
   return (
     <div className="flex flex-col gap-1 overflow-y-auto flex-1">
       {isFetching && <Loader />}
@@ -159,6 +187,7 @@ const CarsList = ({ handleSelectCar, selectedCarId, cars, isFetching }) => {
           car={car}
           isSelected={car.id === selectedCarId}
           handleSelectCar={handleSelectCar}
+          selectionTrigger={selectionTrigger}
         />
       ))}
     </div>

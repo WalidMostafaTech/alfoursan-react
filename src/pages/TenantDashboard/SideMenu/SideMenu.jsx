@@ -13,6 +13,7 @@ const SideMenu = ({
   filteredCars,
   handleSelectCar,
   selectedCarId,
+  selectionTrigger,
   isFetching,
   activeFilter,
   setActiveFilter,
@@ -86,6 +87,7 @@ const SideMenu = ({
             cars={filteredCars}
             handleSelectCar={handleSelectCar}
             selectedCarId={selectedCarId}
+            selectionTrigger={selectionTrigger}
             isFetching={isFetching}
           />
         </div>

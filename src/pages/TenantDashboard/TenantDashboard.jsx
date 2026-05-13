@@ -66,6 +66,7 @@ const TenantDashboard = () => {
   const [center, setCenter] = useState({ lat: 23.8859, lng: 41.0792 });
   // const [zoom, setZoom] = useState(6);
   const [selectedCarId, setSelectedCarId] = useState(null);
+  const [selectionTrigger, setSelectionTrigger] = useState(0);
   const [activeFilter, setActiveFilter] = useState("all");
   const [activeBranchId, setActiveBranchId] = useState("");
   const dispatch = useDispatch();
@@ -349,20 +350,26 @@ const TenantDashboard = () => {
       const { position } = car;
       const { lat, lng } = position || {};
 
-      if (
-        !position ||
-        typeof lat !== "number" ||
-        typeof lng !== "number" ||
-        isNaN(lat) ||
-        isNaN(lng)
-      ) {
+      const hasValidPosition =
+        position &&
+        typeof lat === "number" &&
+        typeof lng === "number" &&
+        !isNaN(lat) &&
+        !isNaN(lng);
+
+      // ✅ العربية تبقى active حتى لو مفيش location
+      setSelectedCarId(car.id);
+      setSelectionTrigger(Date.now());
+
+      if (!hasValidPosition) {
         toast.warning(t("tenantDashboard.locationUnavailable"));
-        return setSelectedCarId(null);
+        return;
       }
 
       if (shouldZoom) {
         setCenter(position);
         dispatch(changeZoom(18));
+
         if (mapProvider === "mapbox") {
           setViewState({
             longitude: lng,
@@ -371,10 +378,8 @@ const TenantDashboard = () => {
           });
         }
       }
-
-      setSelectedCarId(car.id);
     },
-    [dispatch, mapProvider],
+    [dispatch, mapProvider, t],
   );
 
   useEffect(() => {
@@ -393,6 +398,7 @@ const TenantDashboard = () => {
         isFetching={isFetching}
         handleSelectCar={handleSelectCar}
         selectedCarId={selectedCarId}
+        selectionTrigger={selectionTrigger}
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
         branches={branches}

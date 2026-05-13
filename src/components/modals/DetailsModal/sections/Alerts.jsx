@@ -33,6 +33,13 @@ const Alerts = ({ deviceSettings, refetch }) => {
       alert_acc_off: alerts?.alert_acc_off || 0,
       alert_acc_on: alerts?.alert_acc_on || 0,
       alert_offline_judgment: alerts?.alert_offline_judgment || 0,
+
+      // ✅ New Alerts
+      alert_vibration: alerts?.alert_vibration || 0,
+      alert_power_disconnect: alerts?.alert_power_disconnect || 0,
+      alert_harsh_brake: alerts?.alert_harsh_brake || 0,
+      alert_sharp_turn: alerts?.alert_sharp_turn || 0,
+      alert_collision: alerts?.alert_collision || 0,
     });
   }, [alerts]);
 
@@ -46,6 +53,13 @@ const Alerts = ({ deviceSettings, refetch }) => {
     { label: t("alerts.fatigueDriving"), key: "alert_fatigue_driving" },
     { label: t("alerts.accOff"), key: "alert_acc_off" },
     { label: t("alerts.accOn"), key: "alert_acc_on" },
+
+    // ✅ New Alerts
+    { label: t("alerts.vibrationAlarm"), key: "alert_vibration" },
+    { label: t("alerts.powerAlarm"), key: "alert_power_disconnect" },
+    { label: t("alerts.harshBrake"), key: "alert_harsh_brake" },
+    { label: t("alerts.sharpTurn"), key: "alert_sharp_turn" },
+    { label: t("alerts.collision"), key: "alert_collision" },
   ];
 
   const { mutate, isPending } = useMutation({
@@ -79,36 +93,46 @@ const Alerts = ({ deviceSettings, refetch }) => {
 
   return (
     <section>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-4">
-        {alertsList.map((item, index) => (
-          <div key={index} className="flex flex-col gap-1">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="toggle toggle-primary toggle-sm"
-                checked={formData[item.key] === 1}
-                onChange={() => handleToggle(item.key)}
-              />
-              <span className="text-gray-700 text-xs font-medium">
-                {item.label}
-              </span>
-            </label>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-4 mb-8">
+        {alertsList.map((item, index) => {
+          const showSpeedInput =
+            item.key === "alert_speed_limit" &&
+            formData.alert_speed_limit === 1;
 
-            {item.key === "alert_speed_limit" &&
-              formData.alert_speed_limit === 1 && (
+          return (
+            <div
+              key={index}
+              className={`flex flex-col gap-3 justify-center
+            ${showSpeedInput ? "border border-gray-300 rounded-lg p-2" : ""}`}
+            >
+              <label className="flex items-center gap-2 w-fit">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={formData[item.key] === 1}
+                  onChange={() => handleToggle(item.key)}
+                />
+                <span className="text-gray-700 text-xs font-medium cursor-pointer">
+                  {item.label}
+                </span>
+              </label>
+
+              {showSpeedInput && (
                 <input
                   type="number"
                   min="0"
                   placeholder={t("alerts.maxSpeedPlaceholder")}
-                  className="input input-bordered input-sm w-full mt-1 text-xs"
+                  className="w-full text-base bg-white outline-none border-none px-1 py-0.5 rounded-md ring-1 transition-all placeholder:text-gray-400 placeholder:text-sm 
+                  ring-gray-400 focus-within:ring-2 focus-within:ring-mainColor"
                   value={formData.alert_speed_limit_value || ""}
                   onChange={(e) =>
                     handleInputChange("alert_speed_limit_value", e.target.value)
                   }
                 />
               )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
 
       <FormBtn
